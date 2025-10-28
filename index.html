@@ -209,7 +209,8 @@
         /* Products Section */
         .section{padding:80px 14px;max-width:1100px;margin:auto;}
         .section-title{font-size:2.2rem;font-weight:700;color:var(--accent-color);margin-bottom:24px;text-align:left;transition:color .3s ease;opacity:0;animation:slideInTitle 1.2s ease forwards;}
-        @keyframes slideInTitle{to{opacity:1);}}
+        /* FIX: Corrected the syntax error in the keyframe from `opacity:1);}` to `opacity:1;}` */
+        @keyframes slideInTitle{to{opacity:1;}}
         .products-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:28px;}
         .product-card{background:var(--card-bg);border-radius:16px;box-shadow:var(--shadow);padding:30px 28px;transition:transform .22s, background .3s ease, box-shadow .3s ease;display:flex;flex-direction:column;align-items:start;opacity:0;transform:translateY(50px);animation:slideInCard .8s ease forwards;}
         @keyframes slideInCard{to{opacity:1;transform:translateY(0);}}
@@ -252,9 +253,7 @@
         /* Service section */
         .services-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:28px;}
         .service-card{background:var(--card-bg);border-radius:16px;box-shadow:var(--shadow);padding:28px 24px;display:flex;flex-direction:column;align-items:start;transition:transform .3s, background .3s ease, box-shadow .3s ease;opacity:0;transform:translateY(50px);animation:slideInCard .8s ease forwards;}
-        .service-card:nth-child(1){animation-delay:0.5s;}
-        .service-card:nth-child(2){animation-delay:0.7s;}
-        .service-card:nth-child(3){animation-delay:0.9s;}
+        /* The multiple card animation delays are removed since only one service card remains */
         .service-card:hover{transform:translateY(-6px) scale(1.022);}
         .service-title{font-size:1.15rem;color:var(--primary-color);font-weight:600;margin-bottom:8px;transition:color .3s ease;}
         .service-desc{color:var(--muted-text);font-size:1rem;margin-bottom:10px;transition:color .3s ease;}
@@ -289,10 +288,10 @@
         .people-list{display:flex;gap:38px;margin-top:24px;justify-content:center;flex-wrap:wrap;}
         .people-card{width:240px;background:var(--white-bg);border-radius:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;padding:24px 18px;transition:transform .3s, background .3s ease, box-shadow .3s ease;opacity:0;transform:scale(0.85) translateY(40px);animation:popInCard .7s cubic-bezier(.34,1.56,.64,1) forwards;}
         @keyframes popInCard{to{opacity:1;transform:scale(1) translateY(0);}}
+        /* Animation delays for the two new cards */
         .people-card:nth-child(1){animation-delay:0.6s;}
         .people-card:nth-child(2){animation-delay:0.8s;}
-        .people-card:nth-child(3){animation-delay:1s;}
-        .people-card:nth-child(4){animation-delay:1.2s;}
+        
         .people-card:hover{transform:translateY(-8px) scale(1.05);}
         .people-img{width:120px;height:120px;background:var(--people-img-bg);border-radius:50%;overflow:hidden;margin-bottom:14px;display:flex;align-items:center;justify-content:center;transition:background .3s ease, transform .3s ease;}
         .people-card:hover .people-img{transform:scale(1.1) rotate(5deg);}
@@ -422,17 +421,10 @@
         <section class="section" id="services">
             <h2 class="section-title">Services</h2>
             <div class="services-list">
+                <!-- Only the "Web Development" card remains -->
                 <div class="service-card">
                     <div class="service-title"><i class="fa-solid fa-laptop-code"></i> Web Development</div>
                     <div class="service-desc">End-to-end websites and apps to upgrade your online presence.</div>
-                </div>
-                <div class="service-card">
-                    <div class="service-title"><i class="fa-solid fa-gears"></i> Custom Software Solutions</div>
-                    <div class="service-desc">Business tools crafted for your productivity.</div>
-                </div>
-                <div class="service-card">
-                    <div class="service-title"><i class="fa-solid fa-diagram-project"></i> Business Automation</div>
-                    <div class="service-desc">Automate your processes—run smarter and faster, 24/7.</div>
                 </div>
             </div>
         </section>
@@ -451,29 +443,23 @@
         <section class="section" id="team">
             <h2 class="section-title">Our Team</h2>
             <div class="people-list">
+                <!-- Apurv Vala - Developer -->
                 <div class="people-card">
-                    <div class="people-img"><img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Team" /></div>
-                    <div class="people-name">Amit Patel</div>
-                    <div class="people-role">Software Engineer</div>
-                    <div class="people-details">Full-stack developer specializing in business automation and custom software solutions.</div>
+                    <div class="people-img">
+                        <img src="https://placehold.co/120x120/4F5665/ffffff?text=AV" alt="Apurv Vala" />
+                    </div>
+                    <div class="people-name">Apurv Vala</div>
+                    <div class="people-role">Developer</div>
+                    <div class="people-details">Responsible for the architecture and implementation of next-gen software solutions.</div>
                 </div>
+                <!-- Priyansh Vala - Graphic Designer & Marketing Executive -->
                 <div class="people-card">
-                    <div class="people-img"><img src="https://randomuser.me/api/portraits/women/76.jpg" alt="Team" /></div>
-                    <div class="people-name">Priya Shah</div>
-                    <div class="people-role">UI/UX Designer</div>
-                    <div class="people-details">Creating aesthetic and professional interfaces for modern business applications.</div>
-                </div>
-                <div class="people-card">
-                    <div class="people-img"><img src="https://randomuser.me/api/portraits/men/53.jpg" alt="Team" /></div>
-                    <div class="people-name">Rahul Desai</div>
-                    <div class="people-role">Backend Developer</div>
-                    <div class="people-details">Building robust and scalable backend systems for seamless 24/7 operations.</div>
-                </div>
-                <div class="people-card">
-                    <div class="people-img"><img src="https://randomuser.me/api/portraits/women/27.jpg" alt="Team" /></div>
-                    <div class="people-name">Sneha Joshi</div>
-                    <div class="people-role">Project Manager</div>
-                    <div class="people-details">Leading development teams to deliver high-quality software on time.</div>
+                    <div class="people-img">
+                        <img src="https://placehold.co/120x120/4F5665/ffffff?text=PV" alt="Priyansh Vala" />
+                    </div>
+                    <div class="people-name">Priyansh Vala</div>
+                    <div class="people-role">Graphic Designer & Marketing Executive</div>
+                    <div class="people-details">Handles brand visual identity, marketing campaigns, and design for user interfaces.</div>
                 </div>
             </div>
         </section>
