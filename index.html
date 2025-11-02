@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -181,6 +182,40 @@
         .service-card:hover{transform:translateY(-6px) scale(1.022);}
         .service-title{font-size:1.15rem;color:var(--primary-color);font-weight:600;margin-bottom:8px;}
         .service-desc{color:var(--muted-text);font-size:1rem;margin-bottom:10px;}
+        
+        /* QR LAB STYLES */
+        .qr-lab-section { background:var(--card-bg); border-radius:20px; box-shadow:var(--shadow); padding: 48px; }
+        .qr-lab-title { text-align: center; }
+        .qr-lab-description { text-align: center; color: var(--muted-text); max-width: 600px; margin: 0 auto 32px auto; }
+        .qr-filter-buttons { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-bottom: 40px; }
+        .qr-filter-btn { padding: 8px 18px; border-radius: 9999px; font-weight: 600; font-size: 0.95rem; border: none; transition: all .3s ease; }
+        .qr-filter-btn.active { background-color: var(--accent-color); color: var(--white-bg); box-shadow: 0 4px 10px rgba(79, 86, 101, 0.3); }
+        .qr-filter-btn:not(.active) { background-color: var(--white-bg); color: var(--accent-color); }
+        .qr-filter-btn:not(.active):hover { background-color: rgba(79, 86, 101, 0.1); }
+        .qr-designs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 32px; }
+        .qr-card { background: var(--white-bg); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; transition: all .3s ease; }
+        .qr-card:hover { transform: translateY(-8px); box-shadow: 0 16px 48px rgba(76,80,100,0.12); }
+        .qr-image-wrapper { width: 100%; aspect-ratio: 4 / 6; overflow: hidden; position: relative; cursor: pointer; }
+        .qr-image-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s ease; }
+        .qr-card:hover .qr-image-wrapper img { transform: scale(1.05); }
+        .qr-image-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0); transition: background .3s ease; display: flex; align-items: center; justify-content: center; }
+        .qr-card:hover .qr-image-overlay { background: rgba(0,0,0,0.4); }
+        .qr-image-overlay i { color: white; font-size: 2rem; opacity: 0; transition: opacity .3s ease; }
+        .qr-card:hover .qr-image-overlay i { opacity: 1; }
+        .qr-card-info { padding: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .qr-card-name { font-weight: 600; color: var(--primary-color); }
+        .qr-card-id { font-size: 0.9rem; color: var(--muted-text); }
+        .qr-select-btn { padding: 8px 16px; background: var(--accent-color); color: var(--white-bg); border: none; border-radius: 8px; font-weight: 500; transition: all .2s; }
+        .qr-select-btn:hover { background: var(--primary-color); transform: scale(1.05); }
+        .qr-select-btn.copied { background: var(--success-color); }
+        
+        .qr-preview-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10002; display: flex; align-items: center; justify-content: center; padding: 16px; opacity: 0; visibility: hidden; transition: opacity .3s ease, visibility .3s ease; }
+        .qr-preview-modal.visible { opacity: 1; visibility: visible; }
+        .qr-preview-modal .modal-content { position: relative; transition: all .3s ease; transform: scale(0.95); }
+        .qr-preview-modal.visible .modal-content { transform: scale(1); }
+        .qr-preview-modal img { display: block; max-width: 90vw; max-height: 85vh; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .qr-preview-modal .modal-close-btn { position: absolute; top: -15px; right: -15px; background: rgba(255,255,255,0.8); color: #333; width: 36px; height: 36px; border-radius: 50%; font-size: 2rem; line-height: 36px; text-align: center; backdrop-filter: blur(2px); box-shadow: 0 2px 10px rgba(0,0,0,0.2); transition: all .2s ease; }
+        .qr-preview-modal .modal-close-btn:hover { background: white; transform: rotate(90deg); }
 
         .about-container{ display:flex; gap:30px; align-items:center; flex-wrap:wrap; margin-top: 20px; }
         .about-text-content{ flex:1 1 55%; min-width:300px; }
@@ -335,7 +370,21 @@
             .people-card { transform:scale(1) translateY(0); box-shadow:var(--shadow); }
             .contact-container { padding: 30px 20px; }
         }
+        @media (max-width: 640px) {
+            .qr-image-wrapper {
+                aspect-ratio: 1 / 1;
+            }
+        }
     </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/"
+  }
+}
+</script>
 <link rel="stylesheet" href="/index.css">
 </head>
 <body>
@@ -350,7 +399,7 @@
         <a class="navbar-link" href="#home">Home</a>
         <a class="navbar-link" href="#why-choose">Why Choose Us</a>
         <a class="navbar-link" href="#products">Products</a>
-        <a class="navbar-link" href="#services">Services</a>
+        <a class="navbar-link" href="#qrlab">QR Lab</a>
         <a class="navbar-link" href="#pricing">Pricing</a>
         <a class="navbar-link" href="#team">Team</a>
         <a class="navbar-link" href="#contact">Contact</a>
@@ -362,7 +411,7 @@
       <a href="#home" class="slide-nav-link">Home</a>
       <a href="#why-choose" class="slide-nav-link">Why Choose Us</a>
       <a href="#products" class="slide-nav-link">Products</a>
-      <a href="#services" class="slide-nav-link">Services</a>
+      <a href="#qrlab" class="slide-nav-link">QR Lab</a>
       <a href="#pricing" class="slide-nav-link">Pricing</a>
       <a href="#team" class="slide-nav-link">Team</a>
       <a href="#contact" class="slide-nav-link">Contact</a>
@@ -408,7 +457,7 @@
                         <img class="product-mockup-img" src="p3.jpg" alt="Payment Terminal 3" />
                         <img class="product-mockup-img" src="p4.jpg" alt="Office Workstation 4" />
                     </div>
-                    <a href="https://apurv1155.github.io/qrapp/" class="demo-btn">View Demo</a>
+                    <a href="https://apurv1155.github.io/qrapp/" class="demo-btn" target="_blank" rel="noopener noreferrer">View Demo</a>
                 </div>
                 <div class="product-card" data-product="2">
                     <div class="product-title"><i class="fa-solid fa-utensils"></i> Part-2 Restaurant Management System</div>
@@ -420,7 +469,7 @@
                         <img class="product-mockup-img" src="s4.jpg" alt="Customer Feedback Screen 4" />
                         <img class="product-mockup-img" src="s5.jpg" alt="Tablet View 5" />
                     </div>
-                    <a href="https://apurv1155.github.io/qrapp/receiver.html" class="demo-btn">View Demo</a>
+                    <a href="https://apurv1155.github.io/qrapp/receiver.html" class="demo-btn" target="_blank" rel="noopener noreferrer">View Demo</a>
                 </div>
             </div>
         </section>
@@ -435,8 +484,19 @@
             </div>
         </section>
 
+        <section class="section qr-lab-section" id="qrlab">
+            <h2 class="section-title qr-lab-title">The QR Lab</h2>
+            <p class="qr-lab-description">Browse our QR stand designs. Tap the image to preview, or click 'Select' to copy the design name for the contact form.</p>
+            <div class="qr-filter-buttons" id="qr-filter-buttons">
+                <!-- Filter buttons will be inserted here by JS -->
+            </div>
+            <div class="qr-designs-grid" id="qr-designs-grid">
+                <!-- QR Design cards will be inserted here by JS -->
+            </div>
+        </section>
+
         <section class="section" id="pricing">
-            <h2 class="section-title">Choose Your Plan</h2>
+            <h2 class="section-title" style="text-align: center;">Choose Your Plan</h2>
             <div class="pricing-grid">
                 <div class="pricing-card" data-plan="essential">
                     <h3 class="plan-name">Essential</h3>
@@ -478,7 +538,7 @@
         </section>
 
         <section class="section" id="notice">
-            <h2 class="section-title">Important Notice</h2>
+            <h2 class="section-title" style="text-align: center;">Important Notice</h2>
             <div class="notice-container">
                 <ul class="notice-list">
                     <li class="notice-item">
@@ -507,7 +567,7 @@
         </section>
 
         <section class="section" id="team">
-            <h2 class="section-title">Our Team</h2>
+            <h2 class="section-title" style="text-align: center;">Our Team</h2>
             <div class="people-list">
                 <div class="people-card">
                     <div class="people-img">
@@ -520,8 +580,8 @@
                     <div class="people-details-extended">
                         <p class="extended-title">Expertise: Full-Stack Development</p>
                         <div class="extended-contact-row">
-                            <a href="https://www.linkedin.com/in/wala-apurv-48634a2a1/" target="_blank" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
-                            <a href="https://www.instagram.com/apurv.wala_/" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+                            <a href="https://www.linkedin.com/in/wala-apurv-48634a2a1/" target="_blank" rel="noopener noreferrer" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                            <a href="https://www.instagram.com/apurv.wala_/" target="_blank" rel="noopener noreferrer" title="Instagram"><i class="fab fa-instagram"></i></a>
                         </div>
                     </div>
                 </div>
@@ -536,8 +596,8 @@
                     <div class="people-details-extended">
                         <p class="extended-title">Expertise: UI/UX & Brand Strategy</p>
                         <div class="extended-contact-row">
-                            <a href="https://www.linkedin.com/in/priyansh-vala-25102000p/" target="_blank" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
-                            <a href="https://www.instagram.com/valapriyansh/" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+                            <a href="https://www.linkedin.com/in/priyansh-vala-25102000p/" target="_blank" rel="noopener noreferrer" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                            <a href="https://www.instagram.com/valapriyansh/" target="_blank" rel="noopener noreferrer" title="Instagram"><i class="fab fa-instagram"></i></a>
                         </div>
                     </div>
                 </div>
@@ -545,7 +605,7 @@
         </section>
 
         <section class="section" id="contact">
-            <h2 class="section-title">Start Your Journey With Us</h2>
+            <h2 class="section-title" style="text-align: center;">Start Your Journey With Us</h2>
             <div class="contact-container">
                 <div class="contact-grid">
                     <div class="form-column">
@@ -560,6 +620,7 @@
                                 <option value="pro">Pro - ₹999/mo</option>
                                 <option value="ultimate">Ultimate - ₹1299/mo</option>
                             </select>
+                            <input type="text" placeholder="Paste selected QR design here" id="qr-design-input" />
                             <input type="number" placeholder="Number of Tables" required />
                             <button type="submit">Submit Inquiry</button>
                         </form>
@@ -568,10 +629,10 @@
                         <h3>Direct Contact</h3>
                         <p>Prefer to talk? Reach out to us directly or connect on our social platforms. We're here to help.</p>
                         <div class="social-links">
-                            <a href="https://api.whatsapp.com/send/?phone=9173213576&text&type=phone_number&app_absent=0" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i> WhatsApp</a>
-                            <a href="https://mail.google.com/mail/u/0/?fs=1&to=walaapurv@gmail.com&tf=cm" target="_blank" title="Email"><i class="fa-solid fa-envelope"></i> Email</a>
-                            <a href="https://www.instagram.com/nextgen.bywala/" target="_blank" title="Instagram"><i class="fab fa-instagram"></i> Instagram</a>
-                            <a href="https://www.youtube.com/@Nextgen-j7r" target="_blank" title="YouTube"><i class="fab fa-youtube"></i> YouTube</a>
+                            <a href="https://api.whatsapp.com/send/?phone=9173213576&text&type=phone_number&app_absent=0" target="_blank" rel="noopener noreferrer" title="WhatsApp"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+                            <a href="https://mail.google.com/mail/u/0/?fs=1&to=walaapurv@gmail.com&tf=cm" target="_blank" rel="noopener noreferrer" title="Email"><i class="fa-solid fa-envelope"></i> Email</a>
+                            <a href="https://www.instagram.com/nextgen.bywala/" target="_blank" rel="noopener noreferrer" title="Instagram"><i class="fab fa-instagram"></i> Instagram</a>
+                            <a href="https://www.youtube.com/@Nextgen-j7r" target="_blank" rel="noopener noreferrer" title="YouTube"><i class="fab fa-youtube"></i> YouTube</a>
                         </div>
                     </div>
                 </div>
@@ -605,9 +666,76 @@
             </div>
         </div>
     </div>
+    
+    <div id="qr-preview-modal" class="qr-preview-modal">
+        <div class="modal-content">
+            <img id="qr-preview-image" src="" alt="QR Design Preview" />
+            <button class="modal-close-btn">&times;</button>
+        </div>
+    </div>
+
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- DATA ---
+            const planData = {
+                essential: {
+                    title: "Essential Plan",
+                    description: "A simple, elegant QR menu for showcasing your offerings. The perfect digital starting point.",
+                    images: ["P1.jpg", "p2.jpg", "p3.jpg", "p4.jpg"],
+                    features: [
+                        { text: "Showcase QR Menu System", included: true },
+                        { text: "Standard NextGen Branding", included: true },
+                        { text: "Mobile-Friendly Design", included: true },
+                        { text: "Instant Menu Updates", included: false },
+                        { text: "Live Order Taking", included: false },
+                        { text: "Table & Bill Management", included: false },
+                    ],
+                    buttons: [ { text: "Preview Menu", link: "https://apurv1155.github.io/qrapp/simpleplan.html" } ]
+                },
+                pro: {
+                    title: "Pro Plan",
+                    description: "A comprehensive solution to manage and streamline all operations under the NextGen brand.",
+                    images: ["s1.png", "s2.png", "s3.jpg", "s4.jpg"],
+                    features: [
+                        { text: "Dynamic QR Menu System", included: true },
+                        { text: "Full Management System", included: true },
+                        { text: "Table Management", included: true },
+                        { text: "Instant Order Receiver", included: true },
+                        { text: "Automatic Bill Generation", included: true },
+                        { text: "Personalized Branding", included: false },
+                    ],
+                    buttons: [ { text: "Preview Menu", link: "https://apurv1155.github.io/qrapp/NextgenBasePlan.html" }, { text: "Preview Receiver", link: "https://apurv1155.github.io/qrapp/" } ]
+                },
+                ultimate: {
+                    title: "Ultimate Plan",
+                    description: "The complete white-label package, fully personalized with your brand and automated seasonal themes.",
+                    images: ["s5.jpg", "about.jpg", "P1.jpg", "s1.png"],
+                    features: [
+                        { text: "Everything in Pro Included", included: true },
+                        { text: "Personalized Logo & Branding", included: true },
+                        { text: "No NextGen Branding", included: true },
+                        { text: "Automatic Festival Themes", included: true },
+                        { text: "Priority Support", included: true },
+                    ],
+                    buttons: [ { text: "Preview Menu", link: "https://apurv1155.github.io/qrapp/" }, { text: "Preview Receiver", link: "https://apurv1155.github.io/qrapp/" } ]
+                }
+            };
+
+            const qrDesigns = [
+                { id: 1, name: 'Modern Steel', category: 'modern', imageUrl: 'Qr/1.jpg' },
+                { id: 2, name: 'Minimalist White', category: 'modern', imageUrl: 'Qr/2.jpg' },
+                { id: 3, name: 'Soft Leave', category: 'modern', imageUrl: 'Qr/3.jpg' },
+                { id: 4, name: 'Sleeping Cat', category: 'crazy', imageUrl: 'Qr/6.jpg' },
+                { id: 5, name: 'Crezy Cat', category: 'crazy', imageUrl: 'Qr/7.jpg' },
+                { id: 6, name: 'Tea..', category: 'crazy', imageUrl: 'Qr/8.jpg' },
+                { id: 7, name: 'Innocent Cat', category: 'crazy', imageUrl: 'Qr/9.jpg' },
+                { id: 8, name: 'Classic Crest', category: 'official', imageUrl: 'Qr/4.jpg' },
+                { id: 9, name: 'Gilded Frame', category: 'official', imageUrl: 'Qr/5.jpg' },
+                { id: 10, name: 'Creative', category: 'aesthetic', imageUrl: 'Qr/10.jpg' },
+                { id: 11, name: 'Poster', category: 'aesthetic', imageUrl: 'Qr/11.jpg' },
+            ];
+            
             // --- VANTA.JS HERO ANIMATION ---
             let vantaEffect = null;
             const heroSection = document.getElementById('home');
@@ -660,22 +788,11 @@
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         entry.target.classList.add('visible');
-
-                        // Staggered animations for specific sections
-                        if (entry.target.id === 'why-choose') {
-                            entry.target.querySelectorAll('.why-choose-card').forEach((card, index) => {
-                                setTimeout(() => card.classList.add('visible'), index * 150);
-                            });
-                        } else if (entry.target.id === 'products') {
-                            entry.target.querySelectorAll('.product-card').forEach((card, index) => {
-                                setTimeout(() => card.classList.add('visible'), index * 150);
-                            });
-                        } else if (entry.target.id === 'pricing') {
-                            entry.target.querySelectorAll('.pricing-card').forEach((card, index) => {
-                                setTimeout(() => card.classList.add('visible'), index * 150);
-                            });
-                        } else if (entry.target.id === 'team') {
-                             entry.target.querySelectorAll('.people-card').forEach((card, index) => {
+                        
+                        // Staggered animations for cards inside sections
+                        const cards = entry.target.querySelectorAll('.why-choose-card, .product-card, .pricing-card, .people-card');
+                        if (cards.length > 0) {
+                            cards.forEach((card, index) => {
                                 setTimeout(() => card.classList.add('visible'), index * 150);
                             });
                         }
@@ -728,52 +845,114 @@
                     this.classList.toggle('hide', extendedDetails?.classList.contains('active'));
                 });
             });
+            
+            // --- QR LAB LOGIC ---
+            const qrFilterButtonsContainer = document.getElementById('qr-filter-buttons');
+            const qrDesignsGrid = document.getElementById('qr-designs-grid');
+            const qrDesignInput = document.getElementById('qr-design-input');
+            const qrPreviewModal = document.getElementById('qr-preview-modal');
+            const qrPreviewImage = document.getElementById('qr-preview-image');
+            const qrModalCloseBtn = qrPreviewModal.querySelector('.modal-close-btn');
+
+            let activeCategory = 'modern';
+            let copiedTimeout = null;
+
+            const categories = [
+                { key: 'modern', label: 'Modern' },
+                { key: 'crazy', label: 'Crazy' },
+                { key: 'official', label: 'Official' },
+                { key: 'aesthetic', label: 'Aesthetic' },
+            ];
+
+            function renderQrDesigns() {
+                qrDesignsGrid.innerHTML = '';
+                const filteredDesigns = qrDesigns.filter(d => d.category === activeCategory);
+
+                filteredDesigns.forEach(design => {
+                    const card = document.createElement('div');
+                    card.className = 'qr-card';
+                    card.innerHTML = `
+                        <div class="qr-image-wrapper" data-img-url="${design.imageUrl}">
+                            <img src="${design.imageUrl}" alt="${design.name}" />
+                            <div class="qr-image-overlay"><i class="fa-solid fa-expand"></i></div>
+                        </div>
+                        <div class="qr-card-info">
+                            <div>
+                                <p class="qr-card-name">${design.name}</p>
+                                <p class="qr-card-id">#${design.id}</p>
+                            </div>
+                            <button class="qr-select-btn" data-name="${design.name}" data-id="${design.id}">Select</button>
+                        </div>
+                    `;
+                    qrDesignsGrid.appendChild(card);
+                });
+            }
+
+            function renderFilterButtons() {
+                qrFilterButtonsContainer.innerHTML = '';
+                categories.forEach(({ key, label }) => {
+                    const button = document.createElement('button');
+                    button.className = `qr-filter-btn ${activeCategory === key ? 'active' : ''}`;
+                    button.textContent = label;
+                    button.dataset.category = key;
+                    qrFilterButtonsContainer.appendChild(button);
+                });
+            }
+            
+            qrFilterButtonsContainer.addEventListener('click', (e) => {
+                if (e.target.matches('.qr-filter-btn')) {
+                    activeCategory = e.target.dataset.category;
+                    renderFilterButtons();
+                    renderQrDesigns();
+                }
+            });
+
+            qrDesignsGrid.addEventListener('click', (e) => {
+                const selectBtn = e.target.closest('.qr-select-btn');
+                const imageWrapper = e.target.closest('.qr-image-wrapper');
+                
+                if (selectBtn) {
+                    const { name, id } = selectBtn.dataset;
+                    const textToCopy = `QR Design: ${name} #${id}`;
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        qrDesignInput.value = textToCopy;
+                        selectBtn.textContent = 'Copied!';
+                        selectBtn.classList.add('copied');
+                        
+                        if(copiedTimeout) clearTimeout(copiedTimeout);
+                        
+                        copiedTimeout = setTimeout(() => {
+                            selectBtn.textContent = 'Select';
+                            selectBtn.classList.remove('copied');
+                        }, 2500);
+                    });
+                } else if (imageWrapper) {
+                    const imageUrl = imageWrapper.dataset.imgUrl;
+                    qrPreviewImage.src = imageUrl;
+                    qrPreviewModal.classList.add('visible');
+                    document.body.style.overflow = 'hidden';
+                }
+            });
+            
+            function closeQrPreview() {
+                 qrPreviewModal.classList.remove('visible');
+                 document.body.style.overflow = '';
+            }
+            
+            qrModalCloseBtn.addEventListener('click', closeQrPreview);
+            qrPreviewModal.addEventListener('click', (e) => {
+                if (e.target === qrPreviewModal) {
+                    closeQrPreview();
+                }
+            });
+
+
+            // Initial render for QR Lab
+            renderFilterButtons();
+            renderQrDesigns();
+            
 
             // --- PRICING MODAL LOGIC ---
-            const planData = {
-                essential: {
-                    title: "Essential Plan",
-                    description: "A simple, elegant QR menu for showcasing your offerings. The perfect digital starting point.",
-                    images: ["P1.jpg", "p2.jpg", "p3.jpg", "p4.jpg"],
-                    features: [
-                        { text: "Showcase QR Menu System", included: true },
-                        { text: "Standard NextGen Branding", included: true },
-                        { text: "Mobile-Friendly Design", included: true },
-                        { text: "Instant Menu Updates", included: false },
-                        { text: "Live Order Taking", included: false },
-                        { text: "Table & Bill Management", included: false },
-                    ],
-                    buttons: [ { text: "Preview Menu", link: "https://apurv1155.github.io/qrapp/simpleplan.html" } ]
-                },
-                pro: {
-                    title: "Pro Plan",
-                    description: "A comprehensive solution to manage and streamline all operations under the NextGen brand.",
-                    images: ["s1.png", "s2.png", "s3.jpg", "s4.jpg"],
-                    features: [
-                        { text: "Dynamic QR Menu System", included: true },
-                        { text: "Full Management System", included: true },
-                        { text: "Table Management", included: true },
-                        { text: "Instant Order Receiver", included: true },
-                        { text: "Automatic Bill Generation", included: true },
-                        { text: "Personalized Branding", included: false },
-                    ],
-                    buttons: [ { text: "Preview Menu", link: "https://apurv1155.github.io/qrapp/NextgenBasePlan.html" }, { text: "Preview Receiver", link: "https://apurv1155.github.io/qrapp/" } ]
-                },
-                ultimate: {
-                    title: "Ultimate Plan",
-                    description: "The complete white-label package, fully personalized with your brand and automated seasonal themes.",
-                    images: ["s5.jpg", "about.jpg", "P1.jpg", "s1.png"],
-                    features: [
-                        { text: "Everything in Pro Included", included: true },
-                        { text: "Personalized Logo & Branding", included: true },
-                        { text: "No NextGen Branding", included: true },
-                        { text: "Automatic Festival Themes", included: true },
-                        { text: "Priority Support", included: true },
-                    ],
-                    buttons: [ { text: "Preview Menu", link: "https://apurv1155.github.io/qrapp/" }, { text: "Preview Receiver", link: "https://apurv1155.github.io/qrapp/" } ]
-                }
-            };
-
             const modal = document.getElementById('pricing-modal');
             const closeBtn = modal?.querySelector('.modal-close-btn');
             let currentSlide = 0;
@@ -809,7 +988,7 @@
 
                 const buttonGroup = modal.querySelector('#preview-btn-group');
                 buttonGroup.innerHTML = data.buttons.map(b => `
-                    <a href="${b.link}" target="_blank" class="preview-btn">${b.text}</a>
+                    <a href="${b.link}" target="_blank" rel="noopener noreferrer" class="preview-btn">${b.text}</a>
                 `).join('');
 
                 currentSlide = 0;
