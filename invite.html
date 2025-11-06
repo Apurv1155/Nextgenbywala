@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wedding Invitation & Gallery: Aarav & Diya</title>
+    
+    <!-- NEW: Favicon link for the browser tab icon. Uses an inline SVG of a gold ring. -->
+    <link rel="icon" type="image/svg+xml" href="p2.jpg">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- TailwindCSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    
+    <!-- Global and Animation CSS -->
+    <style>
+        :root {
+            --bg-primary: #fdfaf5; /* Creamy White */
+            --bg-secondary: #f9f4ec; /* Lighter Cream */
+            --accent-gold: #b38b4c; /* Muted Gold */
+            --accent-rose: #d1a3a4; /* Dusty Rose */
+            --text-primary: #4a4a4a; /* Dark Gray */
+            --text-secondary: #7a7a7a; /* Medium Gray */
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+        }
+
+        .font-heading {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .text-shadow-strong {
+            text-shadow: 0px 2px 10px rgba(0, 0, 0, 0.7);
+        }
+
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .fade-in-section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .animated-title {
+            position: relative;
+            display: inline-block;
+        }
+        .animated-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background-color: var(--accent-gold);
+            transition: width 0.8s ease-out;
+        }
+        .fade-in-section.visible .animated-title::after {
+            width: 80px;
+        }
+
+        .petal-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .petal {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            opacity: 0;
+            animation: fall linear infinite;
+        }
+        
+        @keyframes fall {
+            0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) translateX(15vw) rotate(720deg); opacity: 0; }
+        }
+
+        /* --- Event Timeline Specific CSS --- */
+        .desktop-timeline-line {
+            transition: height 1.5s ease-out;
+            height: 0;
+        }
+        .desktop-timeline-line.visible {
+            height: 100%;
+        }
+
+        .timeline-card {
+            opacity: 0;
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .timeline-card.timeline-left {
+            transform: translateX(-50px);
+        }
+        .timeline-card.timeline-right {
+            transform: translateX(50px);
+        }
+
+        .timeline-card.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .mobile-timeline-container {
+            position: relative;
+            padding-left: 30px; 
+        }
+        .mobile-timeline-line {
+            position: absolute;
+            left: 10px;
+            top: 20px;
+            bottom: 20px;
+            width: 2px;
+            background-color: var(--accent-gold);
+            opacity: 0.3;
+        }
+        .mobile-timeline-card {
+            position: relative;
+            margin-bottom: 2rem;
+            opacity: 0;
+            transform: translateX(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .mobile-timeline-card.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .mobile-timeline-card::before {
+            content: '';
+            position: absolute;
+            left: -26px; /* (30px padding - 10px line left) - (12px dot width / 2) */
+            top: 24px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: var(--accent-gold);
+            border: 3px solid var(--bg-primary);
+        }
+        
+        .animated-ampersand {
+             animation: scaleIn 1s ease-out 0.5s backwards;
+        }
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .gallery-image {
+            opacity: 0;
+            transform: scale(0.9);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .gallery-image.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        .lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .lightbox.visible {
+            display: flex;
+        }
+        
+        @keyframes fadeIn { 
+            from { opacity: 0; } 
+            to { opacity: 1; } 
+        }
+    </style>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    
+    <header id="header" class="fixed top-0 left-0 w-full z-50 transition-all duration-300 bg-transparent">
+      <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+        <!-- MODIFICATION: Added ring icon to the header logo as requested -->
+        <a href="#home" class="text-3xl font-heading text-[var(--accent-gold)] font-semibold">
+            <i class="fas fa-ring text-[var(--accent-rose)] mr-3"></i>A & D
+        </a>
+        
+        <nav class="hidden md:block">
+          <ul class="flex space-x-8 items-center" id="nav-links-desktop">
+            <!-- Nav links will be injected here by JS -->
+          </ul>
+        </nav>
+        
+        <button id="menu-toggle" class="md:hidden text-3xl text-[var(--text-primary)]">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
+      
+      <nav id="mobile-menu" class="hidden md:hidden bg-[var(--bg-secondary)] pb-6">
+          <ul class="flex flex-col items-center space-y-6" id="nav-links-mobile">
+            <!-- Mobile nav links will be injected here by JS -->
+          </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="home" class="relative h-screen flex items-center justify-center text-center text-white overflow-hidden">
+          <div class="absolute inset-0 bg-cover bg-center bg-no-repeat" style="background-image: url('https://images.unsplash.com/photo-1627899149791-12f759a2a7a7?q=80&w=1964&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')">
+            <div class="absolute inset-0 bg-black/60"></div>
+          </div>
+          
+          <div id="petal-container" class="petal-container">
+             <!-- Petals injected by JS -->
+          </div>
+    
+          <div class="relative z-10 p-6">
+            <div class="fade-in-section" style="transition-delay: 100ms">
+                <h2 class="text-xl md:text-2xl font-light tracking-[0.2em] uppercase mb-4 text-shadow-strong">We are getting married</h2>
+            </div>
+            <div class="fade-in-section" style="transition-delay: 300ms">
+                <h1 class="text-7xl md:text-9xl font-heading text-white mb-6 text-shadow-strong">Aarav & Diya</h1>
+            </div>
+            <div class="fade-in-section" style="transition-delay: 500ms">
+                <p class="text-2xl md:text-3xl font-light text-shadow-strong">March 01, 2025</p>
+            </div>
+          </div>
+          
+           <a href="#tahuko" class="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 animate-bounce">
+            <i class="fa-solid fa-chevron-down text-3xl text-white/70"></i>
+          </a>
+        </section>
+
+        <section id="tahuko" class="py-20 bg-[var(--bg-secondary)] fade-in-section">
+            <div class="container mx-auto px-6">
+                <div class="max-w-3xl mx-auto p-8 md:p-12 bg-white rounded-lg shadow-xl text-center">
+                    <h2 class="text-4xl font-heading text-[var(--accent-gold)] mb-4">
+                        Tahuko <span class="text-3xl text-[var(--accent-rose)]">(ટહુકો)</span>
+                    </h2>
+                    <div class="text-center text-[var(--text-secondary)] italic text-2xl md:text-3xl leading-loose font-heading">
+                        <p>"આંખ મિચોલી રમતી'તી જિંદગી,</p>
+                        <p>એક-બીજા ના પ્રેમ માં હવે ઠરી છે.</p>
+                        <p>સાથ આપવા આવજો આ મંગલ અવસરે,</p>
+                        <p>તમારી હાજરી જ અમારી પ્રેરણા છે."</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="invitation" class="py-20 text-center fade-in-section">
+          <div class="container mx-auto px-6">
+            <p class="max-w-3xl mx-auto text-[var(--text-secondary)] text-lg md:text-xl leading-relaxed">
+              With hearts full of joy, we, Aarav and Diya, invite you to join us as we embark on our new journey together. Your presence as we exchange vows and celebrate our union would mean the world to us.
+            </p>
+          </div>
+        </section>
+
+        <section id="couple" class="py-24 fade-in-section bg-[var(--bg-secondary)]">
+          <div class="container mx-auto px-6 text-center">
+            <h2 class="text-5xl md:text-6xl font-heading mb-16 text-[var(--text-primary)] animated-title">The Happy Couple</h2>
+            <div id="couple-container" class="flex flex-col md:flex-row justify-center items-center gap-12 md:gap-16">
+              <!-- Couple cards will be injected here by JS -->
+            </div>
+          </div>
+        </section>
+
+        <section id="events" class="py-24 fade-in-section">
+          <div class="container mx-auto px-6">
+            <h2 class="text-5xl md:text-6xl font-heading text-center mb-16 md:mb-24 text-[var(--text-primary)] animated-title">Wedding Ceremonies</h2>
+            <div id="events-container-mobile" class="md:hidden mobile-timeline-container">
+                <div class="mobile-timeline-line"></div>
+                <!-- Mobile events will be injected here by JS -->
+            </div>
+            <div id="events-container-desktop" class="hidden md:block relative">
+                <div class="desktop-timeline-line absolute left-1/2 -translate-x-1/2 w-0.5 bg-[var(--accent-gold)]/30"></div>
+                <!-- Desktop events will be injected here by JS -->
+            </div>
+          </div>
+        </section>
+
+        <section id="venue" class="py-24 bg-[var(--bg-secondary)] fade-in-section">
+          <div class="container mx-auto px-6 text-center">
+            <h2 class="text-5xl md:text-6xl font-heading mb-4 text-[var(--text-primary)]">The Venue</h2>
+            <p class="text-3xl font-heading text-[var(--text-primary)]/80">Elysium Gardens</p>
+            <p class="text-[var(--text-secondary)] text-lg mb-8">123 Wedding Lane, Celebration City, Gujarat</p>
+            <div class="w-full max-w-4xl mx-auto h-[50vh] rounded-lg shadow-xl overflow-hidden border-4 border-white mb-8">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3671.939268482083!2d72.5713623153835!3d23.02664332194364!2m3!1f0!2f0!0f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x395e848aba5bd449%3A0x4f924f53e3a4e2a6!2sAhmedabad%2C%2Gaurat%2C%20India!5e0!3m2!1sen!2sus!4v1684241642220!5m2!1sen!2sus"
+                width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" title="Wedding Venue">
+              </iframe>
+            </div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Elysium+Gardens,123+Wedding+Lane,Celebration+City,Gujarat" target="_blank" rel="noopener noreferrer"
+              class="inline-block bg-[var(--accent-gold)] text-white font-bold py-3 px-8 rounded-full text-lg hover:bg-[var(--accent-rose)] transition-all duration-300 transform hover:scale-105">
+              Get Directions
+            </a>
+          </div>
+        </section>
+
+        <section id="gallery" class="py-24 fade-in-section">
+          <div class="container mx-auto px-6 text-center">
+            <h2 class="text-5xl md:text-6xl font-heading mb-16 text-[var(--text-primary)] animated-title">Our Moments</h2>
+            <div id="gallery-container" class="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+               <!-- Gallery images will be injected here by JS -->
+            </div>
+          </div>
+        </section>
+    </main>
+    
+    <footer class="bg-[var(--bg-secondary)] py-12 text-center overflow-hidden">
+        <div class="container mx-auto px-6">
+            <div class="fade-in-section" style="transition-delay: 0ms">
+                <p class="text-5xl font-heading text-[var(--accent-gold)] mb-4">With Love,</p>
+            </div>
+            <div class="fade-in-section" style="transition-delay: 200ms">
+                <p class="text-3xl font-heading text-[var(--text-primary)]/80 mb-6">Aarav & Diya</p>
+            </div>
+            <div class="fade-in-section" style="transition-delay: 400ms">
+                <p class="text-lg text-[var(--text-secondary)]">We can't wait to celebrate our special day with you!</p>
+            </div>
+            <div class="fade-in-section" style="transition-delay: 600ms">
+                <p class="mt-8 text-[var(--text-secondary)]/50">#AaravWedsDiya</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="lightbox" class="lightbox">
+      <img id="lightbox-img" src="" alt="Enlarged gallery view" class="max-w-[90vw] max-h-[80vh] object-contain rounded-lg shadow-2xl mb-4" />
+      <div class="flex items-center space-x-4">
+        <button id="lightbox-close" class="text-white text-4xl leading-none">&times;</button>
+        <a id="lightbox-download" href="" download="Aarav_&_Diya_Moment.jpg" class="bg-[var(--accent-gold)] text-white font-bold py-2 px-6 rounded-full text-lg hover:bg-[var(--accent-rose)] transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2">
+          <i class="fas fa-download"></i> Download
+        </a>
+      </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DATA ---
+            const NAV_LINKS = [
+                { href: '#couple', label: 'The Couple' },
+                { href: '#events', label: 'Events' },
+                { href: '#venue', label: 'Venue' },
+                { href: '#gallery', label: 'Gallery' },
+            ];
+            const GROOM = { name: 'Aarav', parents: 'Son of Smt. & Shri. Ramesh Patel', image: 'https://images.unsplash.com/photo-1594744806543-92151706f055?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' };
+            const BRIDE = { name: 'Diya', parents: 'Daughter of Smt. & Shri. Suresh Mehta', image: 'https://images.unsplash.com/photo-1628019058692-540c8973f4e2?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' };
+            const WEDDING_EVENTS = [
+                { name: 'Haldi & Pithi', gujaratiName: 'હલ્દી અને પીઠી', date: 'Friday, 28th February 2025', time: '10:00 AM', venue: 'At their respective homes', icon: 'fa-solid fa-feather' },
+                { name: 'Raas Garba', gujaratiName: 'રાસ ગરબા', date: 'Friday, 28th February 2025', time: '7:00 PM onwards', venue: 'Elysium Gardens', icon: 'fa-solid fa-drum' },
+                { name: 'Jaan Agaman', gujaratiName: 'જાન આગમન', date: 'Saturday, 1st March 2025', time: '4:00 PM', venue: 'Elysium Gardens', icon: 'fa-solid fa-horse' },
+                { name: 'Hasta Melap', gujaratiName: 'હસ્ત મેળાપ', date: 'Saturday, 1st March 2025', time: '6:30 PM', venue: 'Elysium Gardens', icon: 'fa-solid fa-infinity' },
+                { name: 'Bhojan Samarambh', gujaratiName: 'ભોજન સમારંભ', date: 'Saturday, 1st March 2025', time: '8:00 PM onwards', venue: 'Elysium Gardens', icon: 'fa-solid fa-utensils' },
+            ];
+            // --- GALLERY IMAGE DATA ---
+            // IMPORTANT: For security reasons, browsers cannot access files directly from your local hard drive (e.g., C:\Users\...\photo.jpg).
+            // You MUST use public web URLs (https://...) for the images to load correctly.
+            const GALLERY_IMAGES = [
+                { id: 1, src: '', alt: 'Couple smiling together' },
+                { id: 2, src: '', alt: 'Couple holding hands' },
+                { id: 3, src: '', alt: 'Traditional wedding attire' },
+                { id: 4, src: '', alt: 'Couple in a playful moment' },
+                { id: 5, src: '', alt: 'Close up of wedding rings' },
+                { id: 6, src: '', alt: 'A beautiful moment' },
+            ];
+
+            // --- RENDER DYNAMIC CONTENT ---
+            const navLinksDesktop = document.getElementById('nav-links-desktop');
+            const navLinksMobile = document.getElementById('nav-links-mobile');
+            NAV_LINKS.forEach(link => {
+                const desktopLi = `<li><a href="${link.href}" class="text-[var(--text-primary)] hover:text-[var(--accent-gold)] transition-colors duration-300 text-lg relative group">${link.label}<span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[var(--accent-gold)] transition-all duration-300 group-hover:w-full"></span></a></li>`;
+                const mobileLi = `<li><a href="${link.href}" class="mobile-nav-link text-[var(--text-primary)] hover:text-[var(--accent-gold)] transition-colors duration-300 text-xl">${link.label}</a></li>`;
+                navLinksDesktop.innerHTML += desktopLi;
+                navLinksMobile.innerHTML += mobileLi;
+            });
+            
+            const coupleContainer = document.getElementById('couple-container');
+            coupleContainer.innerHTML = `
+                <div class="text-center fade-in-section" style="transition-delay: 0ms">
+                    <img src="${GROOM.image}" alt="${GROOM.name}" class="w-52 h-52 md:w-64 md:h-64 rounded-full mx-auto object-cover shadow-xl border-4 border-white transition-transform duration-300 hover:scale-105" />
+                    <h3 class="text-4xl font-heading text-[var(--accent-gold)] mt-6">${GROOM.name}</h3>
+                    <p class="text-[var(--text-secondary)] mt-1 text-md">${GROOM.parents}</p>
+                </div>
+                <div class="text-6xl font-heading text-[var(--accent-rose)] my-4 md:my-0 fade-in-section animated-ampersand" style="transition-delay: 200ms">&amp;</div>
+                <div class="text-center fade-in-section" style="transition-delay: 400ms">
+                    <img src="${BRIDE.image}" alt="${BRIDE.name}" class="w-52 h-52 md:w-64 md:h-64 rounded-full mx-auto object-cover shadow-xl border-4 border-white transition-transform duration-300 hover:scale-105" />
+                    <h3 class="text-4xl font-heading text-[var(--accent-gold)] mt-6">${BRIDE.name}</h3>
+                    <p class="text-[var(--text-secondary)] mt-1 text-md">${BRIDE.parents}</p>
+                </div>`;
+
+            const eventsMobileContainer = document.getElementById('events-container-mobile');
+            const eventsDesktopContainer = document.getElementById('events-container-desktop');
+            WEDDING_EVENTS.forEach((event, index) => {
+                eventsMobileContainer.innerHTML += `
+                    <div class="mobile-timeline-card" style="transition-delay: ${index * 150}ms">
+                        <div class="bg-white p-6 rounded-lg shadow-lg border-t-4 border-[var(--accent-rose)]">
+                            <div class="flex items-center space-x-4 mb-3">
+                                <div class="flex-shrink-0 w-12 h-12 rounded-full bg-[var(--bg-secondary)] flex items-center justify-center">
+                                    <i class="${event.icon} text-2xl text-[var(--accent-gold)]"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-2xl font-heading text-[var(--accent-gold)]">${event.name}</h3>
+                                    <p class="text-lg text-[var(--accent-rose)] font-semibold">${event.gujaratiName}</p>
+                                </div>
+                            </div>
+                            <p class="text-md text-[var(--text-secondary)] mt-1">${event.date}</p>
+                            <p class="text-md text-[var(--text-secondary)]">${event.time} at ${event.venue}</p>
+                        </div>
+                    </div>`;
+
+                eventsDesktopContainer.innerHTML += `
+                    <div class="timeline-card flex items-center w-full mb-12 ${index % 2 === 0 ? 'flex-row-reverse timeline-right' : 'timeline-left'}" style="transition-delay: ${index * 200}ms">
+                        <div class="w-1/2"></div>
+                        <div class="w-1/2 px-8">
+                            <div class="bg-white p-8 rounded-lg shadow-xl relative transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
+                                <div class="absolute top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-[var(--bg-secondary)] flex items-center justify-center border-4 border-[var(--bg-primary)] ${index % 2 === 0 ? '-left-7' : '-right-7'}">
+                                    <i class="${event.icon} text-3xl text-[var(--accent-gold)]"></i>
+                                </div>
+                                <h3 class="text-3xl font-heading text-[var(--accent-gold)]">${event.name}</h3>
+                                <p class="text-xl text-[var(--accent-rose)] font-semibold mb-2">${event.gujaratiName}</p>
+                                <p class="text-lg text-[var(--text-secondary)]">${event.date}</p>
+                                <p class="text-lg text-[var(--text-secondary)]">${event.time} at ${event.venue}</p>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            
+            const galleryContainer = document.getElementById('gallery-container');
+            GALLERY_IMAGES.forEach((image, index) => {
+                galleryContainer.innerHTML += `
+                    <div class="gallery-image overflow-hidden rounded-lg shadow-md break-inside-avoid cursor-pointer group relative" style="transition-delay: ${index * 100}ms" data-src="${image.src}">
+                        <!-- Using a generic placeholder background when src is empty. -->
+                        <img src="${image.src || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Crect width=\'100\' height=\'100\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'50\' y=\'55\' font-size=\'10\' text-anchor=\'middle\' fill=\'%23a0a0a0\' font-family=\'sans-serif\'%3EPlaceholder: Add Image URL%3C/text%3E%3C/svg%3E'}" 
+                             alt="${image.alt}" class="w-full h-auto transform transition-transform duration-500 group-hover:scale-110 aspect-[3/4] object-cover" 
+                             onerror="this.style.backgroundColor='var(--bg-secondary)'; this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 100 100\\'%3E%3Crect width=\\'100\\' height=\\'100\\' fill=\\'%23f9f4ec\\'/%3E%3Ctext x=\\'50\\' y=\\'55\\' font-size=\\'10\\' text-anchor=\\'middle\\' fill=\\'%237a7a7a\\' font-family=\\'sans-serif\\'%3EAdd Image URL%3C/text%3E%3C/svg%3E'" />
+                        <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <i class="fa-solid fa-expand text-white text-3xl"></i>
+                        </div>
+                    </div>`;
+            });
+            
+            // --- ANIMATIONS & INTERACTIONS ---
+
+            // General scroll animations
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.fade-in-section').forEach((section) => observer.observe(section));
+
+            // Event timeline animations
+            const timelineObserver = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        timelineObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.2 });
+            document.querySelectorAll('.timeline-card, .mobile-timeline-card').forEach(card => timelineObserver.observe(card));
+
+            const lineObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if(entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1});
+            const desktopLine = document.querySelector('.desktop-timeline-line');
+            if(desktopLine) lineObserver.observe(desktopLine);
+
+            // Gallery animations
+            const galleryObserver = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        galleryObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.gallery-image').forEach(img => galleryObserver.observe(img));
+
+            // Header scroll effect
+            const header = document.getElementById('header');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    header.classList.add('bg-[var(--bg-secondary)]/90', 'backdrop-blur-sm', 'shadow-md');
+                    header.classList.remove('bg-transparent');
+                } else {
+                    header.classList.remove('bg-[var(--bg-secondary)]/90', 'backdrop-blur-sm', 'shadow-md');
+                    header.classList.add('bg-transparent');
+                }
+            });
+
+            // Mobile menu toggle
+            const menuToggle = document.getElementById('menu-toggle');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const menuIcon = menuToggle.querySelector('i');
+            menuToggle.addEventListener('click', () => {
+                const isOpen = mobileMenu.classList.toggle('hidden');
+                menuIcon.className = `fas ${!isOpen ? 'fa-times' : 'fa-bars'}`;
+            });
+            document.querySelectorAll('.mobile-nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenu.classList.add('hidden');
+                    menuIcon.className = 'fas fa-bars';
+                })
+            });
+
+            // Falling petals
+            const petalContainer = document.getElementById('petal-container');
+            for(let i = 0; i < 20; i++) {
+                const petal = document.createElement('div');
+                petal.className = 'petal';
+                petal.style.left = `${Math.random() * 100}vw`;
+                petal.style.width = `${Math.random() * 8 + 5}px`;
+                petal.style.height = `${Math.random() * 8 + 5}px`;
+                petal.style.animationDuration = `${Math.random() * 5 + 8}s`;
+                petal.style.animationDelay = `${Math.random() * 5}s`;
+                petalContainer.appendChild(petal);
+            }
+            
+            // Gallery lightbox
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightbox-img');
+            const lightboxDownload = document.getElementById('lightbox-download');
+            const lightboxClose = document.getElementById('lightbox-close');
+            
+            document.querySelectorAll('.gallery-image').forEach(img => {
+                img.addEventListener('click', () => {
+                    const src = img.getAttribute('data-src');
+                    
+                    // Only open the lightbox if a valid source exists
+                    if (src) {
+                        lightboxImg.setAttribute('src', src);
+                        lightboxDownload.setAttribute('href', src);
+                        lightbox.classList.add('visible');
+                        document.body.style.overflow = 'hidden';
+                    }
+                });
+            });
+
+            const closeLightbox = () => {
+                lightbox.classList.remove('visible');
+                document.body.style.overflow = '';
+            };
+            
+            lightboxClose.addEventListener('click', closeLightbox);
+            lightbox.addEventListener('click', (e) => {
+                if(e.target === lightbox) {
+                    closeLightbox();
+                }
+            });
+        });
+    </script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
