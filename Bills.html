@@ -19,6 +19,7 @@
             colors: {
               teal: { 500: '#00c7a4', 600: '#00b090' },
               indigo: { 500: '#6366f1', 600: '#4f46e5' },
+              slate: { 800: '#1e293b', 900: '#0f172a' },
               dark: '#2d2d38'
             },
             fontFamily: { sans: ['Inter', 'sans-serif'] }
@@ -51,7 +52,7 @@
         
         .hidden { display: none !important; }
 
-        /* Print Logic - Robust Fix */
+        /* Print Logic */
         @media print {
             @page { margin: 0; size: auto; }
             html, body {
@@ -62,14 +63,14 @@
                 background: white !important;
             }
             #app, #loading-screen { display: none !important; }
-            #pdf-template-container {
+            #pdf-template-container, #agreement-template-container {
                 display: block !important;
                 position: relative !important;
                 width: 100% !important;
                 height: auto !important;
                 overflow: visible !important;
             }
-            #pdf-template {
+            #pdf-template, #agreement-template {
                 width: 100% !important;
                 margin: 0 !important;
                 box-shadow: none !important;
@@ -106,15 +107,16 @@
                         <p class="text-xs text-gray-500">NextGen</p>
                     </div>
                     
-                    <button id="btn-create-new" onclick="router.navigate('create')" class="text-white p-3 rounded-full shadow-lg transition-transform active:scale-95 flex items-center justify-center w-12 h-12">
+                    <button id="btn-create-new" onclick="router.handleCreate()" class="text-white p-3 rounded-full shadow-lg transition-transform active:scale-95 flex items-center justify-center w-12 h-12">
                         <i class="fas fa-plus text-lg"></i>
                     </button>
                 </div>
 
                 <!-- Tabs -->
-                <div class="flex p-1 bg-gray-100 rounded-xl max-w-5xl mx-auto">
-                    <button onclick="dashboard.switchTab('INVOICE')" id="tab-invoice" class="flex-1 py-2 text-sm font-bold rounded-lg transition-all">Invoices</button>
-                    <button onclick="dashboard.switchTab('QUOTATION')" id="tab-quotation" class="flex-1 py-2 text-sm font-bold rounded-lg transition-all">Quotations</button>
+                <div class="flex p-1 bg-gray-100 rounded-xl max-w-5xl mx-auto space-x-1">
+                    <button onclick="dashboard.switchTab('INVOICE')" id="tab-invoice" class="flex-1 py-2 text-xs md:text-sm font-bold rounded-lg transition-all">Invoices</button>
+                    <button onclick="dashboard.switchTab('QUOTATION')" id="tab-quotation" class="flex-1 py-2 text-xs md:text-sm font-bold rounded-lg transition-all">Quotations</button>
+                    <button onclick="dashboard.switchTab('AGREEMENT')" id="tab-agreement" class="flex-1 py-2 text-xs md:text-sm font-bold rounded-lg transition-all">Agreements</button>
                 </div>
             </header>
 
@@ -141,7 +143,7 @@
             </div>
         </div>
 
-        <!-- VIEW: CREATE BILL -->
+        <!-- VIEW: CREATE BILL (Invoice/Quote) -->
         <div id="view-create" class="hidden flex-col h-full absolute inset-0 bg-slate-50 overflow-y-auto">
             <div class="bg-white sticky top-0 z-10 px-6 py-4 border-b border-gray-200 flex justify-between items-center shadow-sm">
                 <button onclick="router.navigate('dashboard')" class="text-gray-500 hover:text-dark">
@@ -196,7 +198,78 @@
             </form>
         </div>
 
-        <!-- VIEW: DETAIL (Full Screen + Bottom Actions) -->
+        <!-- VIEW: CREATE AGREEMENT -->
+        <div id="view-create-agreement" class="hidden flex-col h-full absolute inset-0 bg-slate-50 overflow-y-auto">
+            <div class="bg-white sticky top-0 z-10 px-6 py-4 border-b border-gray-200 flex justify-between items-center shadow-sm">
+                <button onclick="router.navigate('dashboard')" class="text-gray-500 hover:text-dark">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </button>
+                <h2 class="text-lg font-bold text-dark">New Agreement</h2>
+                <div class="w-6"></div>
+            </div>
+
+            <form id="create-agreement-form" class="flex-1 p-6 max-w-3xl mx-auto w-full pb-32">
+                <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+                    <h3 class="text-sm uppercase tracking-wide text-gray-400 font-bold mb-4">Agreement Details</h3>
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Agreement Date</label>
+                            <input type="date" id="agmt-input-date" required class="w-full p-3 bg-gray-50 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-slate-500 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Monthly Payment Day</label>
+                            <input type="number" min="1" max="31" id="agmt-input-payday" placeholder="e.g. 5 (for 5th of every month)" required class="w-full p-3 bg-gray-50 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-slate-500 transition-colors">
+                        </div>
+                        <div class="col-span-1 md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Client Name *</label>
+                            <input type="text" id="agmt-input-name" required placeholder="Business Name / Client Name" class="w-full p-3 bg-gray-50 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-slate-500 transition-colors">
+                        </div>
+                        <div class="col-span-1 md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Client Address</label>
+                            <input type="text" id="agmt-input-address" placeholder="City, State" class="w-full p-3 bg-gray-50 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-slate-500 transition-colors">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm p-6">
+                    <h3 class="text-sm uppercase tracking-wide text-gray-400 font-bold mb-4">Subscription Plan</h3>
+                    
+                    <div class="space-y-3">
+                        <label class="flex items-center p-4 border rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                            <input type="radio" name="plan" value="BASIC" class="w-5 h-5 text-slate-600 focus:ring-slate-500" checked>
+                            <div class="ml-4">
+                                <span class="block text-sm font-bold text-gray-900">Basic Plan</span>
+                                <span class="block text-sm text-gray-500">Setup & Basic Features - ₹1000</span>
+                            </div>
+                        </label>
+                        
+                        <label class="flex items-center p-4 border rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                            <input type="radio" name="plan" value="STANDARD" class="w-5 h-5 text-slate-600 focus:ring-slate-500">
+                            <div class="ml-4">
+                                <span class="block text-sm font-bold text-gray-900">Standard Plan</span>
+                                <span class="block text-sm text-gray-500">Monthly Subscription - ₹1000 / month</span>
+                            </div>
+                        </label>
+                        
+                        <label class="flex items-center p-4 border rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                            <input type="radio" name="plan" value="ULTRA" class="w-5 h-5 text-slate-600 focus:ring-slate-500">
+                            <div class="ml-4">
+                                <span class="block text-sm font-bold text-gray-900">Ultra Plan</span>
+                                <span class="block text-sm text-gray-500">Premium Subscription - ₹1249 / month</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="fixed bottom-6 left-0 right-0 px-6 max-w-3xl mx-auto z-20">
+                    <button type="submit" class="w-full py-4 rounded-xl shadow-lg text-white font-bold text-lg bg-slate-800 hover:bg-slate-900 transition-all transform active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fas fa-file-contract"></i> Generate Agreement
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- VIEW: DETAIL (Common) -->
         <div id="view-detail" class="hidden flex-col h-full absolute inset-0 bg-white overflow-hidden z-20">
             <!-- Header -->
             <div class="bg-white px-6 py-4 border-b border-gray-100 flex items-center gap-4 z-20 shadow-sm">
@@ -239,11 +312,19 @@
                             </div>
                             <span id="detail-address" class="font-medium"></span>
                         </div>
+                        
+                        <!-- Extra fields for Agreement -->
+                         <div id="detail-plan-container" class="hidden flex-col gap-1 mt-4 p-4 bg-white rounded-lg border border-gray-200">
+                            <span class="text-xs font-bold uppercase text-gray-400">Selected Plan</span>
+                            <span id="detail-plan-name" class="font-bold text-slate-800"></span>
+                            <span id="detail-plan-price" class="text-sm text-slate-500"></span>
+                            <span id="detail-payday-display" class="text-xs text-slate-400 mt-1"></span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Items List -->
-                <div class="p-6">
+                <!-- Items List (Only for Invoice/Quote) -->
+                <div id="detail-items-wrapper" class="p-6">
                     <div class="flex justify-between items-end mb-4">
                         <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Purchased Items</h3>
                     </div>
@@ -253,23 +334,23 @@
                 </div>
             </div>
 
-            <!-- Sticky Footer Actions (3 Buttons) -->
+            <!-- Sticky Footer Actions -->
             <div class="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 pb-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
-                <div class="flex justify-between items-center mb-4 px-2">
+                <div id="detail-total-row" class="flex justify-between items-center mb-4 px-2">
                     <span class="text-gray-500 font-medium text-sm">Grand Total</span>
                     <span id="detail-total" class="text-3xl font-bold">₹0.00</span>
                 </div>
-                <div class="grid grid-cols-3 gap-3">
-                    <button onclick="outputHandler.print()" class="bg-gray-800 text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 flex flex-col items-center justify-center gap-1">
+                
+                <div id="detail-actions-grid" class="grid grid-cols-3 gap-3">
+                    <button id="btn-print" onclick="outputHandler.print()" class="bg-gray-800 text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 flex flex-col items-center justify-center gap-1">
                         <i class="fas fa-print text-sm"></i>
                         <span class="text-[10px]">Print</span>
                     </button>
-                    <button onclick="outputHandler.download()" id="btn-download-pdf" class="bg-teal-500 text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 flex flex-col items-center justify-center gap-1">
+                    <button id="btn-download-pdf" onclick="outputHandler.download()" class="bg-teal-500 text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 flex flex-col items-center justify-center gap-1">
                         <i class="fas fa-file-download text-sm"></i>
                         <span class="text-[10px]">Save PDF</span>
                     </button>
-                    <!-- Added ID here -->
-                    <button onclick="outputHandler.share()" id="btn-share-pdf" class="bg-indigo-500 text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 flex flex-col items-center justify-center gap-1">
+                    <button id="btn-share-pdf" onclick="outputHandler.share()" class="bg-indigo-500 text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 flex flex-col items-center justify-center gap-1">
                         <i class="fas fa-share-alt text-sm"></i>
                         <span class="text-[10px]">Share PDF</span>
                     </button>
@@ -279,11 +360,10 @@
 
     </div>
 
-    <!-- HIDDEN PDF TEMPLATE (Strict A4 Layout) -->
+    <!-- HIDDEN INVOICE PDF TEMPLATE -->
     <div id="pdf-template-container" class="hidden">
         <div id="pdf-template" style="width: 794px; min-height: 1123px; background-color: white; padding: 40px; font-family: 'Inter', sans-serif; color: #2d2d38; position: relative; box-sizing: border-box; margin: 0 auto;">
-            
-            <!-- PDF Header -->
+             <!-- PDF Header -->
             <div style="display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid; padding-bottom: 20px;" id="pdf-header-border">
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <!-- Custom Logo Image -->
@@ -364,7 +444,100 @@
                     <span style="font-size: 10px; color: #cbd5e1;">Generated by NextGen QuickBills</span>
                 </div>
             </div>
+        </div>
+    </div>
 
+    <!-- HIDDEN AGREEMENT PDF TEMPLATE -->
+    <div id="agreement-template-container" class="hidden">
+        <div id="agreement-template" style="width: 794px; min-height: 1123px; background-color: white; padding: 40px 50px; font-family: 'Inter', sans-serif; color: #1e293b; position: relative; box-sizing: border-box; margin: 0 auto;">
+            
+            <!-- Agreement Header (Redesigned to Match Invoice) -->
+             <div style="display: flex; justify-content: space-between; margin-bottom: 25px; border-bottom: 2px solid #6366f1; padding-bottom: 15px;">
+                <div style="display: flex; align-items: center;">
+                    <!-- Logo Left Aligned -->
+                    <img src="Logo2.png" alt="Company Logo" crossOrigin="anonymous" style="width: 180px; height: auto; margin: 0;">
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 28px; font-weight: 900; color: #1e293b; text-transform: uppercase; letter-spacing: 1px; line-height: 1;">SAAS AGREEMENT</div>
+                    <div style="font-size: 11px; color: #64748b; margin-top: 5px;">Service Agreement</div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px; font-size: 11px; line-height: 1.5; display: flex; justify-content: space-between;">
+                <div style="width: 48%;">
+                    <p style="margin-bottom: 2px;"><strong>Service Provider:</strong> NextGen</p>
+                    <p style="color: #64748b;">Ahmedabad, Gujarat</p>
+                </div>
+                <div style="width: 48%; text-align: right;">
+                    <p style="margin-bottom: 2px;"><strong>Date:</strong> <span id="agmt-date"></span></p>
+                    <p><strong>Client:</strong> <span id="agmt-client" style="font-weight: bold;"></span></p>
+                    <p style="color: #64748b;"><span id="agmt-address"></span></p>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div style="font-size: 10px; line-height: 1.45; color: #334155; text-align: justify;">
+                
+                <h3 style="font-size: 11px; font-weight: 700; color: #0f172a; margin-top: 10px; margin-bottom: 4px; text-transform: uppercase;">1. Service Description</h3>
+                
+                <!-- Dynamic Service Description Injected Here -->
+                <p id="agmt-service-desc" style="margin-bottom: 8px;">
+                    <!-- JS will populate this -->
+                </p>
+
+                <h3 style="font-size: 11px; font-weight: 700; color: #0f172a; margin-top: 10px; margin-bottom: 4px; text-transform: uppercase;">2. Subscription & Payment</h3>
+                <p style="margin-bottom: 4px;">
+                    The Client agrees to pay the subscription fees as per the selected plan. All payments shall be made in advance as per the agreed billing cycle (monthly/quarterly/annual).
+                </p>
+                
+                <!-- Plan Details (No Highlight) -->
+                <div style="margin-bottom: 8px; margin-top: 8px;">
+                     <p style="margin: 0;"><strong>Selected Plan:</strong> <span id="agmt-plan-name"></span></p>
+                     <p style="margin: 0;"><strong>Price:</strong> <span id="agmt-plan-price"></span></p>
+                </div>
+
+                <p style="margin-bottom: 4px;">
+                    <strong>Payment Terms:</strong> <span id="agmt-paydate"></span>
+                </p>
+
+                <h3 style="font-size: 11px; font-weight: 700; color: #0f172a; margin-top: 10px; margin-bottom: 4px; text-transform: uppercase;">3. Terms and Conditions</h3>
+                
+                <p style="margin-bottom: 6px;">
+                    <strong>Software Service:</strong> The Client agrees to a minimum subscription period of six (6) months from the date of activation. During this period, cancellation or termination by the Client is not permitted, and all subscription fees for the six-month term shall remain payable in full. If the Client cancels or discontinues the service before completing six months, the remaining amount shall be payable in full immediately.
+                </p>
+                
+                <p style="margin-bottom: 6px;">
+                    <strong>Termination:</strong> After completion of the six-month minimum period, either party may terminate the subscription with 30 days’ written notice.
+                </p>
+                
+                <p style="margin-bottom: 6px;">
+                    <strong>Support and Service:</strong> General service and support shall be available only on working days through call or online communication. No specific time slots are guaranteed, but the Provider will respond and assist as soon as reasonably possible. Menu updates, item additions, price modifications, or any other configuration changes requested by the Client are considered part of the ongoing service provided by the Provider. The Client acknowledges that such service requests shall require a minimum processing time of seventy-two (72) hours from the time of request or confirmation.
+                </p>
+                
+                <p style="margin-top: 10px; font-style: italic; color: #64748b;">
+                    By signing below or by using the Restaurant Management System, the Client confirms that they have read, understood, and agreed to these Terms and Conditions.
+                </p>
+            </div>
+
+            <!-- Signatures -->
+            <div style="display: flex; justify-content: space-between; margin-top: 40px; padding-top: 10px;">
+                <div style="width: 45%; text-align: left;">
+                    <p style="font-size: 11px; font-weight: bold; margin-bottom: 25px;">Service Provider: NextGen</p>
+                    <div style="border-bottom: 1px solid #94a3b8; width: 100%; margin-bottom: 4px;"></div>
+                    <p style="font-size: 9px; color: #64748b;">Signature</p>
+                    <p style="font-size: 9px; color: #64748b; margin-top: 5px;">Date: _________________</p>
+                </div>
+                <div style="width: 45%; text-align: left;">
+                    <p style="font-size: 11px; font-weight: bold; margin-bottom: 25px;">Client: <span id="agmt-sign-client"></span></p>
+                    <div style="border-bottom: 1px solid #94a3b8; width: 100%; margin-bottom: 4px;"></div>
+                    <p style="font-size: 9px; color: #64748b;">Signature</p>
+                    <p style="font-size: 9px; color: #64748b; margin-top: 5px;">Date: _________________</p>
+                </div>
+            </div>
+            
+            <div style="position: absolute; bottom: 20px; left: 50px; right: 50px; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 8px;">
+                <span style="font-size: 8px; color: #cbd5e1;">Generated by NextGen QuickBills</span>
+            </div>
         </div>
     </div>
 
@@ -372,11 +545,13 @@
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbwU92x1SYftWOrjYaLm_nEeI1sIYHo1p1Ypzi0hV8IHSkknuJ86tpSGqijm9J43o4VF/exec';
         const QUOTATION_STORAGE_KEY = 'nextgen_quickbills_quotations';
+        const AGREEMENT_STORAGE_KEY = 'nextgen_quickbills_agreements';
 
         // --- State ---
         const state = {
             bills: [],      
             quotations: [], 
+            agreements: [],
             activeTab: 'INVOICE', 
             currentBill: null,
             cartItems: [{ name: '', price: 0 }]
@@ -388,6 +563,7 @@
             app: document.getElementById('app'),
             dashboard: document.getElementById('view-dashboard'),
             create: document.getElementById('view-create'),
+            createAgreement: document.getElementById('view-create-agreement'),
             detail: document.getElementById('view-detail')
         };
 
@@ -403,12 +579,15 @@
             }, 2500);
 
             document.getElementById('input-date').valueAsDate = new Date();
+            document.getElementById('agmt-input-date').valueAsDate = new Date();
 
             document.getElementById('search-input').addEventListener('input', (e) => dashboard.filter(e.target.value));
             document.getElementById('create-form').addEventListener('submit', formHandler.submit);
+            document.getElementById('create-agreement-form').addEventListener('submit', formHandler.submitAgreement);
             
             api.fetchBills(); 
             storage.fetchQuotations(); 
+            storage.fetchAgreements();
         });
 
         // --- Router ---
@@ -416,6 +595,7 @@
             navigate: (viewName) => {
                 views.dashboard.classList.add('hidden');
                 views.create.classList.add('hidden');
+                views.createAgreement.classList.add('hidden');
                 views.detail.classList.add('hidden');
 
                 if (viewName === 'dashboard') {
@@ -425,8 +605,20 @@
                     views.create.classList.remove('hidden');
                     formHandler.reset();
                     formHandler.applyTheme(); 
+                } else if (viewName === 'createAgreement') {
+                    views.createAgreement.classList.remove('hidden');
+                    document.getElementById('create-agreement-form').reset();
+                    document.getElementById('agmt-input-date').valueAsDate = new Date();
                 } else if (viewName === 'detail') {
                     views.detail.classList.remove('hidden');
+                }
+            },
+            
+            handleCreate: () => {
+                if (state.activeTab === 'AGREEMENT') {
+                    router.navigate('createAgreement');
+                } else {
+                    router.navigate('create');
                 }
             }
         };
@@ -446,6 +638,20 @@
             saveQuotation: (quotation) => {
                 state.quotations.unshift(quotation);
                 localStorage.setItem(QUOTATION_STORAGE_KEY, JSON.stringify(state.quotations));
+            },
+            fetchAgreements: () => {
+                try {
+                    const data = localStorage.getItem(AGREEMENT_STORAGE_KEY);
+                    state.agreements = data ? JSON.parse(data) : [];
+                    state.agreements = state.agreements.map(a => ({...a, type: 'AGREEMENT'}));
+                } catch (e) {
+                    console.error(e);
+                    state.agreements = [];
+                }
+            },
+            saveAgreement: (agreement) => {
+                state.agreements.unshift(agreement);
+                localStorage.setItem(AGREEMENT_STORAGE_KEY, JSON.stringify(state.agreements));
             }
         };
 
@@ -490,29 +696,41 @@
                 state.activeTab = tab;
                 const btnInvoice = document.getElementById('tab-invoice');
                 const btnQuote = document.getElementById('tab-quotation');
+                const btnAgmt = document.getElementById('tab-agreement');
                 const btnCreate = document.getElementById('btn-create-new');
                 
+                // Reset styles
+                const inactiveStyle = 'flex-1 py-2 text-xs md:text-sm font-bold rounded-lg transition-all text-gray-400 hover:text-gray-600';
+                btnInvoice.className = inactiveStyle;
+                btnQuote.className = inactiveStyle;
+                btnAgmt.className = inactiveStyle;
+
                 if (tab === 'INVOICE') {
-                    btnInvoice.className = 'flex-1 py-2 text-sm font-bold rounded-lg transition-all bg-white text-teal-600 shadow-sm';
-                    btnQuote.className = 'flex-1 py-2 text-sm font-bold rounded-lg transition-all text-gray-400 hover:text-gray-600';
+                    btnInvoice.className = 'flex-1 py-2 text-xs md:text-sm font-bold rounded-lg transition-all bg-white text-teal-600 shadow-sm';
                     btnCreate.className = 'bg-teal-500 hover:bg-teal-600 text-white p-3 rounded-full shadow-lg transition-transform active:scale-95 flex items-center justify-center w-12 h-12';
                     document.getElementById('dashboard-title').innerText = 'Dashboard';
-                } else {
-                    btnInvoice.className = 'flex-1 py-2 text-sm font-bold rounded-lg transition-all text-gray-400 hover:text-gray-600';
-                    btnQuote.className = 'flex-1 py-2 text-sm font-bold rounded-lg transition-all bg-white text-indigo-600 shadow-sm';
+                } else if (tab === 'QUOTATION') {
+                    btnQuote.className = 'flex-1 py-2 text-xs md:text-sm font-bold rounded-lg transition-all bg-white text-indigo-600 shadow-sm';
                     btnCreate.className = 'bg-indigo-500 hover:bg-indigo-600 text-white p-3 rounded-full shadow-lg transition-transform active:scale-95 flex items-center justify-center w-12 h-12';
                     document.getElementById('dashboard-title').innerText = 'Quotations';
+                } else {
+                    btnAgmt.className = 'flex-1 py-2 text-xs md:text-sm font-bold rounded-lg transition-all bg-white text-slate-800 shadow-sm';
+                    btnCreate.className = 'bg-slate-700 hover:bg-slate-800 text-white p-3 rounded-full shadow-lg transition-transform active:scale-95 flex items-center justify-center w-12 h-12';
+                    document.getElementById('dashboard-title').innerText = 'Agreements';
                 }
                 
-                const searchInput = document.getElementById('search-input');
-                searchInput.className = `w-full pl-11 pr-4 py-3 bg-white rounded-xl border-none shadow-sm focus:ring-2 focus:ring-${tab === 'INVOICE' ? 'teal' : 'indigo'}-500 text-gray-700 outline-none`;
-
                 dashboard.render();
             },
 
             render: (filteredData = null) => {
-                const list = state.activeTab === 'INVOICE' ? state.bills : state.quotations;
-                const data = filteredData || list;
+                let data = [];
+                if (filteredData) {
+                    data = filteredData;
+                } else {
+                    if (state.activeTab === 'INVOICE') data = state.bills;
+                    else if (state.activeTab === 'QUOTATION') data = state.quotations;
+                    else data = state.agreements;
+                }
                 
                 const container = document.getElementById('bills-list');
                 const empty = document.getElementById('dashboard-empty');
@@ -520,49 +738,82 @@
 
                 if (data.length === 0) {
                     empty.classList.remove('hidden');
-                    document.getElementById('dashboard-empty-text').innerText = `No ${state.activeTab === 'INVOICE' ? 'invoices' : 'quotations'} found.`;
+                    let text = 'records';
+                    if (state.activeTab === 'INVOICE') text = 'invoices';
+                    if (state.activeTab === 'QUOTATION') text = 'quotations';
+                    if (state.activeTab === 'AGREEMENT') text = 'agreements';
+                    document.getElementById('dashboard-empty-text').innerText = `No ${text} found.`;
                     return;
                 }
                 empty.classList.add('hidden');
 
-                const themeColor = state.activeTab === 'INVOICE' ? 'teal' : 'indigo';
+                let themeColor = 'teal';
+                if (state.activeTab === 'QUOTATION') themeColor = 'indigo';
+                if (state.activeTab === 'AGREEMENT') themeColor = 'slate';
 
                 data.forEach(item => {
                     const dateStr = new Date(item.date).toLocaleDateString();
-                    const total = parseFloat(item.total).toFixed(2);
                     const card = document.createElement('div');
                     card.className = `bg-white p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-transparent hover:border-${themeColor}-100 group animate-fade-in-up`;
                     card.onclick = () => detailHandler.show(item);
                     
-                    const phoneDisplay = item.phone ? `<p><i class="fas fa-phone-alt mr-1 text-${themeColor}-500 opacity-60"></i> ${item.phone}</p>` : '';
-
-                    card.innerHTML = `
-                        <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <h3 class="font-bold text-dark text-lg group-hover:text-${themeColor}-600 transition-colors">${item.customerName}</h3>
-                                <p class="text-xs text-gray-500 font-medium bg-gray-100 inline-block px-2 py-1 rounded-md mt-1">${item.billId}</p>
+                    if (state.activeTab === 'AGREEMENT') {
+                        card.innerHTML = `
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 class="font-bold text-dark text-lg group-hover:text-slate-600 transition-colors">${item.customerName}</h3>
+                                    <p class="text-xs text-gray-500 font-medium bg-gray-100 inline-block px-2 py-1 rounded-md mt-1">AGREEMENT</p>
+                                </div>
+                                <span class="text-xs font-semibold text-gray-400">${dateStr}</span>
                             </div>
-                            <span class="text-xs font-semibold text-gray-400">${dateStr}</span>
-                        </div>
-                        <div class="flex justify-between items-end border-t border-gray-50 pt-3 mt-2">
-                            <div class="text-xs text-gray-500">
-                                ${phoneDisplay}
-                                <p class="mt-1"><i class="fas fa-layer-group mr-1 text-${themeColor}-500 opacity-60"></i> ${item.items.length} items</p>
+                            <div class="flex justify-between items-end border-t border-gray-50 pt-3 mt-2">
+                                <div class="text-xs text-gray-500">
+                                    <p class="mt-1 font-bold text-slate-700">${item.planName}</p>
+                                    <p>${item.planPrice}</p>
+                                </div>
+                                <span class="text-xs font-bold text-slate-300"><i class="fas fa-file-contract"></i></span>
                             </div>
-                            <span class="text-lg font-bold text-dark">₹${total}</span>
-                        </div>
-                    `;
+                        `;
+                    } else {
+                        const total = parseFloat(item.total).toFixed(2);
+                        const phoneDisplay = item.phone ? `<p><i class="fas fa-phone-alt mr-1 text-${themeColor}-500 opacity-60"></i> ${item.phone}</p>` : '';
+                        card.innerHTML = `
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 class="font-bold text-dark text-lg group-hover:text-${themeColor}-600 transition-colors">${item.customerName}</h3>
+                                    <p class="text-xs text-gray-500 font-medium bg-gray-100 inline-block px-2 py-1 rounded-md mt-1">${item.billId}</p>
+                                </div>
+                                <span class="text-xs font-semibold text-gray-400">${dateStr}</span>
+                            </div>
+                            <div class="flex justify-between items-end border-t border-gray-50 pt-3 mt-2">
+                                <div class="text-xs text-gray-500">
+                                    ${phoneDisplay}
+                                    <p class="mt-1"><i class="fas fa-layer-group mr-1 text-${themeColor}-500 opacity-60"></i> ${item.items.length} items</p>
+                                </div>
+                                <span class="text-lg font-bold text-dark">₹${total}</span>
+                            </div>
+                        `;
+                    }
                     container.appendChild(card);
                 });
             },
 
             filter: (term) => {
                 const lowerTerm = term.toLowerCase();
-                const list = state.activeTab === 'INVOICE' ? state.bills : state.quotations;
+                let list = [];
+                 if (state.activeTab === 'INVOICE') list = state.bills;
+                else if (state.activeTab === 'QUOTATION') list = state.quotations;
+                else list = state.agreements;
+
                 const filtered = list.filter(item => {
                     const name = String(item.customerName || '').toLowerCase();
-                    const phone = String(item.phone || '');
                     const date = String(item.date || '');
+                    
+                    if (item.type === 'AGREEMENT') {
+                        return name.includes(lowerTerm) || date.includes(lowerTerm);
+                    }
+                    
+                    const phone = String(item.phone || '');
                     const id = String(item.billId || '').toLowerCase();
                     return name.includes(lowerTerm) || phone.includes(lowerTerm) || date.includes(lowerTerm) || id.includes(lowerTerm);
                 });
@@ -692,70 +943,157 @@
                 
                 btn.disabled = false;
                 btn.innerHTML = originalText;
+            },
+
+            submitAgreement: (e) => {
+                e.preventDefault();
+                const name = document.getElementById('agmt-input-name').value;
+                const address = document.getElementById('agmt-input-address').value;
+                const date = document.getElementById('agmt-input-date').value;
+                const payDay = document.getElementById('agmt-input-payday').value;
+                
+                const planValue = document.querySelector('input[name="plan"]:checked').value;
+                let planName = 'Basic Plan';
+                let planPrice = '₹1000 One-time';
+                
+                if (planValue === 'STANDARD') {
+                    planName = 'Standard Plan';
+                    planPrice = '₹1000 / month';
+                } else if (planValue === 'ULTRA') {
+                    planName = 'Ultra Plan';
+                    planPrice = '₹1249 / month';
+                }
+
+                const agmtData = {
+                    customerName: name,
+                    address: address,
+                    date: date,
+                    paymentDay: payDay,
+                    planName: planName,
+                    planPrice: planPrice,
+                    type: 'AGREEMENT'
+                };
+
+                storage.saveAgreement(agmtData);
+                state.currentBill = agmtData;
+                router.navigate('detail');
+                detailHandler.show(agmtData);
             }
         };
 
         // --- Detail & PDF Logic ---
         const detailHandler = {
-            show: (bill) => {
-                state.currentBill = bill;
+            show: (item) => {
+                state.currentBill = item;
                 router.navigate('detail');
 
-                const isQuote = bill.type === 'QUOTATION';
-                const color = isQuote ? 'indigo' : 'teal';
+                let color = 'teal';
+                let typeText = 'INVOICE';
+                
+                if (item.type === 'QUOTATION') {
+                    color = 'indigo';
+                    typeText = 'QUOTATION';
+                } else if (item.type === 'AGREEMENT') {
+                    color = 'slate';
+                    typeText = 'AGREEMENT';
+                }
                 
                 // Colors
                 const badge = document.getElementById('detail-type-badge');
-                badge.className = `text-xs font-bold px-3 py-1.5 rounded-full bg-${color}-100 text-${color}-700`;
-                badge.innerText = isQuote ? 'QUOTATION' : 'INVOICE';
+                if (item.type === 'AGREEMENT') {
+                    badge.className = `text-xs font-bold px-3 py-1.5 rounded-full bg-slate-200 text-slate-800`;
+                } else {
+                    badge.className = `text-xs font-bold px-3 py-1.5 rounded-full bg-${color}-100 text-${color}-700`;
+                }
+                badge.innerText = typeText;
                 
-                document.getElementById('detail-total').className = `text-3xl font-bold text-${color}-600`;
-                document.getElementById('btn-download-pdf').className = `bg-${color}-500 text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 flex flex-col items-center justify-center gap-1`;
-
-                const btnShare = document.getElementById('btn-share-pdf');
-                btnShare.className = `bg-${color}-500 text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 flex flex-col items-center justify-center gap-1 opacity-90 hover:opacity-100`;
-
-                const phoneIcon = document.getElementById('detail-phone-icon');
-                phoneIcon.className = `w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0 text-${color}-500`;
-                
-                const addrIcon = document.getElementById('detail-address-icon');
-                addrIcon.className = `w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0 text-${color}-500`;
-
                 // Content
-                document.getElementById('detail-name').innerText = bill.customerName;
-                document.getElementById('detail-id').innerText = bill.billId;
-                document.getElementById('detail-date').innerText = new Date(bill.date).toLocaleDateString();
-                document.getElementById('detail-total').innerText = `₹${parseFloat(bill.total).toFixed(2)}`;
+                document.getElementById('detail-name').innerText = item.customerName;
+                document.getElementById('detail-date').innerText = new Date(item.date).toLocaleDateString();
 
-                // Optional
+                // Handle conditional display based on Type
+                const totalRow = document.getElementById('detail-total-row');
+                const itemsWrapper = document.getElementById('detail-items-wrapper');
+                const planContainer = document.getElementById('detail-plan-container');
+                const idDisplay = document.getElementById('detail-id');
                 const phoneCont = document.getElementById('detail-phone-container');
-                if (bill.phone) {
-                    document.getElementById('detail-phone').innerText = bill.phone;
-                    phoneCont.style.display = 'flex';
-                } else {
-                    phoneCont.style.display = 'none';
-                }
-
                 const addrCont = document.getElementById('detail-address-container');
-                if (bill.address) {
-                    document.getElementById('detail-address').innerText = bill.address;
-                    addrCont.style.display = 'flex';
-                } else {
-                    addrCont.style.display = 'none';
-                }
 
-                // Items
-                const itemsContainer = document.getElementById('detail-items');
-                itemsContainer.innerHTML = '';
-                bill.items.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'py-4 flex justify-between items-center';
-                    div.innerHTML = `
-                        <span class="text-gray-700 font-medium text-sm">${item.name}</span>
-                        <span class="text-dark font-bold text-sm">₹${parseFloat(item.price).toFixed(2)}</span>
-                    `;
-                    itemsContainer.appendChild(div);
-                });
+                // Reset
+                phoneCont.style.display = 'none';
+                addrCont.style.display = 'none';
+                planContainer.style.display = 'none';
+                idDisplay.style.display = 'none';
+                
+                if (item.type === 'AGREEMENT') {
+                    totalRow.style.display = 'none';
+                    itemsWrapper.style.display = 'none';
+                    
+                    planContainer.style.display = 'flex';
+                    document.getElementById('detail-plan-name').innerText = item.planName;
+                    document.getElementById('detail-plan-price').innerText = item.planPrice;
+                    
+                    // Display monthly recurring day info
+                    if(item.paymentDay) {
+                         document.getElementById('detail-payday-display').innerText = `Payment due on day ${item.paymentDay} of every month`;
+                    }
+
+                    if (item.address) {
+                        addrCont.style.display = 'flex';
+                        document.getElementById('detail-address').innerText = item.address;
+                         const addrIcon = document.getElementById('detail-address-icon');
+                         addrIcon.className = `w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0 text-slate-500`;
+                    }
+                } 
+                else {
+                    // Invoice / Quote
+                    totalRow.style.display = 'flex';
+                    itemsWrapper.style.display = 'block';
+                    idDisplay.style.display = 'inline-block';
+                    idDisplay.innerText = item.billId;
+
+                    document.getElementById('detail-total').className = `text-3xl font-bold text-${color}-600`;
+                    document.getElementById('detail-total').innerText = `₹${parseFloat(item.total).toFixed(2)}`;
+
+                    if (item.phone) {
+                        phoneCont.style.display = 'flex';
+                        document.getElementById('detail-phone').innerText = item.phone;
+                        const phoneIcon = document.getElementById('detail-phone-icon');
+                        phoneIcon.className = `w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0 text-${color}-500`;
+                    }
+                    if (item.address) {
+                        addrCont.style.display = 'flex';
+                        document.getElementById('detail-address').innerText = item.address;
+                        const addrIcon = document.getElementById('detail-address-icon');
+                        addrIcon.className = `w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0 text-${color}-500`;
+                    }
+
+                    // Render Items
+                    const itemsContainer = document.getElementById('detail-items');
+                    itemsContainer.innerHTML = '';
+                    item.items.forEach(itm => {
+                        const div = document.createElement('div');
+                        div.className = 'py-4 flex justify-between items-center';
+                        div.innerHTML = `
+                            <span class="text-gray-700 font-medium text-sm">${itm.name}</span>
+                            <span class="text-dark font-bold text-sm">₹${parseFloat(itm.price).toFixed(2)}</span>
+                        `;
+                        itemsContainer.appendChild(div);
+                    });
+                }
+                
+                // Button Styling
+                const btnDownload = document.getElementById('btn-download-pdf');
+                const btnShare = document.getElementById('btn-share-pdf');
+                const btnPrint = document.getElementById('btn-print');
+
+                if (item.type === 'AGREEMENT') {
+                    btnDownload.className = `bg-slate-700 text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 flex flex-col items-center justify-center gap-1`;
+                    btnShare.className = `bg-indigo-600 text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 flex flex-col items-center justify-center gap-1`;
+                } else {
+                    btnDownload.className = `bg-${color}-500 text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 flex flex-col items-center justify-center gap-1`;
+                    btnShare.className = `bg-indigo-500 text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 flex flex-col items-center justify-center gap-1 opacity-90 hover:opacity-100`;
+                }
             }
         };
 
@@ -809,15 +1147,82 @@
                 document.getElementById('pdf-terms').innerText = isQuote 
                     ? 'This quotation is valid for 14 days.' 
                     : 'Payment is due upon receipt. Please make checks payable to NextGen.';
+            },
+            
+            updateAgreement: (item) => {
+                 document.getElementById('agmt-client').innerText = item.customerName;
+                 document.getElementById('agmt-sign-client').innerText = item.customerName;
+                 document.getElementById('agmt-address').innerText = item.address || '';
+                 document.getElementById('agmt-date').innerText = new Date(item.date).toLocaleDateString('en-GB');
+                 document.getElementById('agmt-plan-name').innerText = item.planName.toUpperCase();
+                 document.getElementById('agmt-plan-price').innerText = item.planPrice;
+                 
+                 // Update Service Description based on Plan
+                 const plan = item.planName; // 'Basic Plan', 'Standard Plan', 'Ultra Plan'
+                 let serviceHtml = '';
+
+                 if (plan === 'Basic Plan') {
+                    // Essential features from image
+                    serviceHtml = `
+                        Provision of a simple, elegant QR menu for showcasing offerings.<br>
+                        Features include:<br>
+                        • <strong>Showcase QR Menu:</strong> Digital menu display.<br>
+                        • <strong>NextGen Branding:</strong> Default branding applied.<br>
+                        <em style="color:#64748b; font-size:9px;">(Note: Does not include Live Order System or Personalized Branding)</em>
+                    `;
+                 } else if (plan === 'Standard Plan') {
+                    // Pro features from image
+                    serviceHtml = `
+                        Provision of a complete system to manage and streamline restaurant operations.<br>
+                        Features include:<br>
+                        • <strong>Dynamic QR Menu:</strong> Real-time menu updates.<br>
+                        • <strong>Full Management System:</strong> Comprehensive backend control.<br>
+                        • <strong>Bill & Table Management:</strong> Order processing and table tracking.<br>
+                        <em style="color:#64748b; font-size:9px;">(Note: Does not include Personalized Branding)</em>
+                    `;
+                 } else if (plan === 'Ultra Plan') {
+                    // Ultimate features from image
+                    serviceHtml = `
+                        Provision of a fully white-label solution with custom branding.<br>
+                        Features include:<br>
+                        • <strong>Everything in Standard Plan:</strong> Includes Dynamic QR Menu, Management System, and Billing.<br>
+                        • <strong>Personalized Branding:</strong> Custom brand identity.<br>
+                        • <strong>Your Own Logo:</strong> Custom logo placement.<br>
+                        • <strong>Auto Festival Themes:</strong> Automated thematic updates.
+                    `;
+                 }
+                 
+                 document.getElementById('agmt-service-desc').innerHTML = serviceHtml;
+
+                 // Format Payment Day string
+                 let payString = 'Upon Receipt';
+                 if (item.paymentDay) {
+                     // Add suffix (st, nd, rd, th)
+                     const day = parseInt(item.paymentDay);
+                     let suffix = 'th';
+                     if (day % 10 === 1 && day !== 11) suffix = 'st';
+                     else if (day % 10 === 2 && day !== 12) suffix = 'nd';
+                     else if (day % 10 === 3 && day !== 13) suffix = 'rd';
+                     
+                     payString = `Recurring monthly payment due on the ${day}${suffix} of every month.`;
+                 }
+                 document.getElementById('agmt-paydate').innerText = payString;
             }
         };
 
         const outputHandler = {
             // Helper function to generate PDF blob/file for both Download and Share
-            _generatePdfInstance: async (bill) => {
+            // Now accepts optional templateId (default: #pdf-template)
+            _generatePdfInstance: async (item, templateId) => {
+                
                 // 1. Prepare template
-                templateRenderer.update(bill);
-                const template = document.getElementById('pdf-template');
+                if (templateId === 'agreement-template') {
+                    templateRenderer.updateAgreement(item);
+                } else {
+                    templateRenderer.update(item);
+                }
+
+                const template = document.getElementById(templateId);
                 const clone = template.cloneNode(true);
                 
                 // Styling for off-screen rendering
@@ -868,16 +1273,23 @@
             },
 
             print: () => {
-                const bill = state.currentBill;
-                if (!bill) return;
-                templateRenderer.update(bill);
+                const item = state.currentBill;
+                if (!item) return;
+                
+                if (item.type === 'AGREEMENT') {
+                    templateRenderer.updateAgreement(item);
+                } else {
+                    templateRenderer.update(item);
+                }
                 setTimeout(() => window.print(), 100);
             },
 
+            // Updated Share to handle both Agreement and Invoice based on context/button logic
             share: async () => {
-                 const bill = state.currentBill;
-                 if (!bill) return;
-                
+                 const item = state.currentBill;
+                 if (!item) return;
+                 
+                 const isAgreement = item.type === 'AGREEMENT';
                  const btn = document.getElementById('btn-share-pdf');
                  const originalContent = btn.innerHTML;
                  btn.disabled = true;
@@ -885,23 +1297,27 @@
 
                  try {
                      // 1. Generate PDF
-                     const pdf = await outputHandler._generatePdfInstance(bill);
+                     const templateId = isAgreement ? 'agreement-template' : 'pdf-template';
+                     const pdf = await outputHandler._generatePdfInstance(item, templateId);
                      
                      // 2. Create File Object
                      const blob = pdf.output('blob');
-                     const sanitizedName = (bill.customerName || 'customer').replace(/[^a-z0-9]/gi, '_').toLowerCase();
-                     const dateStr = new Date(bill.date).toISOString().split('T')[0];
-                     const filename = `nextgen-${sanitizedName}-${dateStr}.pdf`;
+                     const sanitizedName = (item.customerName || 'customer').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                     const dateStr = new Date(item.date).toISOString().split('T')[0];
+                     const typeStr = isAgreement ? 'agreement' : 'bill';
+                     const filename = `nextgen-${typeStr}-${sanitizedName}-${dateStr}.pdf`;
                      
                      const file = new File([blob], filename, { type: 'application/pdf' });
 
                      // 3. Share
-                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                         await navigator.share({
-                             files: [file],
-                             title: 'Bill ' + bill.billId,
-                             text: `Please find attached the bill for ${bill.customerName}.`
-                         });
+                     const shareData = {
+                         files: [file],
+                         title: isAgreement ? 'Agreement for ' + item.customerName : 'Bill ' + item.billId,
+                         text: isAgreement ? `SaaS Agreement for ${item.customerName}.` : `Please find attached the bill for ${item.customerName}.`
+                     };
+
+                     if (navigator.canShare && navigator.canShare(shareData)) {
+                         await navigator.share(shareData);
                      } else {
                          // Fallback logic if sharing files isn't supported
                          alert("Sharing files is not supported on this browser. Downloading instead.");
@@ -916,12 +1332,14 @@
                      btn.innerHTML = originalContent;
                  }
             },
-
+            
             download: async () => {
-                const bill = state.currentBill;
-                if (!bill) return;
-
+                const item = state.currentBill;
+                if (!item) return;
+                
+                const isAgreement = item.type === 'AGREEMENT';
                 const btn = document.getElementById('btn-download-pdf');
+                
                 // Temporarily show spinner inside the PDF button structure
                 btn.disabled = true;
                 const oldIcon = btn.querySelector('i').className;
@@ -931,11 +1349,14 @@
                 btn.querySelector('i').className = 'fas fa-spinner fa-spin text-sm';
 
                 try {
-                    const pdf = await outputHandler._generatePdfInstance(bill);
+                    const templateId = isAgreement ? 'agreement-template' : 'pdf-template';
+                    const pdf = await outputHandler._generatePdfInstance(item, templateId);
                     
-                    const sanitizedName = (bill.customerName || 'customer').replace(/[^a-z0-9]/gi, '_').toLowerCase();
-                    const dateStr = new Date(bill.date).toISOString().split('T')[0];
-                    pdf.save(`nextgen-${sanitizedName}-${dateStr}.pdf`);
+                    const sanitizedName = (item.customerName || 'customer').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                    const dateStr = new Date(item.date).toISOString().split('T')[0];
+                    const typeStr = isAgreement ? 'agreement' : 'bill';
+                    
+                    pdf.save(`nextgen-${typeStr}-${sanitizedName}-${dateStr}.pdf`);
 
                 } catch (error) {
                     console.error(error);
