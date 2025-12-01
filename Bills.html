@@ -268,9 +268,10 @@
                         <i class="fas fa-file-download text-sm"></i>
                         <span class="text-[10px]">Save PDF</span>
                     </button>
-                    <button onclick="outputHandler.share()" class="bg-indigo-500 text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 flex flex-col items-center justify-center gap-1">
+                    <!-- Added ID here -->
+                    <button onclick="outputHandler.share()" id="btn-share-pdf" class="bg-indigo-500 text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 flex flex-col items-center justify-center gap-1">
                         <i class="fas fa-share-alt text-sm"></i>
-                        <span class="text-[10px]">Share</span>
+                        <span class="text-[10px]">Share PDF</span>
                     </button>
                 </div>
             </div>
@@ -711,6 +712,9 @@
                 document.getElementById('detail-total').className = `text-3xl font-bold text-${color}-600`;
                 document.getElementById('btn-download-pdf').className = `bg-${color}-500 text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 flex flex-col items-center justify-center gap-1`;
 
+                const btnShare = document.getElementById('btn-share-pdf');
+                btnShare.className = `bg-${color}-500 text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 flex flex-col items-center justify-center gap-1 opacity-90 hover:opacity-100`;
+
                 const phoneIcon = document.getElementById('detail-phone-icon');
                 phoneIcon.className = `w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0 text-${color}-500`;
                 
@@ -809,52 +813,25 @@
         };
 
         const outputHandler = {
-            print: () => {
-                const bill = state.currentBill;
-                if (!bill) return;
+            // Helper function to generate PDF blob/file for both Download and Share
+            _generatePdfInstance: async (bill) => {
+                // 1. Prepare template
                 templateRenderer.update(bill);
-                setTimeout(() => window.print(), 100);
-            },
-
-            share: () => {
-                 const bill = state.currentBill;
-                 if (!bill) return;
-                 const text = `Bill for ${bill.customerName}: ₹${parseFloat(bill.total).toFixed(2)}`;
-                 if (navigator.share) {
-                     navigator.share({
-                         title: 'NextGen Bill',
-                         text: text,
-                     }).catch(console.error);
-                 } else {
-                     alert("Share not supported on this browser. " + text);
-                 }
-            },
-
-            download: async () => {
-                const bill = state.currentBill;
-                if (!bill) return;
-
-                const btn = document.getElementById('btn-download-pdf');
-                const originalContent = btn.innerHTML;
-                // Temporarily show spinner inside the PDF button structure
-                btn.disabled = true;
-                btn.querySelector('span').innerText = 'Generating...';
-                btn.querySelector('i').className = 'fas fa-spinner fa-spin text-sm';
+                const template = document.getElementById('pdf-template');
+                const clone = template.cloneNode(true);
+                
+                // Styling for off-screen rendering
+                clone.style.position = 'absolute';
+                clone.style.left = '0';
+                clone.style.top = '0';
+                clone.style.zIndex = '-9999';
+                clone.style.margin = '0';
+                clone.style.width = '794px'; 
+                clone.style.display = 'block';
+                document.body.appendChild(clone);
 
                 try {
-                    templateRenderer.update(bill);
-                    const template = document.getElementById('pdf-template');
-                    const clone = template.cloneNode(true);
-                    
-                    clone.style.position = 'absolute';
-                    clone.style.left = '0';
-                    clone.style.top = '0';
-                    clone.style.zIndex = '-9999';
-                    clone.style.margin = '0';
-                    clone.style.width = '794px'; 
-                    clone.style.display = 'block';
-                    document.body.appendChild(clone);
-
+                    // 2. HTML to Canvas
                     const canvas = await html2canvas(clone, {
                         scale: 2, 
                         windowWidth: 794,
@@ -867,8 +844,7 @@
                         backgroundColor: '#ffffff'
                     });
 
-                    document.body.removeChild(clone);
-
+                    // 3. Canvas to PDF
                     const { jsPDF } = window.jspdf;
                     const pdf = new jsPDF({
                         orientation: 'portrait',
@@ -881,8 +857,82 @@
                     const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
                     pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                    return pdf;
+
+                } finally {
+                    // Cleanup
+                    if (document.body.contains(clone)) {
+                        document.body.removeChild(clone);
+                    }
+                }
+            },
+
+            print: () => {
+                const bill = state.currentBill;
+                if (!bill) return;
+                templateRenderer.update(bill);
+                setTimeout(() => window.print(), 100);
+            },
+
+            share: async () => {
+                 const bill = state.currentBill;
+                 if (!bill) return;
+                
+                 const btn = document.getElementById('btn-share-pdf');
+                 const originalContent = btn.innerHTML;
+                 btn.disabled = true;
+                 btn.innerHTML = '<i class="fas fa-spinner fa-spin text-sm"></i><span class="text-[10px]">Sharing...</span>';
+
+                 try {
+                     // 1. Generate PDF
+                     const pdf = await outputHandler._generatePdfInstance(bill);
+                     
+                     // 2. Create File Object
+                     const blob = pdf.output('blob');
+                     const sanitizedName = (bill.customerName || 'customer').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                     const dateStr = new Date(bill.date).toISOString().split('T')[0];
+                     const filename = `nextgen-${sanitizedName}-${dateStr}.pdf`;
+                     
+                     const file = new File([blob], filename, { type: 'application/pdf' });
+
+                     // 3. Share
+                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                         await navigator.share({
+                             files: [file],
+                             title: 'Bill ' + bill.billId,
+                             text: `Please find attached the bill for ${bill.customerName}.`
+                         });
+                     } else {
+                         // Fallback logic if sharing files isn't supported
+                         alert("Sharing files is not supported on this browser. Downloading instead.");
+                         pdf.save(filename);
+                     }
+
+                 } catch (error) {
+                     console.error(error);
+                     alert("Share failed: " + error.message);
+                 } finally {
+                     btn.disabled = false;
+                     btn.innerHTML = originalContent;
+                 }
+            },
+
+            download: async () => {
+                const bill = state.currentBill;
+                if (!bill) return;
+
+                const btn = document.getElementById('btn-download-pdf');
+                // Temporarily show spinner inside the PDF button structure
+                btn.disabled = true;
+                const oldIcon = btn.querySelector('i').className;
+                const oldText = btn.querySelector('span').innerText;
+                
+                btn.querySelector('span').innerText = 'Generating...';
+                btn.querySelector('i').className = 'fas fa-spinner fa-spin text-sm';
+
+                try {
+                    const pdf = await outputHandler._generatePdfInstance(bill);
                     
-                    // Filename: nextgen-customer-date.pdf
                     const sanitizedName = (bill.customerName || 'customer').replace(/[^a-z0-9]/gi, '_').toLowerCase();
                     const dateStr = new Date(bill.date).toISOString().split('T')[0];
                     pdf.save(`nextgen-${sanitizedName}-${dateStr}.pdf`);
@@ -892,8 +942,8 @@
                     alert('PDF Generation failed: ' + error.message);
                 } finally {
                     btn.disabled = false;
-                    btn.querySelector('span').innerText = 'Save PDF';
-                    btn.querySelector('i').className = 'fas fa-file-download text-sm';
+                    btn.querySelector('span').innerText = oldText;
+                    btn.querySelector('i').className = oldIcon;
                 }
             }
         };
