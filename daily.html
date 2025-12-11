@@ -300,11 +300,11 @@
                     </div>
                 </div>
 
-                <button onclick="adminManager.downloadPDF()" class="w-full bg-white text-slate-800 border border-slate-200 p-4 rounded-xl flex items-center justify-center gap-3 font-bold text-sm shadow-sm active:scale-95 transition-all hover:bg-slate-50">
-                    <div class="bg-red-50 text-red-500 p-1.5 rounded-lg">
-                        <i data-lucide="file-down" class="w-4 h-4"></i>
+                <button onclick="adminManager.shareReport()" id="btn-share" class="w-full bg-green-500 text-white border-0 p-4 rounded-xl flex items-center justify-center gap-3 font-bold text-sm shadow-md shadow-green-200 active:scale-95 transition-all hover:bg-green-600">
+                    <div class="bg-white/20 p-1.5 rounded-lg">
+                        <i data-lucide="share-2" class="w-4 h-4"></i>
                     </div>
-                    Download Report PDF
+                    Share Report via WhatsApp
                 </button>
 
                 <!-- Table Preview -->
@@ -637,11 +637,13 @@
                     `).join('');
                 }
             },
-            downloadPDF: () => {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                
-                // --- 1. Filter Data (Logic duplicated from render to ensure fresh dataset) ---
+            shareReport: async () => {
+                const btn = document.getElementById('btn-share');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Generating...`;
+                lucide.createIcons();
+
+                // 1. Filter Data
                 const range = document.getElementById('admin-range').value;
                 const now = new Date();
                 let startStr, endStr, periodLabel;
@@ -662,7 +664,10 @@
                 } else {
                     startStr = document.getElementById('admin-start').value;
                     endStr = document.getElementById('admin-end').value;
-                    if (!startStr || !endStr) { alert("Select dates first"); return; }
+                    if (!startStr || !endStr) { 
+                         btn.innerHTML = originalText; lucide.createIcons();
+                         alert("Select dates first"); return; 
+                    }
                     periodLabel = `${startStr} to ${endStr}`;
                 }
 
@@ -670,55 +675,71 @@
                     .filter(e => e.dateStr >= startStr && e.dateStr <= endStr)
                     .sort((a,b) => (a.dateStr > b.dateStr) ? 1 : -1);
 
-                if(filtered.length === 0) { alert("No data to download"); return; }
+                if(filtered.length === 0) { 
+                    btn.innerHTML = originalText; lucide.createIcons();
+                    alert("No data to share"); return; 
+                }
 
-                // --- 2. Calculate Total ---
+                // 2. Prepare Data for PDF/Text
                 const grandTotal = filtered.reduce((acc, curr) => acc + Number(curr.totalCost), 0);
+                const tableBody = filtered.map(e => [e.dateStr, e.milkType, e.quantity, e.costPerPouch, e.totalCost]);
+                tableBody.push([{ content: 'Total', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } }, { content: String(grandTotal), styles: { fontStyle: 'bold' } }]);
 
-                // --- 3. Prepare Table Body ---
-                const tableBody = filtered.map(e => [
-                    e.dateStr,
-                    e.milkType,
-                    e.quantity,
-                    e.costPerPouch,
-                    e.totalCost
-                ]);
+                // 3. Try Sharing PDF File
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(18);
+                    doc.setTextColor(40);
+                    doc.text("Archtech housekeeping milk record", 14, 20);
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(12);
+                    doc.setTextColor(100);
+                    doc.text(periodLabel, 14, 28);
 
-                // Add Total Row
-                tableBody.push([
-                    { content: 'Total', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 240, 240] } },
-                    { content: String(grandTotal), styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }
-                ]);
+                    doc.autoTable({
+                        startY: 35,
+                        head: [['Date', 'Milk Pouch', 'Quantity', 'Cost/Pouch', 'Total']],
+                        body: tableBody,
+                        theme: 'grid',
+                        headStyles: { fillColor: [79, 70, 229], halign: 'center' },
+                        columnStyles: { 3: { halign: 'right' }, 4: { halign: 'right' } },
+                    });
 
-                // --- 4. Generate PDF ---
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(18);
-                doc.setTextColor(40);
-                doc.text("Archtech housekeeping milk record", 14, 20);
+                    const fileName = `Milk_Record_${periodLabel.replace(/ /g, '_')}.pdf`;
+                    const pdfBlob = doc.output('blob');
+                    const file = new File([pdfBlob], fileName, { type: "application/pdf" });
 
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(12);
-                doc.setTextColor(100);
-                doc.text(periodLabel, 14, 28);
+                    // Attempt Native Share (works for files in supported WebViews/Browsers)
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Milk Record Report',
+                            text: `Here is the milk record for ${periodLabel}`
+                        });
+                        btn.innerHTML = originalText;
+                        lucide.createIcons();
+                        return; // Success, exit
+                    }
+                } catch (e) {
+                    console.warn("File sharing failed/unsupported, falling back to text.", e);
+                }
 
-                doc.autoTable({
-                    startY: 35,
-                    head: [['Date', 'Milk Pouch', 'Quantity', 'Cost/Pouch', 'Total']],
-                    body: tableBody,
-                    theme: 'grid',
-                    headStyles: { fillColor: [79, 70, 229], halign: 'center' }, // Indigo
-                    columnStyles: {
-                        0: { cellWidth: 25 },
-                        1: { cellWidth: 40 },
-                        2: { halign: 'center' },
-                        3: { halign: 'right' },
-                        4: { halign: 'right' }
-                    },
-                    styles: { fontSize: 10, cellPadding: 3 }
-                });
+                // 4. Fallback: Text Summary to WhatsApp (Redirects to WhatsApp directly)
+                // If file share fails or isn't supported by the WebView, we send a clean text summary.
+                const textHeader = `*Archtech housekeeping milk record*\nPeriod: ${periodLabel}\n\n`;
+                const textRows = filtered.map(e => `${e.dateStr}: ${e.milkType} x${e.quantity} = ₹${e.totalCost}`).join('\n');
+                const textFooter = `\n\n*Grand Total: ₹${grandTotal}*`;
                 
-                // Filename: housekeeping milk recourd(October 2023).pdf
-                doc.save(`housekeeping milk recourd(${periodLabel}).pdf`);
+                const finalMsg = textHeader + textRows + textFooter;
+                const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(finalMsg)}`;
+                
+                window.location.href = whatsappUrl;
+                
+                btn.innerHTML = originalText;
+                lucide.createIcons();
             }
         };
 
