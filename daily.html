@@ -318,7 +318,7 @@
                         <div class="bg-white/20 p-1.5 rounded-lg">
                             <i data-lucide="share-2" class="w-4 h-4"></i>
                         </div>
-                        Share via WhatsApp
+                        Share Report
                     </button>
                     
                     <button onclick="adminManager.printReport()" class="col-span-1 bg-white text-slate-700 border border-slate-200 rounded-xl flex items-center justify-center shadow-sm active:scale-95 transition-all hover:bg-slate-50">
@@ -659,21 +659,32 @@
             shareReport: async () => {
                 const btn = document.getElementById('btn-share');
                 const originalText = btn.innerHTML;
-                btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Generating...`;
+                
+                // Visual feedback
+                btn.disabled = true;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Processing...`;
                 lucide.createIcons();
 
                 const { filtered, periodLabel, grandTotal } = adminManager.getFilteredData();
                 if(!filtered) {
-                     btn.innerHTML = originalText; lucide.createIcons();
+                     btn.disabled = false;
+                     btn.innerHTML = originalText; 
+                     lucide.createIcons();
                      return; 
                 }
 
+                // Prepare Text content (Receipt style)
+                const textHeader = `*Archtech housekeeping milk record*\nPeriod: ${periodLabel}\n----------------------------\n`;
+                const textRows = filtered.map(e => `${e.dateStr}: ${e.milkType} (Qty:${e.quantity}) = ₹${e.totalCost}`).join('\n');
+                const textFooter = `\n----------------------------\n*Grand Total: ₹${grandTotal}*`;
+                const finalMsg = textHeader + textRows + textFooter;
+
                 try {
-                    // --- ATTEMPT 1: PDF SHARE ---
-                    // Generate PDF Blob
+                    // --- STRATEGY 1: Share PDF File (Preferred) ---
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF();
                     
+                    // PDF Styling
                     doc.setFont("helvetica", "bold");
                     doc.setFontSize(18);
                     doc.setTextColor(40);
@@ -699,34 +710,39 @@
                     const pdfBlob = doc.output('blob');
                     const file = new File([pdfBlob], fileName, { type: "application/pdf" });
 
-                    // Check if native sharing is supported for files
+                    // Try File Share
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         await navigator.share({
                             files: [file],
-                            title: 'Milk Record Report',
-                            text: `Here is the milk record for ${periodLabel}`
+                            title: 'Milk Record',
+                            text: finalMsg
                         });
-                        btn.innerHTML = originalText;
-                        lucide.createIcons();
-                        return; // Success
                     } else {
                         throw new Error("File sharing not supported");
                     }
-                } catch (e) {
-                    console.log("PDF Share failed, falling back to text:", e);
-                    
-                    // --- ATTEMPT 2: TEXT SHARE FALLBACK ---
-                    // Clean receipt-style text format
-                    const textHeader = `*Archtech housekeeping milk record*\nPeriod: ${periodLabel}\n----------------------------\n`;
-                    const textRows = filtered.map(e => `${e.dateStr}: ${e.milkType} (Qty:${e.quantity}) = ₹${e.totalCost}`).join('\n');
-                    const textFooter = `\n----------------------------\n*Grand Total: ₹${grandTotal}*`;
-                    
-                    const finalMsg = textHeader + textRows + textFooter;
-                    const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(finalMsg)}`;
-                    
-                    // Use standard location header for reliable deep linking
-                    window.location.href = whatsappUrl;
+
+                } catch (pdfError) {
+                    console.log("PDF Share failed, trying text share...", pdfError);
+
+                    // --- STRATEGY 2: Share Text (System Sheet) ---
+                    try {
+                        if (navigator.share) {
+                             await navigator.share({
+                                title: 'Milk Record',
+                                text: finalMsg
+                            });
+                        } else {
+                            throw new Error("Navigator.share not supported");
+                        }
+                    } catch (textError) {
+                        console.log("Text share failed, trying WhatsApp intent...", textError);
+                        
+                        // --- STRATEGY 3: Direct WhatsApp URL ---
+                        // This bypasses the system sheet but works on almost all phones with WhatsApp
+                        window.location.href = `whatsapp://send?text=${encodeURIComponent(finalMsg)}`;
+                    }
                 } finally {
+                    btn.disabled = false;
                     btn.innerHTML = originalText;
                     lucide.createIcons();
                 }
