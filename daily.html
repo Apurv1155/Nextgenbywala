@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>GenDaily</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -29,64 +29,67 @@
         .spinner { animation: spin 1s linear infinite; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 h-screen overflow-hidden selection:bg-blue-100">
+<body class="bg-slate-50 text-slate-900 h-[100dvh] w-screen overflow-hidden selection:bg-blue-100">
     
     <div id="app" class="h-full w-full max-w-md mx-auto bg-slate-50 md:border-x md:border-gray-200 relative shadow-2xl flex flex-col">
         
         <!-- ================= DASHBOARD VIEW ================= -->
-        <div id="view-dashboard" class="view active">
+        <div id="view-dashboard" class="view active relative">
             <!-- Header -->
-            <div class="bg-blue-600 pb-8 pt-4 px-5 rounded-b-[2rem] shadow-lg shadow-blue-200 relative z-10 shrink-0">
-                <div class="flex justify-between items-center mb-6">
-                    <h1 class="text-xl font-bold flex items-center gap-2 text-white">
-                        <i data-lucide="milk" class="fill-white w-6 h-6" stroke-width="2.5"></i>
+            <div class="bg-blue-600 pb-6 pt-safe-top px-5 rounded-b-[2rem] shadow-lg shadow-blue-200 relative z-10 shrink-0">
+                <!-- Top Padding Helper for status bars -->
+                <div class="h-2"></div> 
+                
+                <div class="flex justify-between items-center mb-4">
+                    <h1 class="text-lg font-bold flex items-center gap-2 text-white">
+                        <i data-lucide="milk" class="fill-white w-5 h-5" stroke-width="2.5"></i>
                         GenDaily
                     </h1>
                     <div class="flex gap-2">
                         <!-- Sync Button -->
                         <button onclick="apiService.fetchAll(true)" class="bg-white/20 backdrop-blur-md p-2 rounded-lg hover:bg-white/30 transition-all text-white border border-white/10 active:scale-95">
-                            <i id="icon-refresh" data-lucide="refresh-cw" class="w-5 h-5"></i>
+                            <i id="icon-refresh" data-lucide="refresh-cw" class="w-4 h-4"></i>
                         </button>
                         <!-- Admin Button -->
                         <button onclick="router.navigate('admin')" class="bg-white/20 backdrop-blur-md p-2 rounded-lg hover:bg-white/30 transition-all text-white border border-white/10 active:scale-95">
-                            <i data-lucide="file-text" class="w-5 h-5"></i>
+                            <i data-lucide="file-text" class="w-4 h-4"></i>
                         </button>
                     </div>
                 </div>
                 
-                <div class="flex flex-col items-center justify-center">
-                    <div class="text-blue-200 text-xs font-semibold uppercase tracking-widest mb-1">Today's Sales</div>
-                    <div class="text-5xl font-extrabold text-white tracking-tight">
+                <div class="flex flex-col items-center justify-center pb-2">
+                    <div class="text-blue-200 text-[10px] font-semibold uppercase tracking-widest mb-0.5">Today's Sales</div>
+                    <div class="text-4xl font-extrabold text-white tracking-tight">
                         <span class="text-2xl font-bold align-top opacity-70 mr-0.5">₹</span><span id="dashboard-total">0</span>
                     </div>
                 </div>
             </div>
 
             <!-- List -->
-            <div class="flex-1 -mt-5 px-4 overflow-y-auto pb-24 z-10 relative no-scrollbar" id="entry-list">
+            <div class="flex-1 -mt-4 px-4 overflow-y-auto pb-28 z-10 relative no-scrollbar" id="entry-list">
                 <!-- Loading State -->
                 <div class="flex flex-col items-center justify-center pt-16 opacity-50">
                     <i data-lucide="loader-2" class="w-6 h-6 spinner text-blue-600 mb-2"></i>
-                    <p class="text-xs font-medium text-gray-500">Syncing with Sheet...</p>
+                    <p class="text-xs font-medium text-gray-500">Syncing...</p>
                 </div>
             </div>
 
             <!-- FAB -->
-            <div class="absolute bottom-5 right-5 z-30">
-                <button onclick="router.navigate('entry')" class="w-14 h-14 bg-gray-900 text-white rounded-2xl shadow-xl shadow-gray-400/50 flex items-center justify-center hover:bg-black hover:scale-105 transition-all active:scale-95">
+            <div class="absolute bottom-8 right-6 z-40">
+                <button onclick="router.navigate('entry')" class="w-14 h-14 bg-gray-900 text-white rounded-2xl shadow-xl shadow-gray-400/50 flex items-center justify-center hover:bg-black hover:scale-105 transition-all active:scale-95 border-2 border-white/10">
                     <i data-lucide="plus" class="w-7 h-7"></i>
                 </button>
             </div>
         </div>
 
         <!-- ================= ENTRY VIEW ================= -->
-        <div id="view-entry" class="view bg-gray-50">
+        <div id="view-entry" class="view bg-gray-50 h-full relative">
             <!-- Nav -->
-            <div class="px-5 pt-5 pb-2 flex items-center justify-between z-20 shrink-0">
+            <div class="px-5 pt-6 pb-2 flex items-center justify-between z-20 shrink-0">
                 <button onclick="router.navigate('dashboard')" class="w-9 h-9 bg-white rounded-full flex items-center justify-center text-gray-500 shadow-sm border border-gray-100 active:scale-95 transition-transform">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
-                <h2 class="text-base font-bold text-gray-800 tracking-tight">Add Daily Entry</h2>
+                <h2 class="text-base font-bold text-gray-800 tracking-tight">Add Entry</h2>
                 <div class="w-9"></div>
             </div>
 
@@ -103,20 +106,20 @@
                 <div id="card-big" class="bg-white shadow-sm border border-gray-100 rounded-2xl p-4 transition-all duration-300">
                     <div class="flex justify-between items-start mb-3">
                         <div>
-                            <h3 class="text-base font-extrabold text-gray-800">Milk 500 ml</h3>
-                            <p class="text-gray-400 font-medium text-xs mt-0.5">₹35 per pack</p>
+                            <h3 class="text-sm font-extrabold text-gray-800">Milk 500 ml</h3>
+                            <p class="text-gray-400 font-medium text-[10px] mt-0.5">₹35 per pack</p>
                         </div>
                         <div class="text-right">
                              <div id="subtotal-big-wrap" class="hidden text-blue-600 font-bold">
                                  <span class="text-[10px] text-gray-400 font-normal mr-1"><span id="qty-disp-big">0</span> × 35 =</span>
-                                 <span class="text-lg">₹<span id="subtotal-big">0</span></span>
+                                 <span class="text-base">₹<span id="subtotal-big">0</span></span>
                              </div>
                         </div>
                     </div>
                     <div class="bg-gray-50 rounded-xl p-1.5 flex items-center">
-                        <button onclick="entryManager.updateQty('Big', -1)" class="w-12 h-10 bg-white rounded-lg shadow-sm text-gray-600 flex items-center justify-center active:scale-90"><i data-lucide="minus" class="w-5 h-5"></i></button>
+                        <button onclick="entryManager.updateQty('Big', -1)" class="w-10 h-10 bg-white rounded-lg shadow-sm text-gray-600 flex items-center justify-center active:scale-90"><i data-lucide="minus" class="w-4 h-4"></i></button>
                         <input type="number" id="input-big" value="0" readonly class="flex-1 bg-transparent text-center text-xl font-bold text-gray-800 outline-none w-full">
-                        <button onclick="entryManager.updateQty('Big', 1)" id="btn-add-big" class="w-12 h-10 bg-gray-800 text-white rounded-lg shadow-md flex items-center justify-center active:scale-90"><i data-lucide="plus" class="w-5 h-5"></i></button>
+                        <button onclick="entryManager.updateQty('Big', 1)" id="btn-add-big" class="w-10 h-10 bg-gray-800 text-white rounded-lg shadow-md flex items-center justify-center active:scale-90"><i data-lucide="plus" class="w-4 h-4"></i></button>
                     </div>
                 </div>
 
@@ -124,27 +127,27 @@
                 <div id="card-small" class="bg-white shadow-sm border border-gray-100 rounded-2xl p-4 transition-all duration-300">
                     <div class="flex justify-between items-start mb-3">
                         <div>
-                            <h3 class="text-base font-extrabold text-gray-800">Milk Small</h3>
-                            <p class="text-gray-400 font-medium text-xs mt-0.5">₹11 per pack</p>
+                            <h3 class="text-sm font-extrabold text-gray-800">Milk Small</h3>
+                            <p class="text-gray-400 font-medium text-[10px] mt-0.5">₹11 per pack</p>
                         </div>
                         <div class="text-right">
                              <div id="subtotal-small-wrap" class="hidden text-blue-600 font-bold">
                                  <span class="text-[10px] text-gray-400 font-normal mr-1"><span id="qty-disp-small">0</span> × 11 =</span>
-                                 <span class="text-lg">₹<span id="subtotal-small">0</span></span>
+                                 <span class="text-base">₹<span id="subtotal-small">0</span></span>
                              </div>
                         </div>
                     </div>
                     <div class="bg-gray-50 rounded-xl p-1.5 flex items-center">
-                        <button onclick="entryManager.updateQty('Small', -1)" class="w-12 h-10 bg-white rounded-lg shadow-sm text-gray-600 flex items-center justify-center active:scale-90"><i data-lucide="minus" class="w-5 h-5"></i></button>
+                        <button onclick="entryManager.updateQty('Small', -1)" class="w-10 h-10 bg-white rounded-lg shadow-sm text-gray-600 flex items-center justify-center active:scale-90"><i data-lucide="minus" class="w-4 h-4"></i></button>
                         <input type="number" id="input-small" value="0" readonly class="flex-1 bg-transparent text-center text-xl font-bold text-gray-800 outline-none w-full">
-                        <button onclick="entryManager.updateQty('Small', 1)" id="btn-add-small" class="w-12 h-10 bg-gray-800 text-white rounded-lg shadow-md flex items-center justify-center active:scale-90"><i data-lucide="plus" class="w-5 h-5"></i></button>
+                        <button onclick="entryManager.updateQty('Small', 1)" id="btn-add-small" class="w-10 h-10 bg-gray-800 text-white rounded-lg shadow-md flex items-center justify-center active:scale-90"><i data-lucide="plus" class="w-4 h-4"></i></button>
                     </div>
                 </div>
             </div>
 
             <!-- Footer -->
-            <div class="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-white via-white/95 to-transparent z-30 pb-6">
-                <div id="entry-footer-empty" class="bg-gray-100 rounded-xl p-3 text-center text-gray-400 text-sm font-medium border border-gray-200 border-dashed">
+            <div class="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-white via-white/95 to-transparent z-30 pb-8">
+                <div id="entry-footer-empty" class="bg-gray-100 rounded-xl p-3 text-center text-gray-400 text-xs font-medium border border-gray-200 border-dashed">
                     <i data-lucide="alert-circle" class="mx-auto mb-1 opacity-50 w-4 h-4 inline"></i> Add items to save
                 </div>
                 <div id="entry-footer-active" class="hidden slide-up">
@@ -166,29 +169,29 @@
         </div>
 
         <!-- ================= ADMIN VIEW ================= -->
-        <div id="view-admin" class="view bg-slate-50">
+        <div id="view-admin" class="view bg-slate-50 relative">
             <div class="bg-white border-b border-gray-100 p-4 sticky top-0 z-20 shrink-0">
                 <div class="flex items-center gap-3">
                     <button onclick="router.navigate('dashboard')" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600">
                         <i data-lucide="arrow-left" class="w-5 h-5"></i>
                     </button>
                     <div class="flex-1">
-                        <h2 class="text-lg font-bold text-gray-800">Admin</h2>
+                        <h2 class="text-base font-bold text-gray-800">Admin</h2>
                         <p class="text-[10px] text-gray-400 font-medium">Reports</p>
                     </div>
                 </div>
             </div>
             
-            <div class="p-5 space-y-5 flex-1 overflow-y-auto">
+            <div class="p-5 space-y-4 flex-1 overflow-y-auto pb-10">
                 <!-- Filter -->
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative">
                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Time Period</label>
-                    <select id="admin-range" onchange="adminManager.onFilterChange()" class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-base font-bold p-2.5 rounded-lg outline-none appearance-none">
+                    <select id="admin-range" onchange="adminManager.onFilterChange()" class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm font-bold p-2.5 rounded-lg outline-none appearance-none">
                         <option value="last_month">Last Month</option>
                         <option value="this_month">Current Month</option>
                         <option value="custom">Custom Date</option>
                     </select>
-                    <i data-lucide="chevron-down" class="absolute right-6 top-[2.5rem] text-gray-400 pointer-events-none w-4 h-4"></i>
+                    <i data-lucide="chevron-down" class="absolute right-6 top-[2.4rem] text-gray-400 pointer-events-none w-4 h-4"></i>
 
                     <!-- Custom Date Inputs -->
                     <div id="admin-custom-dates" class="hidden grid grid-cols-2 gap-3 mt-3 animate-in slide-in-from-top-2">
@@ -215,7 +218,7 @@
                     </div>
                 </div>
 
-                <button onclick="adminManager.downloadPDF()" class="w-full bg-gray-900 text-white p-3.5 rounded-xl flex items-center justify-center gap-2 font-bold text-base shadow-xl active:scale-95 transition-all">
+                <button onclick="adminManager.downloadPDF()" class="w-full bg-gray-900 text-white p-3.5 rounded-xl flex items-center justify-center gap-2 font-bold text-sm shadow-xl active:scale-95 transition-all">
                     <i data-lucide="download" class="w-4 h-4"></i> Download PDF
                 </button>
 
@@ -364,7 +367,7 @@
                     listEl.innerHTML = sorted.map(e => `
                         <div class="bg-white p-3 mb-2.5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-base font-bold ${String(e.milkType).includes('500') ? 'bg-blue-100 text-blue-600' : 'bg-orange-100 text-orange-600'}">
+                                <div class="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold ${String(e.milkType).includes('500') ? 'bg-blue-100 text-blue-600' : 'bg-orange-100 text-orange-600'}">
                                     ${e.quantity}
                                 </div>
                                 <div>
