@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>GenDaily</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- PDF Generation -->
@@ -13,264 +13,319 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
     
     <style>
-        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
         /* View Management */
-        .view { display: none; height: 100%; flex-direction: column; opacity: 0; transition: opacity 0.2s ease-in-out; }
+        .view { display: none; height: 100%; flex-direction: column; opacity: 0; transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
         .view.active { display: flex; opacity: 1; }
         
         /* Animations */
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .slide-up { animation: slideUp 0.3s ease-out forwards; }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .slide-up { animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
         
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .spinner { animation: spin 1s linear infinite; }
+        .spinner { animation: spin 0.8s linear infinite; }
 
         /* Loading Screen */
         #loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh;
-            background: #F8FAFC; /* Match bg-slate-50 */
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh;
+            background: #F8FAFC;
+            display: flex; justify-content: center; align-items: center;
             z-index: 10000;
-            transition: opacity 0.8s ease, visibility 0.8s ease;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
         }
-        #loading-screen.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
+        #loading-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
         
         .nextgen-logo {
-            width: 258px;
-            height: 65px;
-            object-fit: contain;
-            animation: logoFade 2s ease-in-out infinite alternate;
+            width: 220px; height: auto; object-fit: contain;
+            animation: logoPulse 2s ease-in-out infinite;
         }
-        @keyframes logoFade { from { opacity: 0.7; } to { opacity: 1; } }
+        @keyframes logoPulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
 
+        /* Custom Utilities */
+        .glass-panel { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.5); }
+        .safe-top { padding-top: env(safe-area-inset-top, 20px); }
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 20px); }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 h-[100dvh] w-screen overflow-hidden selection:bg-blue-100">
+<body class="bg-slate-100 text-slate-900 h-[100dvh] w-screen overflow-hidden selection:bg-indigo-100">
     
     <!-- Loading Screen -->
     <div id="loading-screen">
         <img src="Logo2.png" alt="Loading Logo" class="nextgen-logo" />
     </div>
 
-    <div id="app" class="h-full w-full max-w-md mx-auto bg-slate-50 md:border-x md:border-gray-200 relative shadow-2xl flex flex-col">
+    <div id="app" class="h-full w-full max-w-md mx-auto bg-slate-50 md:border-x md:border-slate-200 relative shadow-2xl flex flex-col overflow-hidden">
         
         <!-- ================= DASHBOARD VIEW ================= -->
-        <div id="view-dashboard" class="view active relative">
+        <div id="view-dashboard" class="view active relative bg-slate-50">
             <!-- Header -->
-            <div class="bg-blue-600 pb-6 pt-safe-top px-5 rounded-b-[2rem] shadow-lg shadow-blue-200 relative z-10 shrink-0">
-                <!-- Top Padding Helper for status bars -->
-                <div class="h-2"></div> 
+            <div class="bg-gradient-to-br from-indigo-600 via-blue-600 to-blue-500 pb-8 safe-top px-6 rounded-b-[2.5rem] shadow-xl shadow-blue-200/50 relative z-10 shrink-0 overflow-hidden">
+                <!-- Decorative Circle -->
+                <div class="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
                 
-                <div class="flex justify-between items-center mb-4">
-                    <h1 class="text-lg font-bold flex items-center gap-2 text-white">
-                        <i data-lucide="milk" class="fill-white w-5 h-5" stroke-width="2.5"></i>
+                <div class="h-4"></div> <!-- Spacer -->
+                
+                <div class="flex justify-between items-center mb-6 relative z-10">
+                    <h1 class="text-lg font-bold flex items-center gap-2.5 text-white tracking-wide">
+                        <div class="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm">
+                            <i data-lucide="milk" class="text-white w-4 h-4" stroke-width="3"></i>
+                        </div>
                         GenDaily
                     </h1>
                     <div class="flex gap-2">
                         <!-- Sync Button -->
-                        <button onclick="apiService.fetchAll(true)" class="bg-white/20 backdrop-blur-md p-2 rounded-lg hover:bg-white/30 transition-all text-white border border-white/10 active:scale-95">
+                        <button onclick="apiService.fetchAll(true)" class="bg-white/10 backdrop-blur-md p-2 rounded-xl hover:bg-white/20 transition-all text-white border border-white/10 active:scale-95 shadow-lg shadow-black/5">
                             <i id="icon-refresh" data-lucide="refresh-cw" class="w-4 h-4"></i>
                         </button>
                         <!-- Admin Button -->
-                        <button onclick="router.navigate('admin')" class="bg-white/20 backdrop-blur-md p-2 rounded-lg hover:bg-white/30 transition-all text-white border border-white/10 active:scale-95">
-                            <i data-lucide="file-text" class="w-4 h-4"></i>
+                        <button onclick="router.navigate('admin')" class="bg-white/10 backdrop-blur-md p-2 rounded-xl hover:bg-white/20 transition-all text-white border border-white/10 active:scale-95 shadow-lg shadow-black/5">
+                            <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
                         </button>
                     </div>
                 </div>
                 
-                <div class="flex flex-col items-center justify-center pb-2">
-                    <div class="text-blue-200 text-[10px] font-semibold uppercase tracking-widest mb-0.5">Today's Sales</div>
-                    <div class="text-4xl font-extrabold text-white tracking-tight">
-                        <span class="text-2xl font-bold align-top opacity-70 mr-0.5">₹</span><span id="dashboard-total">0</span>
+                <div class="flex flex-col items-center justify-center py-2 relative z-10">
+                    <div class="text-blue-100 text-[11px] font-bold uppercase tracking-widest mb-1 opacity-80">Today's Sales</div>
+                    <div class="flex items-start text-white drop-shadow-sm">
+                        <span class="text-2xl font-semibold mt-1 opacity-80 mr-1">₹</span>
+                        <span id="dashboard-total" class="text-[3.5rem] leading-none font-black tracking-tight">0</span>
                     </div>
                 </div>
             </div>
 
             <!-- List -->
-            <div class="flex-1 -mt-4 px-4 overflow-y-auto pb-28 z-10 relative no-scrollbar" id="entry-list">
+            <div class="flex-1 -mt-6 px-4 overflow-y-auto pb-32 z-20 relative no-scrollbar" id="entry-list">
                 <!-- Loading State -->
-                <div class="flex flex-col items-center justify-center pt-16 opacity-50">
-                    <i data-lucide="loader-2" class="w-6 h-6 spinner text-blue-600 mb-2"></i>
-                    <p class="text-xs font-medium text-gray-500">Syncing...</p>
+                <div class="flex flex-col items-center justify-center pt-20 opacity-60">
+                    <div class="bg-white p-3 rounded-full shadow-lg mb-3">
+                        <i data-lucide="loader-2" class="w-6 h-6 spinner text-indigo-500"></i>
+                    </div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Syncing Data...</p>
                 </div>
             </div>
 
             <!-- FAB -->
-            <div class="absolute bottom-8 right-6 z-40">
-                <button onclick="router.navigate('entry')" class="w-14 h-14 bg-gray-900 text-white rounded-2xl shadow-xl shadow-gray-400/50 flex items-center justify-center hover:bg-black hover:scale-105 transition-all active:scale-95 border-2 border-white/10">
-                    <i data-lucide="plus" class="w-7 h-7"></i>
+            <div class="absolute bottom-6 right-6 z-50">
+                <button onclick="router.navigate('entry')" class="group relative w-14 h-14 flex items-center justify-center">
+                    <div class="absolute inset-0 bg-indigo-600 rounded-2xl rotate-3 group-hover:rotate-6 transition-transform shadow-xl shadow-indigo-300"></div>
+                    <div class="absolute inset-0 bg-slate-900 rounded-2xl flex items-center justify-center text-white border border-white/10 group-active:scale-95 transition-transform">
+                        <i data-lucide="plus" class="w-7 h-7"></i>
+                    </div>
                 </button>
             </div>
         </div>
 
         <!-- ================= ENTRY VIEW ================= -->
-        <div id="view-entry" class="view bg-gray-50 h-full relative">
+        <div id="view-entry" class="view bg-slate-50 h-full relative">
+            <!-- Header Background -->
+            <div class="absolute top-0 left-0 w-full h-48 bg-gradient-to-b from-indigo-50 to-transparent pointer-events-none"></div>
+
             <!-- Nav -->
-            <div class="px-5 pt-6 pb-2 flex items-center justify-between z-20 shrink-0">
-                <button onclick="router.navigate('dashboard')" class="w-9 h-9 bg-white rounded-full flex items-center justify-center text-gray-500 shadow-sm border border-gray-100 active:scale-95 transition-transform">
+            <div class="px-5 pt-safe-top mt-4 pb-2 flex items-center justify-between z-20 shrink-0 relative">
+                <button onclick="router.navigate('dashboard')" class="w-10 h-10 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center text-slate-500 shadow-sm border border-white active:scale-95 transition-transform">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
-                <h2 class="text-base font-bold text-gray-800 tracking-tight">Add Entry</h2>
-                <div class="w-9"></div>
+                <h2 class="text-lg font-bold text-slate-800 tracking-tight">New Entry</h2>
+                <div class="w-10"></div>
             </div>
 
-            <div class="flex-1 overflow-y-auto px-5 py-3 pb-32 space-y-4">
-                <!-- Date -->
-                <div class="bg-white p-1 rounded-xl shadow-sm border border-gray-100 flex items-center">
-                    <div class="bg-blue-50 w-10 h-10 rounded-lg flex items-center justify-center text-blue-600 ml-1">
-                        <i data-lucide="calendar" class="w-5 h-5"></i>
-                    </div>
-                    <input type="date" id="entry-date" class="flex-1 bg-transparent border-none text-gray-800 font-bold text-base p-2.5 focus:ring-0 outline-none">
-                </div>
-
-                <!-- Milk 500ml -->
-                <div id="card-big" class="bg-white shadow-sm border border-gray-100 rounded-2xl p-4 transition-all duration-300">
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <h3 class="text-sm font-extrabold text-gray-800">Milk 500 ml</h3>
-                            <p class="text-gray-400 font-medium text-[10px] mt-0.5">₹35 per pack</p>
-                        </div>
-                        <div class="text-right">
-                             <div id="subtotal-big-wrap" class="hidden text-blue-600 font-bold">
-                                 <span class="text-[10px] text-gray-400 font-normal mr-1"><span id="qty-disp-big">0</span> × 35 =</span>
-                                 <span class="text-base">₹<span id="subtotal-big">0</span></span>
-                             </div>
-                        </div>
-                    </div>
-                    <div class="bg-gray-50 rounded-xl p-1.5 flex items-center">
-                        <button onclick="entryManager.updateQty('Big', -1)" class="w-10 h-10 bg-white rounded-lg shadow-sm text-gray-600 flex items-center justify-center active:scale-90"><i data-lucide="minus" class="w-4 h-4"></i></button>
-                        <input type="number" id="input-big" value="0" readonly class="flex-1 bg-transparent text-center text-xl font-bold text-gray-800 outline-none w-full">
-                        <button onclick="entryManager.updateQty('Big', 1)" id="btn-add-big" class="w-10 h-10 bg-gray-800 text-white rounded-lg shadow-md flex items-center justify-center active:scale-90"><i data-lucide="plus" class="w-4 h-4"></i></button>
+            <div class="flex-1 overflow-y-auto px-5 py-2 pb-40 space-y-5 relative z-10">
+                
+                <!-- Date Picker -->
+                <div class="flex justify-center mb-2">
+                    <div class="glass-panel px-4 py-2 rounded-full flex items-center shadow-sm">
+                        <i data-lucide="calendar" class="w-4 h-4 text-indigo-500 mr-2"></i>
+                        <input type="date" id="entry-date" class="bg-transparent border-none text-slate-700 font-bold text-sm focus:ring-0 outline-none p-0 w-32">
                     </div>
                 </div>
 
-                <!-- Milk Small -->
-                <div id="card-small" class="bg-white shadow-sm border border-gray-100 rounded-2xl p-4 transition-all duration-300">
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <h3 class="text-sm font-extrabold text-gray-800">Milk Small</h3>
-                            <p class="text-gray-400 font-medium text-[10px] mt-0.5">₹11 per pack</p>
+                <!-- Milk 500ml Card -->
+                <div id="card-big" class="bg-white shadow-sm border border-slate-100 rounded-[1.25rem] p-5 transition-all duration-300 transform active:scale-[0.99]">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="flex gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                                <i data-lucide="milk" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-extrabold text-slate-800">500 ml Pack</h3>
+                                <p class="text-slate-400 font-medium text-[11px] mt-0.5">₹35.00 / pouch</p>
+                            </div>
                         </div>
                         <div class="text-right">
-                             <div id="subtotal-small-wrap" class="hidden text-blue-600 font-bold">
-                                 <span class="text-[10px] text-gray-400 font-normal mr-1"><span id="qty-disp-small">0</span> × 11 =</span>
-                                 <span class="text-base">₹<span id="subtotal-small">0</span></span>
+                             <div id="subtotal-big-wrap" class="hidden animate-in fade-in slide-in-from-right-4">
+                                 <span class="text-[10px] text-slate-400 font-bold block mb-0.5">Subtotal</span>
+                                 <span class="text-lg font-black text-indigo-600">₹<span id="subtotal-big">0</span></span>
                              </div>
                         </div>
                     </div>
-                    <div class="bg-gray-50 rounded-xl p-1.5 flex items-center">
-                        <button onclick="entryManager.updateQty('Small', -1)" class="w-10 h-10 bg-white rounded-lg shadow-sm text-gray-600 flex items-center justify-center active:scale-90"><i data-lucide="minus" class="w-4 h-4"></i></button>
-                        <input type="number" id="input-small" value="0" readonly class="flex-1 bg-transparent text-center text-xl font-bold text-gray-800 outline-none w-full">
-                        <button onclick="entryManager.updateQty('Small', 1)" id="btn-add-small" class="w-10 h-10 bg-gray-800 text-white rounded-lg shadow-md flex items-center justify-center active:scale-90"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                    
+                    <!-- Counter -->
+                    <div class="bg-slate-50 rounded-2xl p-1.5 flex items-center justify-between border border-slate-100/50">
+                        <button onclick="entryManager.updateQty('Big', -1)" class="w-12 h-11 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-400 hover:text-indigo-600 flex items-center justify-center active:scale-90 transition-all">
+                            <i data-lucide="minus" class="w-5 h-5" stroke-width="2.5"></i>
+                        </button>
+                        <div class="flex-1 text-center">
+                            <input type="number" id="input-big" value="0" readonly class="bg-transparent text-center text-2xl font-black text-slate-800 outline-none w-full pointer-events-none">
+                        </div>
+                        <button onclick="entryManager.updateQty('Big', 1)" id="btn-add-big" class="w-12 h-11 bg-slate-800 text-white rounded-xl shadow-md shadow-slate-300 flex items-center justify-center active:scale-90 transition-all">
+                            <i data-lucide="plus" class="w-5 h-5" stroke-width="2.5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Milk Small Card -->
+                <div id="card-small" class="bg-white shadow-sm border border-slate-100 rounded-[1.25rem] p-5 transition-all duration-300 transform active:scale-[0.99]">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="flex gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center">
+                                <i data-lucide="cup-soda" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-extrabold text-slate-800">Small Pack</h3>
+                                <p class="text-slate-400 font-medium text-[11px] mt-0.5">₹11.00 / pouch</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                             <div id="subtotal-small-wrap" class="hidden animate-in fade-in slide-in-from-right-4">
+                                 <span class="text-[10px] text-slate-400 font-bold block mb-0.5">Subtotal</span>
+                                 <span class="text-lg font-black text-orange-500">₹<span id="subtotal-small">0</span></span>
+                             </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Counter -->
+                    <div class="bg-slate-50 rounded-2xl p-1.5 flex items-center justify-between border border-slate-100/50">
+                        <button onclick="entryManager.updateQty('Small', -1)" class="w-12 h-11 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-400 hover:text-orange-500 flex items-center justify-center active:scale-90 transition-all">
+                            <i data-lucide="minus" class="w-5 h-5" stroke-width="2.5"></i>
+                        </button>
+                        <div class="flex-1 text-center">
+                            <input type="number" id="input-small" value="0" readonly class="bg-transparent text-center text-2xl font-black text-slate-800 outline-none w-full pointer-events-none">
+                        </div>
+                        <button onclick="entryManager.updateQty('Small', 1)" id="btn-add-small" class="w-12 h-11 bg-slate-800 text-white rounded-xl shadow-md shadow-slate-300 flex items-center justify-center active:scale-90 transition-all">
+                            <i data-lucide="plus" class="w-5 h-5" stroke-width="2.5"></i>
+                        </button>
                     </div>
                 </div>
             </div>
 
             <!-- Footer -->
-            <div class="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-white via-white/95 to-transparent z-30 pb-8">
-                <div id="entry-footer-empty" class="bg-gray-100 rounded-xl p-3 text-center text-gray-400 text-xs font-medium border border-gray-200 border-dashed">
-                    <i data-lucide="alert-circle" class="mx-auto mb-1 opacity-50 w-4 h-4 inline"></i> Add items to save
+            <div class="absolute bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-xl border-t border-slate-100 z-30 safe-bottom rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+                <div id="entry-footer-empty" class="text-center py-3">
+                    <p class="text-sm font-semibold text-slate-400 flex items-center justify-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-slate-300"></span>
+                        Start adding items
+                        <span class="w-2 h-2 rounded-full bg-slate-300"></span>
+                    </p>
                 </div>
                 <div id="entry-footer-active" class="hidden slide-up">
-                    <div class="flex justify-between items-end mb-3 px-1">
+                    <div class="flex justify-between items-center mb-4 px-2">
                         <div>
-                            <p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Total Payable</p>
-                            <p class="text-2xl font-extrabold text-gray-900">₹<span id="total-cost">0</span></p>
+                            <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-0.5">Total Payable</p>
+                            <p class="text-3xl font-black text-slate-900">₹<span id="total-cost">0</span></p>
                         </div>
-                        <div class="text-right pb-1">
-                            <span class="bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded-full text-[10px] font-bold"><span id="total-qty">0</span> Packs</span>
+                        <div class="text-right">
+                            <div class="bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-100">
+                                <span id="total-qty">0</span> Packs Total
+                            </div>
                         </div>
                     </div>
-                    <button onclick="entryManager.save()" id="btn-save" class="w-full bg-gray-900 text-white h-14 rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-xl hover:bg-black active:scale-[0.98] transition-all">
-                        <span>Confirm Entry</span>
-                        <i data-lucide="check" class="bg-white/20 rounded-full p-1 w-5 h-5"></i>
+                    <button onclick="entryManager.save()" id="btn-save" class="w-full bg-slate-900 text-white h-14 rounded-2xl font-bold text-base flex items-center justify-center gap-3 shadow-xl shadow-slate-400/20 hover:bg-black active:scale-[0.98] transition-all">
+                        <span>Save Entry</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- ================= ADMIN VIEW ================= -->
-        <div id="view-admin" class="view bg-slate-50 relative">
-            <div class="bg-white border-b border-gray-100 p-4 sticky top-0 z-20 shrink-0">
-                <div class="flex items-center gap-3">
-                    <button onclick="router.navigate('dashboard')" class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600">
+        <div id="view-admin" class="view bg-slate-50 relative h-full">
+            <div class="bg-white/80 backdrop-blur-md border-b border-slate-100 p-4 safe-top sticky top-0 z-30 shrink-0">
+                <div class="flex items-center gap-3 pt-2">
+                    <button onclick="router.navigate('dashboard')" class="w-10 h-10 hover:bg-slate-50 rounded-full flex items-center justify-center transition-colors text-slate-600">
                         <i data-lucide="arrow-left" class="w-5 h-5"></i>
                     </button>
                     <div class="flex-1">
-                        <h2 class="text-base font-bold text-gray-800">Admin</h2>
-                        <p class="text-[10px] text-gray-400 font-medium">Reports</p>
+                        <h2 class="text-lg font-bold text-slate-800">Admin Reports</h2>
                     </div>
                 </div>
             </div>
             
-            <div class="p-5 space-y-4 flex-1 overflow-y-auto pb-10">
+            <div class="p-5 space-y-5 flex-1 overflow-y-auto pb-safe-bottom">
                 <!-- Filter -->
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Time Period</label>
-                    <select id="admin-range" onchange="adminManager.onFilterChange()" class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm font-bold p-2.5 rounded-lg outline-none appearance-none">
-                        <option value="last_month">Last Month</option>
-                        <option value="this_month">Current Month</option>
-                        <option value="custom">Custom Date</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="absolute right-6 top-[2.4rem] text-gray-400 pointer-events-none w-4 h-4"></i>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative">
+                    <label class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block mb-2">Select Period</label>
+                    <div class="relative">
+                        <select id="admin-range" onchange="adminManager.onFilterChange()" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm font-bold p-3.5 pr-10 rounded-xl outline-none appearance-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all">
+                            <option value="last_month">Last Month</option>
+                            <option value="this_month">Current Month</option>
+                            <option value="custom">Custom Date Range</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="absolute right-4 top-3.5 text-slate-400 pointer-events-none w-4 h-4"></i>
+                    </div>
 
                     <!-- Custom Date Inputs -->
-                    <div id="admin-custom-dates" class="hidden grid grid-cols-2 gap-3 mt-3 animate-in slide-in-from-top-2">
+                    <div id="admin-custom-dates" class="hidden grid grid-cols-2 gap-3 mt-4 animate-in fade-in slide-in-from-top-2">
                         <div>
-                            <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">From</label>
-                            <input type="date" id="admin-start" onchange="adminManager.render()" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 text-xs font-bold">
+                            <label class="text-[10px] text-slate-400 font-bold uppercase ml-1 mb-1 block">From</label>
+                            <input type="date" id="admin-start" onchange="adminManager.render()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold outline-none focus:border-indigo-300">
                         </div>
                         <div>
-                            <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">To</label>
-                            <input type="date" id="admin-end" onchange="adminManager.render()" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 text-xs font-bold">
+                            <label class="text-[10px] text-slate-400 font-bold uppercase ml-1 mb-1 block">To</label>
+                            <input type="date" id="admin-end" onchange="adminManager.render()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold outline-none focus:border-indigo-300">
                         </div>
                     </div>
                 </div>
 
                 <!-- Stats -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-blue-600 text-white p-4 rounded-xl shadow-lg shadow-blue-200">
-                        <div class="text-blue-100 text-[10px] font-semibold uppercase">Total Cost</div>
-                        <div class="text-xl font-bold mt-0.5">₹<span id="admin-total-cost">0</span></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gradient-to-br from-indigo-500 to-blue-600 text-white p-5 rounded-2xl shadow-lg shadow-indigo-200">
+                        <div class="flex items-center gap-2 mb-2 opacity-80">
+                            <i data-lucide="indian-rupee" class="w-4 h-4"></i>
+                            <div class="text-[10px] font-bold uppercase tracking-wider">Total Cost</div>
+                        </div>
+                        <div class="text-2xl font-black">₹<span id="admin-total-cost">0</span></div>
                     </div>
-                    <div class="bg-white text-gray-800 p-4 rounded-xl shadow-sm border border-gray-100">
-                        <div class="text-gray-400 text-[10px] font-bold uppercase">Quantity</div>
-                        <div class="text-xl font-bold mt-0.5"><span id="admin-total-qty">0</span> <span class="text-xs font-normal text-gray-400">Packs</span></div>
+                    <div class="bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-5 rounded-2xl shadow-lg shadow-emerald-200">
+                        <div class="flex items-center gap-2 mb-2 opacity-80">
+                            <i data-lucide="package" class="w-4 h-4"></i>
+                            <div class="text-[10px] font-bold uppercase tracking-wider">Quantity</div>
+                        </div>
+                        <div class="text-2xl font-black"><span id="admin-total-qty">0</span></div>
                     </div>
                 </div>
 
-                <button onclick="adminManager.downloadPDF()" class="w-full bg-gray-900 text-white p-3.5 rounded-xl flex items-center justify-center gap-2 font-bold text-sm shadow-xl active:scale-95 transition-all">
-                    <i data-lucide="download" class="w-4 h-4"></i> Download PDF
+                <button onclick="adminManager.downloadPDF()" class="w-full bg-white text-slate-800 border border-slate-200 p-4 rounded-xl flex items-center justify-center gap-3 font-bold text-sm shadow-sm active:scale-95 transition-all hover:bg-slate-50">
+                    <div class="bg-red-50 text-red-500 p-1.5 rounded-lg">
+                        <i data-lucide="file-down" class="w-4 h-4"></i>
+                    </div>
+                    Download Report PDF
                 </button>
 
                 <!-- Table Preview -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <table class="w-full text-xs text-left">
-                        <thead class="bg-gray-50 text-gray-500 font-medium border-b border-gray-100">
-                            <tr>
-                                <th class="px-4 py-2.5">Date</th>
-                                <th class="px-4 py-2.5">Item</th>
-                                <th class="px-4 py-2.5 text-right">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody id="admin-table-body" class="divide-y divide-gray-50">
-                            <!-- Rows -->
-                        </tbody>
-                    </table>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="px-5 py-3 border-b border-slate-100 bg-slate-50/50">
+                        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide">Recent Entries</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left">
+                            <thead class="bg-white text-slate-400 font-bold border-b border-slate-50">
+                                <tr>
+                                    <th class="px-5 py-3">Date</th>
+                                    <th class="px-5 py-3">Item</th>
+                                    <th class="px-5 py-3 text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-table-body" class="divide-y divide-slate-50 text-slate-700 font-medium">
+                                <!-- Rows -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -296,9 +351,13 @@
         const router = {
             navigate: (viewId) => {
                 document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-                document.getElementById('view-' + viewId).classList.add('active');
+                const target = document.getElementById('view-' + viewId);
+                target.classList.add('active');
                 
-                if(viewId === 'dashboard') dashboardManager.render();
+                // Reset scrolls
+                if(viewId === 'dashboard') {
+                    dashboardManager.render();
+                }
                 if(viewId === 'entry') entryManager.reset();
                 if(viewId === 'admin') adminManager.render();
                 
@@ -323,7 +382,12 @@
                         state.entries = data;
                         state.loading = false;
                         dashboardManager.render();
-                        if(manual) alert("Sync Complete!");
+                        if(manual) {
+                            // Subtle success feedback
+                            const btn = document.getElementById('icon-refresh').parentElement;
+                            btn.classList.add('bg-green-400', 'border-green-400');
+                            setTimeout(() => btn.classList.remove('bg-green-400', 'border-green-400'), 1000);
+                        }
                     } else {
                         throw new Error("Invalid data format");
                     }
@@ -334,12 +398,16 @@
                     if(manual) alert("Sync Failed. Check internet.");
                     
                     document.getElementById('entry-list').innerHTML = `
-                        <div class="p-8 text-center text-red-500">
-                            <p>Failed to load data.</p>
-                            <p class="text-xs text-gray-400 mt-2">Check internet connection</p>
-                            <button onclick="apiService.fetchAll(true)" class="mt-4 bg-red-100 text-red-600 px-4 py-2 rounded-lg text-sm font-bold">Try Again</button>
+                        <div class="p-8 text-center text-red-500 pt-20">
+                            <div class="bg-red-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i data-lucide="wifi-off" class="w-6 h-6"></i>
+                            </div>
+                            <p class="font-bold text-slate-800">Connection Failed</p>
+                            <p class="text-xs text-slate-400 mt-1 mb-4">Could not sync with database</p>
+                            <button onclick="apiService.fetchAll(true)" class="bg-red-100 text-red-600 px-6 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition-transform">Retry</button>
                         </div>
                     `;
+                    lucide.createIcons();
                 } finally {
                     if(manual) {
                         const icon = document.getElementById('icon-refresh');
@@ -375,9 +443,11 @@
                 
                 if(state.loading) {
                      listEl.innerHTML = `
-                        <div class="flex flex-col items-center justify-center pt-16 opacity-50">
-                            <i data-lucide="loader-2" class="w-6 h-6 spinner text-blue-600 mb-2"></i>
-                            <p class="text-xs font-medium text-gray-500">Syncing with Sheet...</p>
+                        <div class="flex flex-col items-center justify-center pt-20 opacity-60">
+                            <div class="bg-white p-3 rounded-full shadow-lg mb-3">
+                                <i data-lucide="loader-2" class="w-6 h-6 spinner text-indigo-500"></i>
+                            </div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Syncing Data...</p>
                         </div>
                     `;
                     lucide.createIcons();
@@ -388,35 +458,44 @@
                 const todayTotal = state.entries
                     .filter(e => e.dateStr === today)
                     .reduce((sum, e) => sum + Number(e.totalCost), 0);
+                
+                // Animate number
                 totalEl.innerText = todayTotal;
 
                 if (state.entries.length === 0) {
                     listEl.innerHTML = `
-                        <div class="bg-white p-6 rounded-2xl shadow-sm text-center text-gray-400 mt-4 border border-gray-100">
-                            <i data-lucide="milk" class="mx-auto mb-2 w-6 h-6 opacity-50"></i>
-                            <p class="text-sm">No entries found</p>
+                        <div class="flex flex-col items-center justify-center pt-16 opacity-50">
+                            <i data-lucide="inbox" class="w-12 h-12 text-slate-300 mb-2"></i>
+                            <p class="text-sm font-medium text-slate-400">No entries yet</p>
                         </div>`;
                 } else {
                     const sorted = [...state.entries].sort((a,b) => (b.dateStr > a.dateStr) ? 1 : -1);
                     
-                    listEl.innerHTML = sorted.map(e => `
-                        <div class="bg-white p-3 mb-2.5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold ${String(e.milkType).includes('500') ? 'bg-blue-100 text-blue-600' : 'bg-orange-100 text-orange-600'}">
+                    listEl.innerHTML = sorted.map(e => {
+                        const isBig = String(e.milkType).toLowerCase().includes('500');
+                        const colorClass = isBig ? 'text-indigo-600 bg-indigo-50' : 'text-orange-600 bg-orange-50';
+                        const barColor = isBig ? 'bg-indigo-500' : 'bg-orange-500';
+                        
+                        return `
+                        <div class="group relative bg-white p-4 mb-3 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between transition-all active:scale-[0.98]">
+                            <div class="absolute left-0 top-4 bottom-4 w-1 rounded-r-full ${barColor}"></div>
+                            <div class="flex items-center gap-4 pl-3">
+                                <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black shadow-inner ${colorClass}">
                                     ${e.quantity}
                                 </div>
                                 <div>
-                                    <div class="font-bold text-gray-800 text-sm">${e.milkType}</div>
-                                    <div class="text-[10px] text-gray-400 flex items-center gap-1 mt-0.5">
-                                        ${e.dateStr} • ₹${e.costPerPouch}/each
+                                    <div class="font-bold text-slate-800 text-sm leading-tight">${e.milkType}</div>
+                                    <div class="text-[10px] text-slate-400 font-semibold mt-1 flex items-center gap-1">
+                                        <i data-lucide="calendar" class="w-3 h-3"></i> ${e.dateStr}
                                     </div>
                                 </div>
                             </div>
                             <div class="text-right">
-                                <div class="font-bold text-base text-gray-900">₹${e.totalCost}</div>
+                                <div class="font-black text-lg text-slate-800">₹${e.totalCost}</div>
+                                <div class="text-[10px] text-slate-400 font-medium">₹${e.costPerPouch} / unit</div>
                             </div>
                         </div>
-                    `).join('');
+                    `}).join('');
                 }
                 lucide.createIcons();
             }
@@ -448,19 +527,22 @@
                     const card = document.getElementById(`card-${idPrefix}`);
                     const btn = document.getElementById(`btn-add-${idPrefix}`);
                     const subWrapper = document.getElementById(`subtotal-${idPrefix}-wrap`);
-                    
-                    document.getElementById(`qty-disp-${idPrefix}`).innerText = qty;
+                    const isBig = idPrefix === 'big';
+                    const activeColor = isBig ? 'bg-indigo-600' : 'bg-orange-500';
+                    const ringColor = isBig ? 'ring-indigo-500' : 'ring-orange-500';
+                    const shadowColor = isBig ? 'shadow-indigo-100' : 'shadow-orange-100';
+
                     document.getElementById(`subtotal-${idPrefix}`).innerText = subtotal;
 
                     if (qty > 0) {
-                        card.classList.add('ring-2', 'ring-blue-500', 'shadow-lg', 'shadow-blue-100');
-                        card.classList.remove('border-gray-100');
-                        btn.classList.replace('bg-gray-800', 'bg-blue-600');
+                        card.classList.add('ring-2', ringColor, 'shadow-xl', shadowColor);
+                        card.classList.remove('border-slate-100', 'shadow-sm');
+                        btn.className = `w-12 h-11 ${activeColor} text-white rounded-xl shadow-lg shadow-${isBig?'indigo':'orange'}-200 flex items-center justify-center active:scale-90 transition-all`;
                         subWrapper.classList.remove('hidden');
                     } else {
-                        card.classList.remove('ring-2', 'ring-blue-500', 'shadow-lg', 'shadow-blue-100');
-                        card.classList.add('border-gray-100');
-                        btn.classList.replace('bg-blue-600', 'bg-gray-800');
+                        card.classList.remove('ring-2', ringColor, 'shadow-xl', shadowColor);
+                        card.classList.add('border-slate-100', 'shadow-sm');
+                        btn.className = `w-12 h-11 bg-slate-800 text-white rounded-xl shadow-md shadow-slate-300 flex items-center justify-center active:scale-90 transition-all`;
                         subWrapper.classList.add('hidden');
                     }
                 };
@@ -544,13 +626,13 @@
 
                 const tbody = document.getElementById('admin-table-body');
                 if (filtered.length === 0) {
-                     tbody.innerHTML = `<tr><td colspan="3" class="px-4 py-8 text-center text-gray-400">No data for selected period</td></tr>`;
+                     tbody.innerHTML = `<tr><td colspan="3" class="px-5 py-8 text-center text-slate-400 text-xs uppercase tracking-wide">No data found</td></tr>`;
                 } else {
                     tbody.innerHTML = filtered.map(e => `
                         <tr>
-                            <td class="px-4 py-2.5 text-gray-600 whitespace-nowrap">${e.dateStr}</td>
-                            <td class="px-4 py-2.5 font-medium text-gray-800">${e.milkType}</td>
-                            <td class="px-4 py-2.5 text-right font-bold text-blue-600">₹${e.totalCost}</td>
+                            <td class="px-5 py-3 text-slate-500 whitespace-nowrap">${e.dateStr}</td>
+                            <td class="px-5 py-3 font-bold text-slate-700">${e.milkType}</td>
+                            <td class="px-5 py-3 text-right font-black text-slate-800">₹${e.totalCost}</td>
                         </tr>
                     `).join('');
                 }
@@ -559,36 +641,84 @@
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
                 
-                doc.setFontSize(22);
-                doc.setTextColor(37, 99, 235);
-                doc.text(`GenDaily Report`, 14, 20);
-                
-                const rangeSelect = document.getElementById('admin-range');
-                const rangeText = rangeSelect.options[rangeSelect.selectedIndex].text;
-                doc.setFontSize(14);
+                // --- 1. Filter Data (Logic duplicated from render to ensure fresh dataset) ---
+                const range = document.getElementById('admin-range').value;
+                const now = new Date();
+                let startStr, endStr, periodLabel;
+                const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+                if (range === 'last_month') {
+                    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                    const end = new Date(now.getFullYear(), now.getMonth(), 0);
+                    startStr = start.toISOString().split('T')[0];
+                    endStr = end.toISOString().split('T')[0];
+                    periodLabel = `${months[start.getMonth()]} ${start.getFullYear()}`;
+                } else if (range === 'this_month') {
+                    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+                    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                    startStr = start.toISOString().split('T')[0];
+                    endStr = end.toISOString().split('T')[0];
+                    periodLabel = `${months[start.getMonth()]} ${start.getFullYear()}`;
+                } else {
+                    startStr = document.getElementById('admin-start').value;
+                    endStr = document.getElementById('admin-end').value;
+                    if (!startStr || !endStr) { alert("Select dates first"); return; }
+                    periodLabel = `${startStr} to ${endStr}`;
+                }
+
+                const filtered = state.entries
+                    .filter(e => e.dateStr >= startStr && e.dateStr <= endStr)
+                    .sort((a,b) => (a.dateStr > b.dateStr) ? 1 : -1);
+
+                if(filtered.length === 0) { alert("No data to download"); return; }
+
+                // --- 2. Calculate Total ---
+                const grandTotal = filtered.reduce((acc, curr) => acc + Number(curr.totalCost), 0);
+
+                // --- 3. Prepare Table Body ---
+                const tableBody = filtered.map(e => [
+                    e.dateStr,
+                    e.milkType,
+                    e.quantity,
+                    e.costPerPouch,
+                    e.totalCost
+                ]);
+
+                // Add Total Row
+                tableBody.push([
+                    { content: 'Total', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 240, 240] } },
+                    { content: String(grandTotal), styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }
+                ]);
+
+                // --- 4. Generate PDF ---
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(18);
+                doc.setTextColor(40);
+                doc.text("Archtech housekeeping milk record", 14, 20);
+
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(12);
                 doc.setTextColor(100);
-                doc.text(rangeText, 14, 30);
-
-                const rows = [];
-                const tbody = document.getElementById('admin-table-body').querySelectorAll('tr');
-                tbody.forEach(tr => {
-                    const cols = tr.querySelectorAll('td');
-                    if(cols.length > 1) { // Skip "No data" row
-                        rows.push([cols[0].innerText, cols[1].innerText, cols[2].innerText]);
-                    }
-                });
-
-                if(rows.length === 0) { alert("No data to download"); return; }
+                doc.text(periodLabel, 14, 28);
 
                 doc.autoTable({
-                    startY: 40,
-                    head: [['Date', 'Item', 'Total']],
-                    body: rows,
+                    startY: 35,
+                    head: [['Date', 'Milk Pouch', 'Quantity', 'Cost/Pouch', 'Total']],
+                    body: tableBody,
                     theme: 'grid',
-                    headStyles: { fillColor: [37, 99, 235] }
+                    headStyles: { fillColor: [79, 70, 229], halign: 'center' }, // Indigo
+                    columnStyles: {
+                        0: { cellWidth: 25 },
+                        1: { cellWidth: 40 },
+                        2: { halign: 'center' },
+                        3: { halign: 'right' },
+                        4: { halign: 'right' }
+                    },
+                    styles: { fontSize: 10, cellPadding: 3 }
                 });
                 
-                doc.save('GenDaily_Report.pdf');
+                // Filename: housekeeping milk recourd(October 2023).pdf
+                doc.save(`housekeeping milk recourd(${periodLabel}).pdf`);
             }
         };
 
