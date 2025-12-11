@@ -673,18 +673,11 @@
                      return; 
                 }
 
-                // Prepare Text content (Receipt style)
-                const textHeader = `*Archtech housekeeping milk record*\nPeriod: ${periodLabel}\n----------------------------\n`;
-                const textRows = filtered.map(e => `${e.dateStr}: ${e.milkType} (Qty:${e.quantity}) = ₹${e.totalCost}`).join('\n');
-                const textFooter = `\n----------------------------\n*Grand Total: ₹${grandTotal}*`;
-                const finalMsg = textHeader + textRows + textFooter;
-
                 try {
-                    // --- STRATEGY 1: Share PDF File (Preferred) ---
+                    // --- Generate PDF ---
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF();
                     
-                    // PDF Styling
                     doc.setFont("helvetica", "bold");
                     doc.setFontSize(18);
                     doc.setTextColor(40);
@@ -710,37 +703,44 @@
                     const pdfBlob = doc.output('blob');
                     const file = new File([pdfBlob], fileName, { type: "application/pdf" });
 
-                    // Try File Share
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        await navigator.share({
-                            files: [file],
-                            title: 'Milk Record',
-                            text: finalMsg
-                        });
+                    // --- SHARE LOGIC ---
+                    const textHeader = `*Archtech housekeeping milk record*\nPeriod: ${periodLabel}\n`;
+                    const textFooter = `\nTotal: ₹${grandTotal}`;
+                    
+                    const shareData = {
+                        files: [file],
+                        title: 'Milk Record',
+                        text: textHeader + textFooter
+                    };
+
+                    // 1. Try Native File Share (System Sheet)
+                    if (navigator.canShare && navigator.canShare(shareData)) {
+                        await navigator.share(shareData);
                     } else {
-                        throw new Error("File sharing not supported");
-                    }
-
-                } catch (pdfError) {
-                    console.log("PDF Share failed, trying text share...", pdfError);
-
-                    // --- STRATEGY 2: Share Text (System Sheet) ---
-                    try {
-                        if (navigator.share) {
-                             await navigator.share({
-                                title: 'Milk Record',
-                                text: finalMsg
-                            });
-                        } else {
-                            throw new Error("Navigator.share not supported");
-                        }
-                    } catch (textError) {
-                        console.log("Text share failed, trying WhatsApp intent...", textError);
+                        // 2. Fallback: Try Text Share (System Sheet)
+                        // If file sharing is not supported (common in WebViews), try sharing text summaries.
+                        // This keeps the user in the system share sheet (Phone Sharing Screen).
                         
-                        // --- STRATEGY 3: Direct WhatsApp URL ---
-                        // This bypasses the system sheet but works on almost all phones with WhatsApp
-                        window.location.href = `whatsapp://send?text=${encodeURIComponent(finalMsg)}`;
+                        const textOnlyData = {
+                             title: 'Milk Record',
+                             text: textHeader + filtered.map(e => `${e.dateStr}: ${e.milkType} = ₹${e.totalCost}`).join('\n') + textFooter
+                        };
+                        
+                        if (navigator.canShare && navigator.canShare(textOnlyData)) {
+                             await navigator.share(textOnlyData);
+                        } else {
+                             // 3. Last Resort: Download File
+                             // If even text sharing fails, let the user download the file.
+                             // Removed 'whatsapp://' scheme to prevent "Webpage not available" crashes.
+                             alert("Sharing not supported. Downloading file.");
+                             doc.save(fileName);
+                        }
                     }
+
+                } catch (e) {
+                    console.error("Share failed", e);
+                    // Silent fail or alert based on UX preference.
+                    // Usually cancelling share throws an error, so we might not want to alert.
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = originalText;
