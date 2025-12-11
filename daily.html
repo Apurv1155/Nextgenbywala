@@ -51,6 +51,15 @@
         .glass-panel { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.5); }
         .safe-top { padding-top: env(safe-area-inset-top, 20px); }
         .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 20px); }
+
+        /* PRINT STYLES */
+        #print-container { display: none; }
+        @media print {
+            #app, #loading-screen { display: none !important; }
+            #print-container { display: block !important; padding: 20px; background: white; width: 100%; height: 100%; }
+            body { background: white !important; overflow: visible !important; height: auto !important; }
+            @page { margin: 15mm; size: A4 portrait; }
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-900 h-[100dvh] w-screen overflow-hidden selection:bg-indigo-100">
@@ -59,6 +68,9 @@
     <div id="loading-screen">
         <img src="Logo2.png" alt="Loading Logo" class="nextgen-logo" />
     </div>
+
+    <!-- Print Container -->
+    <div id="print-container"></div>
 
     <div id="app" class="h-full w-full max-w-md mx-auto bg-slate-50 md:border-x md:border-slate-200 relative shadow-2xl flex flex-col overflow-hidden">
         
@@ -300,15 +312,22 @@
                     </div>
                 </div>
 
-                <button onclick="adminManager.shareReport()" id="btn-share" class="w-full bg-green-500 text-white border-0 p-4 rounded-xl flex items-center justify-center gap-3 font-bold text-sm shadow-md shadow-green-200 active:scale-95 transition-all hover:bg-green-600">
-                    <div class="bg-white/20 p-1.5 rounded-lg">
-                        <i data-lucide="share-2" class="w-4 h-4"></i>
-                    </div>
-                    Share Report via WhatsApp
-                </button>
+                <!-- Share Buttons -->
+                <div class="grid grid-cols-4 gap-3">
+                    <button onclick="adminManager.shareReport()" id="btn-share" class="col-span-3 bg-green-500 text-white border-0 p-4 rounded-xl flex items-center justify-center gap-3 font-bold text-sm shadow-md shadow-green-200 active:scale-95 transition-all hover:bg-green-600">
+                        <div class="bg-white/20 p-1.5 rounded-lg">
+                            <i data-lucide="share-2" class="w-4 h-4"></i>
+                        </div>
+                        Share via WhatsApp
+                    </button>
+                    
+                    <button onclick="adminManager.printReport()" class="col-span-1 bg-white text-slate-700 border border-slate-200 rounded-xl flex items-center justify-center shadow-sm active:scale-95 transition-all hover:bg-slate-50">
+                         <i data-lucide="save" class="w-5 h-5"></i>
+                    </button>
+                </div>
 
                 <!-- Table Preview -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mt-4">
                     <div class="px-5 py-3 border-b border-slate-100 bg-slate-50/50">
                         <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wide">Recent Entries</h3>
                     </div>
@@ -643,7 +662,143 @@
                 btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Generating...`;
                 lucide.createIcons();
 
-                // 1. Filter Data
+                const { filtered, periodLabel, grandTotal } = adminManager.getFilteredData();
+                if(!filtered) {
+                     btn.innerHTML = originalText; lucide.createIcons();
+                     return; 
+                }
+
+                try {
+                    // --- ATTEMPT 1: PDF SHARE ---
+                    // Generate PDF Blob
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(18);
+                    doc.setTextColor(40);
+                    doc.text("Archtech housekeeping milk record", 14, 20);
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(12);
+                    doc.setTextColor(100);
+                    doc.text(periodLabel, 14, 28);
+
+                    const tableBody = filtered.map(e => [e.dateStr, e.milkType, e.quantity, e.costPerPouch, e.totalCost]);
+                    tableBody.push([{ content: 'Total', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } }, { content: String(grandTotal), styles: { fontStyle: 'bold' } }]);
+
+                    doc.autoTable({
+                        startY: 35,
+                        head: [['Date', 'Milk Pouch', 'Quantity', 'Cost/Pouch', 'Total']],
+                        body: tableBody,
+                        theme: 'grid',
+                        headStyles: { fillColor: [79, 70, 229], halign: 'center' },
+                        columnStyles: { 3: { halign: 'right' }, 4: { halign: 'right' } },
+                    });
+
+                    const fileName = `Milk_Record_${periodLabel.replace(/ /g, '_')}.pdf`;
+                    const pdfBlob = doc.output('blob');
+                    const file = new File([pdfBlob], fileName, { type: "application/pdf" });
+
+                    // Check if native sharing is supported for files
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Milk Record Report',
+                            text: `Here is the milk record for ${periodLabel}`
+                        });
+                        btn.innerHTML = originalText;
+                        lucide.createIcons();
+                        return; // Success
+                    } else {
+                        throw new Error("File sharing not supported");
+                    }
+                } catch (e) {
+                    console.log("PDF Share failed, falling back to text:", e);
+                    
+                    // --- ATTEMPT 2: TEXT SHARE FALLBACK ---
+                    // Clean receipt-style text format
+                    const textHeader = `*Archtech housekeeping milk record*\nPeriod: ${periodLabel}\n----------------------------\n`;
+                    const textRows = filtered.map(e => `${e.dateStr}: ${e.milkType} (Qty:${e.quantity}) = ₹${e.totalCost}`).join('\n');
+                    const textFooter = `\n----------------------------\n*Grand Total: ₹${grandTotal}*`;
+                    
+                    const finalMsg = textHeader + textRows + textFooter;
+                    const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(finalMsg)}`;
+                    
+                    // Use standard location header for reliable deep linking
+                    window.location.href = whatsappUrl;
+                } finally {
+                    btn.innerHTML = originalText;
+                    lucide.createIcons();
+                }
+            },
+            printReport: () => {
+                const { filtered, periodLabel, grandTotal } = adminManager.getFilteredData();
+                if(!filtered) return;
+
+                // Generate HTML for Print
+                const rowsHtml = filtered.map(e => `
+                    <tr>
+                        <td>${e.dateStr}</td>
+                        <td>${e.milkType}</td>
+                        <td class="text-right">${e.quantity}</td>
+                        <td class="text-right">${e.costPerPouch}</td>
+                        <td class="text-right">${e.totalCost}</td>
+                    </tr>
+                `).join('');
+
+                const printContent = `
+                    <html>
+                    <head>
+                        <title>housekeeping milk recourd(${periodLabel})</title>
+                        <style>
+                            body { font-family: sans-serif; padding: 20px; }
+                            h1 { color: #1e293b; font-size: 24px; margin-bottom: 5px; font-weight: 800; }
+                            p { color: #64748b; font-size: 14px; margin-bottom: 25px; }
+                            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                            th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; }
+                            th { background-color: #f1f5f9; font-weight: bold; color: #475569; }
+                            .text-right { text-align: right; }
+                            .total-row { background-color: #f8fafc; font-weight: bold; color: #0f172a; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Archtech housekeeping milk record</h1>
+                        <p>${periodLabel}</p>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Milk Pouch</th>
+                                    <th class="text-right">Quantity</th>
+                                    <th class="text-right">Cost/Pouch</th>
+                                    <th class="text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rowsHtml}
+                                <tr class="total-row">
+                                    <td colspan="4" class="text-right">Grand Total</td>
+                                    <td class="text-right">${grandTotal}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </body>
+                    </html>
+                `;
+
+                // Handle Native or Web Print
+                if (typeof AndroidPrintInterface !== 'undefined' && typeof AndroidPrintInterface.print === 'function') {
+                    AndroidPrintInterface.print(printContent);
+                } else {
+                    const printContainer = document.getElementById('print-container');
+                    printContainer.innerHTML = printContent;
+                    const originalTitle = document.title;
+                    document.title = `housekeeping milk recourd(${periodLabel})`; 
+                    window.print();
+                    document.title = originalTitle; 
+                }
+            },
+            getFilteredData: () => {
                 const range = document.getElementById('admin-range').value;
                 const now = new Date();
                 let startStr, endStr, periodLabel;
@@ -664,10 +819,7 @@
                 } else {
                     startStr = document.getElementById('admin-start').value;
                     endStr = document.getElementById('admin-end').value;
-                    if (!startStr || !endStr) { 
-                         btn.innerHTML = originalText; lucide.createIcons();
-                         alert("Select dates first"); return; 
-                    }
+                    if (!startStr || !endStr) { alert("Select dates first"); return {}; }
                     periodLabel = `${startStr} to ${endStr}`;
                 }
 
@@ -675,71 +827,11 @@
                     .filter(e => e.dateStr >= startStr && e.dateStr <= endStr)
                     .sort((a,b) => (a.dateStr > b.dateStr) ? 1 : -1);
 
-                if(filtered.length === 0) { 
-                    btn.innerHTML = originalText; lucide.createIcons();
-                    alert("No data to share"); return; 
-                }
+                if(filtered.length === 0) { alert("No data found"); return {}; }
 
-                // 2. Prepare Data for PDF/Text
                 const grandTotal = filtered.reduce((acc, curr) => acc + Number(curr.totalCost), 0);
-                const tableBody = filtered.map(e => [e.dateStr, e.milkType, e.quantity, e.costPerPouch, e.totalCost]);
-                tableBody.push([{ content: 'Total', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } }, { content: String(grandTotal), styles: { fontStyle: 'bold' } }]);
-
-                // 3. Try Sharing PDF File
-                try {
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF();
-                    
-                    doc.setFont("helvetica", "bold");
-                    doc.setFontSize(18);
-                    doc.setTextColor(40);
-                    doc.text("Archtech housekeeping milk record", 14, 20);
-                    doc.setFont("helvetica", "normal");
-                    doc.setFontSize(12);
-                    doc.setTextColor(100);
-                    doc.text(periodLabel, 14, 28);
-
-                    doc.autoTable({
-                        startY: 35,
-                        head: [['Date', 'Milk Pouch', 'Quantity', 'Cost/Pouch', 'Total']],
-                        body: tableBody,
-                        theme: 'grid',
-                        headStyles: { fillColor: [79, 70, 229], halign: 'center' },
-                        columnStyles: { 3: { halign: 'right' }, 4: { halign: 'right' } },
-                    });
-
-                    const fileName = `Milk_Record_${periodLabel.replace(/ /g, '_')}.pdf`;
-                    const pdfBlob = doc.output('blob');
-                    const file = new File([pdfBlob], fileName, { type: "application/pdf" });
-
-                    // Attempt Native Share (works for files in supported WebViews/Browsers)
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        await navigator.share({
-                            files: [file],
-                            title: 'Milk Record Report',
-                            text: `Here is the milk record for ${periodLabel}`
-                        });
-                        btn.innerHTML = originalText;
-                        lucide.createIcons();
-                        return; // Success, exit
-                    }
-                } catch (e) {
-                    console.warn("File sharing failed/unsupported, falling back to text.", e);
-                }
-
-                // 4. Fallback: Text Summary to WhatsApp (Redirects to WhatsApp directly)
-                // If file share fails or isn't supported by the WebView, we send a clean text summary.
-                const textHeader = `*Archtech housekeeping milk record*\nPeriod: ${periodLabel}\n\n`;
-                const textRows = filtered.map(e => `${e.dateStr}: ${e.milkType} x${e.quantity} = ₹${e.totalCost}`).join('\n');
-                const textFooter = `\n\n*Grand Total: ₹${grandTotal}*`;
                 
-                const finalMsg = textHeader + textRows + textFooter;
-                const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(finalMsg)}`;
-                
-                window.location.href = whatsappUrl;
-                
-                btn.innerHTML = originalText;
-                lucide.createIcons();
+                return { filtered, periodLabel, grandTotal };
             }
         };
 
