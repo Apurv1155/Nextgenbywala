@@ -1,9 +1,9 @@
-name: Test - Every 2 Minutes Trigger
+name: Test - Every 1 Minute Trigger
 
 on:
-  # CRON schedule: Runs every 2 minutes (Minute 0, 2, 4, 6, ... Hour *, Day *, Month *, DayOfWeek *)
+  # CRON schedule: Runs every 1 minute (The fastest schedule supported by GitHub Actions cron)
   schedule:
-    - cron: "*/2 * * * *"
+    - cron: "*/1 * * * *"
   # Keep workflow_dispatch for immediate manual testing
   workflow_dispatch:
 
