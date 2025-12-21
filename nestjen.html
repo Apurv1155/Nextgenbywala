@@ -136,11 +136,10 @@
         .hero-btn { background: white; color: var(--dark-gray); border: none; padding: 18px 36px; border-radius: 25px; font-weight: 800; font-size: 11px; text-transform: uppercase; cursor: pointer; transition: var(--transition-smooth); }
         .hero-btn:hover { background: var(--brand-orange); color: white; }
 
-        /* Property Grid */
-        .section-header { margin-bottom: 40px; display: flex; align-items: flex-end; justify-content: space-between; }
-        .section-title h2 { font-size: 42px; font-weight: 800; font-style: italic; letter-spacing: -2px; }
-        .section-title h2 span { color: var(--brand-orange); }
-        .section-title p { font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--medium-gray); margin-top: 8px; letter-spacing: 2px; }
+        /* Property Grid Slider Styles */
+        .market-card-slider { position: relative; width: 100%; height: 100%; }
+        .market-card-slider .slide { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1s ease-in-out; }
+        .market-card-slider .slide.active { opacity: 1; }
 
         .property-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; }
         .property-card { background: white; border-radius: 35px; overflow: hidden; transition: var(--transition-smooth); border: 1px solid rgba(0,0,0,0.03); cursor: pointer; display: flex; flex-direction: column; }
@@ -148,10 +147,10 @@
         .card-image { position: relative; aspect-ratio: 4/3; overflow: hidden; }
         .card-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s; }
         .property-card:hover .card-image img { transform: scale(1.1); }
-        .card-badges { position: absolute; top: 15px; left: 15px; display: flex; gap: 8px; }
+        .card-badges { position: absolute; top: 15px; left: 15px; display: flex; gap: 8px; z-index: 10; }
         .badge { background: var(--brand-orange); color: white; font-size: 9px; font-weight: 800; padding: 6px 12px; border-radius: 20px; text-transform: uppercase; }
         .badge-white { background: white; color: var(--brand-orange); }
-        .save-btn { position: absolute; top: 15px; right: 15px; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.8); border: none; display: flex; align-items: center; justify-content: center; color: var(--medium-gray); transition: 0.3s; cursor: pointer; }
+        .save-btn { position: absolute; top: 15px; right: 15px; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.8); border: none; display: flex; align-items: center; justify-content: center; color: var(--medium-gray); transition: 0.3s; cursor: pointer; z-index: 10; }
         .save-btn.active { color: var(--brand-orange); }
         .card-body { padding: 25px; flex: 1; display: flex; flex-direction: column; }
         .card-title { font-size: 18px; font-weight: 800; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 0.3s; }
@@ -333,7 +332,8 @@
     "react": "https://esm.sh/react@^19.2.3",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
-    "react-router-dom": "https://esm.sh/react-router-dom@^7.11.0"
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.11.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0"
   }
 }
 </script>
@@ -511,6 +511,7 @@
                 }
 
                 updateNavActions();
+                startMarketSlider(); // Restart market slider whenever view changes
             }
         };
 
@@ -545,10 +546,15 @@
 
         function renderPropertyCard(p) {
             const isSaved = state.savedIds.includes(p.id);
+            // Limit to 3 images for card auto-slide performance
+            const cardImages = p.images && p.images.length > 0 ? p.images.slice(0, 3) : ['https://picsum.photos/400/300'];
+            
             return `
                 <article class="property-card animate-fade" onclick="router.navigate('#/property/${p.id}')">
-                    <div class="card-image">
-                        <img src="${p.images[0]}" alt="${p.title}" loading="lazy">
+                    <div class="card-image market-card-slider">
+                        ${cardImages.map((img, i) => `
+                            <img src="${img}" class="slide ${i === 0 ? 'active' : ''}" alt="${p.title}" loading="lazy">
+                        `).join('')}
                         <div class="card-badges">
                             <span class="badge">${p.type}</span>
                             ${p.featured ? '<span class="badge badge-white">Verified</span>' : ''}
@@ -617,6 +623,7 @@
                 </main>
             `;
             startHeroSlider();
+            startMarketSlider();
         }
 
         function startHeroSlider() {
@@ -637,6 +644,27 @@
                 current = (current + 1) % slides.length;
                 slides[current].classList.add('active');
             }, 5000);
+        }
+
+        let marketInterval;
+        function startMarketSlider() {
+            if (marketInterval) clearInterval(marketInterval);
+            marketInterval = setInterval(() => {
+                const sliders = document.querySelectorAll('.market-card-slider');
+                if (sliders.length === 0) return;
+                sliders.forEach(slider => {
+                    const slides = slider.querySelectorAll('.slide');
+                    if (slides.length <= 1) return;
+                    let activeIdx = Array.from(slides).findIndex(s => s.classList.contains('active'));
+                    if (activeIdx === -1) {
+                        slides[0].classList.add('active');
+                        return;
+                    }
+                    slides[activeIdx].classList.remove('active');
+                    let nextIdx = (activeIdx + 1) % slides.length;
+                    slides[nextIdx].classList.add('active');
+                });
+            }, 3500); // Cards cycle images every 3.5 seconds
         }
 
         function renderSearch(container, params, isFavMode = false) {
@@ -698,6 +726,7 @@
                     </section>
                 </div>
             `;
+            startMarketSlider();
         }
 
         function toggleSidebar() {
@@ -793,461 +822,463 @@
                         </div>
                     </div>
                 </div>
-            `;
-        }
+            </div>
+        </div>
+    `;
+}
 
-        function openLightbox(src) {
-            const lightbox = document.getElementById('lightbox');
-            const img = document.getElementById('lightbox-img');
-            img.src = src;
-            lightbox.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
+function openLightbox(src) {
+    const lightbox = document.getElementById('lightbox');
+    const img = document.getElementById('lightbox-img');
+    img.src = src;
+    lightbox.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
 
-        function closeLightbox() {
-            const lightbox = document.getElementById('lightbox');
-            lightbox.classList.remove('active');
-            document.body.style.overflow = 'auto';
-        }
+function closeLightbox() {
+    const lightbox = document.getElementById('lightbox');
+    lightbox.classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
 
-        function applyFilter(key, val) {
-            const hash = window.location.hash || '#/search';
-            const [base, query] = hash.split('?');
-            const params = new URLSearchParams(query || '');
-            params.set(key, val);
-            router.navigate(`${base}?${params.toString()}`);
-        }
+function applyFilter(key, val) {
+    const hash = window.location.hash || '#/search';
+    const [base, query] = hash.split('?');
+    const params = new URLSearchParams(query || '');
+    params.set(key, val);
+    router.navigate(`${base}?${params.toString()}`);
+}
 
-        function updateDetailImage(el, src) {
-            document.getElementById('detail-main-img').src = src;
-            document.querySelectorAll('.thumb-item').forEach(item => item.classList.remove('active'));
-            el.classList.add('active');
-        }
+function updateDetailImage(el, src) {
+    document.getElementById('detail-main-img').src = src;
+    document.querySelectorAll('.thumb-item').forEach(item => item.classList.remove('active'));
+    el.classList.add('active');
+}
 
-        function toggleSave(e, id) {
-            e.stopPropagation();
-            if (state.savedIds.includes(id)) {
-                state.savedIds = state.savedIds.filter(i => i !== id);
-            } else {
-                state.savedIds.push(id);
-            }
-            localStorage.setItem('savedProperties', JSON.stringify(state.savedIds));
-            const btn = e.currentTarget;
-            btn.classList.toggle('active');
-            const svg = btn.querySelector('svg');
-            if (btn.classList.contains('active')) svg.setAttribute('fill', 'currentColor');
-            else svg.setAttribute('fill', 'none');
-        }
+function toggleSave(e, id) {
+    e.stopPropagation();
+    if (state.savedIds.includes(id)) {
+        state.savedIds = state.savedIds.filter(i => i !== id);
+    } else {
+        state.savedIds.push(id);
+    }
+    localStorage.setItem('savedProperties', JSON.stringify(state.savedIds));
+    const btn = e.currentTarget;
+    btn.classList.toggle('active');
+    const svg = btn.querySelector('svg');
+    if (btn.classList.contains('active')) svg.setAttribute('fill', 'currentColor');
+    else svg.setAttribute('fill', 'none');
+}
 
-        function openWhatsApp(title, location, price) {
-            const phone = "9173213576";
-            const text = encodeURIComponent(`Hi, I'm interested in ${title} at ${location}. Price: ${price}.`);
-            window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
-        }
+function openWhatsApp(title, location, price) {
+    const phone = "9173213576";
+    const text = encodeURIComponent(`Hi, I'm interested in ${title} at ${location}. Price: ${price}.`);
+    window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+}
 
-        const modalContainer = document.getElementById('modal-container');
+const modalContainer = document.getElementById('modal-container');
 
-        function closeModal() {
-            modalContainer.classList.remove('active');
-            modalContainer.innerHTML = '';
-        }
+function closeModal() {
+    modalContainer.classList.remove('active');
+    modalContainer.innerHTML = '';
+}
 
-        let authPhotoBase64 = "";
+let authPhotoBase64 = "";
 
-        function openLoginModal(isRegister = false) {
-            authPhotoBase64 = "";
-            modalContainer.innerHTML = `
-                <div class="modal-card animate-fade">
-                    <button class="close-modal" onclick="closeModal()"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="3" stroke-linecap="round"/></svg></button>
-                    
-                    <div class="auth-tabs">
-                        <button class="auth-tab ${isRegister ? 'active' : ''}" onclick="openLoginModal(true)">Register</button>
-                        <button class="auth-tab ${!isRegister ? 'active' : ''}" onclick="openLoginModal(false)">Login</button>
+function openLoginModal(isRegister = false) {
+    authPhotoBase64 = "";
+    modalContainer.innerHTML = `
+        <div class="modal-card animate-fade">
+            <button class="close-modal" onclick="closeModal()"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="3" stroke-linecap="round"/></svg></button>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab ${isRegister ? 'active' : ''}" onclick="openLoginModal(true)">Register</button>
+                <button class="auth-tab ${!isRegister ? 'active' : ''}" onclick="openLoginModal(false)">Login</button>
+            </div>
+
+            ${isRegister ? `
+                <div class="profile-picker-container">
+                    <div class="profile-picker">
+                        <img id="auth-pic-preview" src="" class="hidden">
+                        <svg id="auth-pic-placeholder" viewBox="0 0 24 24" fill="currentColor" style="width: 50px; height: 50px; color: #FFE0D6;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                     </div>
+                    <label class="camera-btn">
+                        <input type="file" accept="image/*" class="hidden" onchange="handleAuthPhoto(this)">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    </label>
+                </div>
+            ` : `
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h2 style="font-size: 32px; font-weight: 800; font-style: italic;">Welcome back.</h2>
+                    <p style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--brand-orange); margin-top: 10px;">Login to continue</p>
+                </div>
+            `}
 
-                    ${isRegister ? `
-                        <div class="profile-picker-container">
-                            <div class="profile-picker">
-                                <img id="auth-pic-preview" src="" class="hidden">
-                                <svg id="auth-pic-placeholder" viewBox="0 0 24 24" fill="currentColor" style="width: 50px; height: 50px; color: #FFE0D6;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                            </div>
-                            <label class="camera-btn">
-                                <input type="file" accept="image/*" class="hidden" onchange="handleAuthPhoto(this)">
-                                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            </label>
+            <form id="auth-form">
+                ${isRegister ? `
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="a-name" class="form-input" placeholder="Your Name" required>
+                    </div>
+                ` : ''}
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="a-email" class="form-input" placeholder="you@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="a-pass" class="form-input" placeholder="••••••••" required>
+                </div>
+                ${isRegister ? `
+                    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Phone</label>
+                            <input type="tel" id="a-phone" class="form-input" placeholder="10 Digits" required>
                         </div>
-                    ` : `
-                        <div style="text-align: center; margin-bottom: 30px;">
-                            <h2 style="font-size: 32px; font-weight: 800; font-style: italic;">Welcome back.</h2>
-                            <p style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--brand-orange); margin-top: 10px;">Login to continue</p>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Date of Birth</label>
+                            <input type="date" id="a-dob" class="form-input" required>
+                        </div>
+                    </div>
+                ` : ''}
+                <button type="submit" class="form-submit" id="auth-submit-btn">${isRegister ? 'Join Nestjen' : 'Sign In'}</button>
+            </form>
+        </div>
+    `;
+    modalContainer.classList.add('active');
+
+    document.getElementById('auth-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('auth-submit-btn');
+        const email = document.getElementById('a-email').value.trim();
+        const pass = document.getElementById('a-pass').value.trim();
+        
+        btn.innerText = 'Signing you in...';
+        btn.disabled = true;
+
+        if (isRegister) {
+            const newUser = { 
+                name: document.getElementById('a-name').value, 
+                email: email, 
+                phone: document.getElementById('a-phone').value, 
+                password: pass, 
+                dob: document.getElementById('a-dob').value,
+                photo: authPhotoBase64
+            };
+            
+            try {
+                await fetch(GAS_WEBAPP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({ action: 'sync_user', user: newUser })
+                });
+                state.user = newUser;
+                localStorage.setItem('estate_user', JSON.stringify(newUser));
+                closeModal();
+                updateNavActions();
+                router.refresh();
+            } catch (err) {
+                alert('Connection error. Please try again.');
+                btn.innerText = 'Join Nestjen';
+                btn.disabled = false;
+            }
+        } else {
+            try {
+                const resp = await fetch(`${GAS_WEBAPP_URL}?action=verify_user&email=${encodeURIComponent(email)}&password=${encodeURIComponent(pass)}`);
+                const result = await resp.json();
+                
+                if (result.status === 'success') {
+                    state.user = result.user;
+                    localStorage.setItem('estate_user', JSON.stringify(result.user));
+                    closeModal();
+                    updateNavActions();
+                    router.refresh();
+                } else {
+                    alert(result.message || "Invalid Email or Password.");
+                    btn.innerText = 'Sign In';
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                alert('Connection error. Please check your internet.');
+                btn.innerText = 'Sign In';
+                btn.disabled = false;
+            }
+        }
+    };
+}
+
+function handleAuthPhoto(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            authPhotoBase64 = e.target.result;
+            const preview = document.getElementById('auth-pic-preview');
+            const placeholder = document.getElementById('auth-pic-placeholder');
+            preview.src = e.target.result;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function openProfileModal() {
+    modalContainer.innerHTML = `
+        <div class="modal-card animate-fade profile-portal-wrapper">
+            <button class="close-modal" onclick="closeModal()" style="color: white"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="3" stroke-linecap="round"/></svg></button>
+            <div class="profile-header">
+                <h2>Account.</h2>
+                <img src="${state.user.photo || 'https://picsum.photos/200/200'}" class="profile-avatar-large">
+            </div>
+            <div class="profile-content">
+                <div class="profile-user-meta">
+                    <h3>${state.user.name}</h3>
+                    <p>Verified Member</p>
+                </div>
+                
+                <div class="profile-stats-grid">
+                    <div class="profile-stat-box">
+                        <label>Postings</label>
+                        <span>0</span>
+                    </div>
+                    <div class="profile-stat-box">
+                        <label>Favorites</label>
+                        <span>${state.savedIds.length}</span>
+                    </div>
+                </div>
+
+                <button class="form-submit" style="background: var(--dark-gray); margin-bottom: 25px" onclick="openAddListingModal()">List a Property</button>
+                
+                <div class="pending-list" id="pending-container">
+                    ${state.pendingRequests.length > 0 ? state.pendingRequests.map(r => `
+                        <div class="pending-card">
+                            <h5>${r.title}</h5>
+                            <div class="pending-progress"><div class="pending-progress-bar"></div></div>
+                            <p style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--medium-gray); opacity: 0.6">Reviewing listing...</p>
+                        </div>
+                    `).join('') : `
+                        <div class="pending-card">
+                            <h5>Welcome to Nestjen</h5>
+                            <div class="pending-progress"><div class="pending-progress-bar" style="width: 100%"></div></div>
+                            <p style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--medium-gray); opacity: 0.6">Profile Complete</p>
                         </div>
                     `}
-
-                    <form id="auth-form">
-                        ${isRegister ? `
-                            <div class="form-group">
-                                <label>Full Name</label>
-                                <input type="text" id="a-name" class="form-input" placeholder="Your Name" required>
-                            </div>
-                        ` : ''}
-                        <div class="form-group">
-                            <label>Email Address</label>
-                            <input type="email" id="a-email" class="form-input" placeholder="you@example.com" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Password</label>
-                            <input type="password" id="a-pass" class="form-input" placeholder="••••••••" required>
-                        </div>
-                        ${isRegister ? `
-                            <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-                                <div class="form-group" style="margin-bottom: 0;">
-                                    <label>Phone</label>
-                                    <input type="tel" id="a-phone" class="form-input" placeholder="10 Digits" required>
-                                </div>
-                                <div class="form-group" style="margin-bottom: 0;">
-                                    <label>Date of Birth</label>
-                                    <input type="date" id="a-dob" class="form-input" required>
-                                </div>
-                            </div>
-                        ` : ''}
-                        <button type="submit" class="form-submit" id="auth-submit-btn">${isRegister ? 'Join Nestjen' : 'Sign In'}</button>
-                    </form>
                 </div>
-            `;
-            modalContainer.classList.add('active');
 
-            document.getElementById('auth-form').onsubmit = async (e) => {
-                e.preventDefault();
-                const btn = document.getElementById('auth-submit-btn');
-                const email = document.getElementById('a-email').value.trim();
-                const pass = document.getElementById('a-pass').value.trim();
-                
-                btn.innerText = 'Signing you in...';
-                btn.disabled = true;
+                <button onclick="handleLogout()" class="sign-out-btn">Log Out</button>
+            </div>
+        </div>
+    `;
+    modalContainer.classList.add('active');
+}
 
-                if (isRegister) {
-                    const newUser = { 
-                        name: document.getElementById('a-name').value, 
-                        email: email, 
-                        phone: document.getElementById('a-phone').value, 
-                        password: pass, 
-                        dob: document.getElementById('a-dob').value,
-                        photo: authPhotoBase64
-                    };
-                    
-                    try {
-                        await fetch(GAS_WEBAPP_URL, {
-                            method: 'POST',
-                            mode: 'no-cors',
-                            body: JSON.stringify({ action: 'sync_user', user: newUser })
-                        });
-                        state.user = newUser;
-                        localStorage.setItem('estate_user', JSON.stringify(newUser));
-                        closeModal();
-                        updateNavActions();
-                        router.refresh();
-                    } catch (err) {
-                        alert('Connection error. Please try again.');
-                        btn.innerText = 'Join Nestjen';
-                        btn.disabled = false;
-                    }
-                } else {
-                    try {
-                        const resp = await fetch(`${GAS_WEBAPP_URL}?action=verify_user&email=${encodeURIComponent(email)}&password=${encodeURIComponent(pass)}`);
-                        const result = await resp.json();
-                        
-                        if (result.status === 'success') {
-                            state.user = result.user;
-                            localStorage.setItem('estate_user', JSON.stringify(result.user));
-                            closeModal();
-                            updateNavActions();
-                            router.refresh();
-                        } else {
-                            alert(result.message || "Invalid Email or Password.");
-                            btn.innerText = 'Sign In';
-                            btn.disabled = false;
-                        }
-                    } catch (err) {
-                        alert('Connection error. Please check your internet.');
-                        btn.innerText = 'Sign In';
-                        btn.disabled = false;
-                    }
-                }
-            };
-        }
+function handleLogout() {
+    state.user = null;
+    localStorage.removeItem('estate_user');
+    closeModal();
+    updateNavActions();
+    router.navigate('#/');
+}
 
-        function handleAuthPhoto(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    authPhotoBase64 = e.target.result;
-                    const preview = document.getElementById('auth-pic-preview');
-                    const placeholder = document.getElementById('auth-pic-placeholder');
-                    preview.src = e.target.result;
-                    preview.classList.remove('hidden');
-                    placeholder.classList.add('hidden');
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        function openProfileModal() {
-            modalContainer.innerHTML = `
-                <div class="modal-card animate-fade profile-portal-wrapper">
-                    <button class="close-modal" onclick="closeModal()" style="color: white"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="3" stroke-linecap="round"/></svg></button>
-                    <div class="profile-header">
-                        <h2>Account.</h2>
-                        <img src="${state.user.photo || 'https://picsum.photos/200/200'}" class="profile-avatar-large">
-                    </div>
-                    <div class="profile-content">
-                        <div class="profile-user-meta">
-                            <h3>${state.user.name}</h3>
-                            <p>Verified Member</p>
-                        </div>
-                        
-                        <div class="profile-stats-grid">
-                            <div class="profile-stat-box">
-                                <label>Postings</label>
-                                <span>0</span>
-                            </div>
-                            <div class="profile-stat-box">
-                                <label>Favorites</label>
-                                <span>${state.savedIds.length}</span>
-                            </div>
-                        </div>
-
-                        <button class="form-submit" style="background: var(--dark-gray); margin-bottom: 25px" onclick="openAddListingModal()">List a Property</button>
-                        
-                        <div class="pending-list" id="pending-container">
-                            ${state.pendingRequests.length > 0 ? state.pendingRequests.map(r => `
-                                <div class="pending-card">
-                                    <h5>${r.title}</h5>
-                                    <div class="pending-progress"><div class="pending-progress-bar"></div></div>
-                                    <p style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--medium-gray); opacity: 0.6">Reviewing listing...</p>
-                                </div>
-                            `).join('') : `
-                                <div class="pending-card">
-                                    <h5>Welcome to Nestjen</h5>
-                                    <div class="pending-progress"><div class="pending-progress-bar" style="width: 100%"></div></div>
-                                    <p style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--medium-gray); opacity: 0.6">Profile Complete</p>
-                                </div>
-                            `}
-                        </div>
-
-                        <button onclick="handleLogout()" class="sign-out-btn">Log Out</button>
+let tempListingImages = [];
+function openAddListingModal() {
+    tempListingImages = [];
+    modalContainer.innerHTML = `
+        <div class="modal-card animate-fade" style="max-width: 650px">
+            <button class="close-modal" onclick="closeModal()"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="3" stroke-linecap="round"/></svg></button>
+            <div style="margin-bottom: 30px;">
+                <h2 style="font-size: 32px; font-weight: 800; font-style: italic;">Post a listing.</h2>
+                <p style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--brand-orange); margin-top: 10px;">Prepare your listing details</p>
+            </div>
+            <form id="listing-form">
+                <div class="form-group">
+                    <label>Photos (Min 4)</label>
+                    <div class="image-uploader-grid" id="listing-img-grid">
+                        <label class="image-uploader-box">
+                            <input type="file" multiple accept="image/*" class="hidden" onchange="handleListingUpload(this)">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="3" stroke-linecap="round"/></svg>
+                            <span style="font-size: 8px; font-weight: 800; text-transform: uppercase; margin-top: 5px;">Add Photos</span>
+                        </label>
                     </div>
                 </div>
-            `;
-            modalContainer.classList.add('active');
-        }
-
-        function handleLogout() {
-            state.user = null;
-            localStorage.removeItem('estate_user');
-            closeModal();
-            updateNavActions();
-            router.navigate('#/');
-        }
-
-        let tempListingImages = [];
-        function openAddListingModal() {
-            tempListingImages = [];
-            modalContainer.innerHTML = `
-                <div class="modal-card animate-fade" style="max-width: 650px">
-                    <button class="close-modal" onclick="closeModal()"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="3" stroke-linecap="round"/></svg></button>
-                    <div style="margin-bottom: 30px;">
-                        <h2 style="font-size: 32px; font-weight: 800; font-style: italic;">Post a listing.</h2>
-                        <p style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--brand-orange); margin-top: 10px;">Prepare your listing details</p>
+                <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label>Property Title</label>
+                        <input type="text" id="l-title" class="form-input" placeholder="e.g. Modern 3BHK Apartment" required>
                     </div>
-                    <form id="listing-form">
-                        <div class="form-group">
-                            <label>Photos (Min 4)</label>
-                            <div class="image-uploader-grid" id="listing-img-grid">
-                                <label class="image-uploader-box">
-                                    <input type="file" multiple accept="image/*" class="hidden" onchange="handleListingUpload(this)">
-                                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="3" stroke-linecap="round"/></svg>
-                                    <span style="font-size: 8px; font-weight: 800; text-transform: uppercase; margin-top: 5px;">Add Photos</span>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
-                            <div class="form-group">
-                                <label>Property Title</label>
-                                <input type="text" id="l-title" class="form-input" placeholder="e.g. Modern 3BHK Apartment" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Property Type</label>
-                                <select id="l-type" class="filter-select" style="width: 100%; border: none; background: var(--soft-peach); padding: 15px 20px; border-radius: 18px; font-weight: 700;">
-                                    <option value="Flat">Flat</option>
-                                    <option value="Shop">Shop</option>
-                                    <option value="Plot">Plot</option>
-                                    <option value="Office">Office</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
-                            <div class="form-group">
-                                <label>Price (₹)</label>
-                                <input type="number" id="l-price" class="form-input" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Area (sq.ft)</label>
-                                <input type="number" id="l-area" class="form-input" required>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Location</label>
-                            <input type="text" id="l-location" class="form-input" placeholder="e.g. Satellite, Ahmedabad" required>
-                        </div>
-                        <button type="submit" class="form-submit" id="listing-submit-btn">Submit Property Listing</button>
-                    </form>
+                    <div class="form-group">
+                        <label>Property Type</label>
+                        <select id="l-type" class="filter-select" style="width: 100%; border: none; background: var(--soft-peach); padding: 15px 20px; border-radius: 18px; font-weight: 700;">
+                            <option value="Flat">Flat</option>
+                            <option value="Shop">Shop</option>
+                            <option value="Plot">Plot</option>
+                            <option value="Office">Office</option>
+                        </select>
+                    </div>
                 </div>
-            `;
-            modalContainer.classList.add('active');
+                <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label>Price (₹)</label>
+                        <input type="number" id="l-price" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Area (sq.ft)</label>
+                        <input type="number" id="l-area" class="form-input" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" id="l-location" class="form-input" placeholder="e.g. Satellite, Ahmedabad" required>
+                </div>
+                <button type="submit" class="form-submit" id="listing-submit-btn">Submit Property Listing</button>
+            </form>
+        </div>
+    `;
+    modalContainer.classList.add('active');
 
-            document.getElementById('listing-form').onsubmit = (e) => {
-                e.preventDefault();
-                if (tempListingImages.length < 4) { alert('Please upload at least 4 photos.'); return; }
-                const newReq = {
-                    id: 'prop-' + Date.now(),
-                    title: document.getElementById('l-title').value,
-                    type: document.getElementById('l-type').value,
-                    price: document.getElementById('l-price').value,
-                    area: document.getElementById('l-area').value,
-                    location: document.getElementById('l-location').value,
-                    images: tempListingImages
-                };
-                state.pendingRequests.push(newReq);
-                closeModal();
-                openProfileModal();
-                fetch(GAS_WEBAPP_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify({ action: 'add_listing_request', property: newReq })
-                }).catch(err => console.error("Submit failed", err));
-            };
-        }
+    document.getElementById('listing-form').onsubmit = (e) => {
+        e.preventDefault();
+        if (tempListingImages.length < 4) { alert('Please upload at least 4 photos.'); return; }
+        const newReq = {
+            id: 'prop-' + Date.now(),
+            title: document.getElementById('l-title').value,
+            type: document.getElementById('l-type').value,
+            price: document.getElementById('l-price').value,
+            area: document.getElementById('l-area').value,
+            location: document.getElementById('l-location').value,
+            images: tempListingImages
+        };
+        state.pendingRequests.push(newReq);
+        closeModal();
+        openProfileModal();
+        fetch(GAS_WEBAPP_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({ action: 'add_listing_request', property: newReq })
+        }).catch(err => console.error("Submit failed", err));
+    };
+}
 
-        function handleListingUpload(input) {
-            const files = input.files;
-            if (!files) return;
-            Array.from(files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    tempListingImages.push(e.target.result);
-                    renderListingImages();
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-
-        function renderListingImages() {
-            const grid = document.getElementById('listing-img-grid');
-            if (!grid) return;
-            const uploadBtn = grid.querySelector('label');
-            grid.innerHTML = '';
-            tempListingImages.forEach((src, i) => {
-                const box = document.createElement('div');
-                box.className = 'uploaded-img-box';
-                box.innerHTML = `<img src="${src}"><button class="remove-img-btn" onclick="removeTempImg(${i})">×</button>`;
-                grid.appendChild(box);
-            });
-            if (tempListingImages.length < 8 && uploadBtn) grid.appendChild(uploadBtn);
-        }
-
-        function removeTempImg(i) {
-            tempListingImages.splice(i, 1);
+function handleListingUpload(input) {
+    const files = input.files;
+    if (!files) return;
+    Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            tempListingImages.push(e.target.result);
             renderListingImages();
-        }
+        };
+        reader.readAsDataURL(file);
+    });
+}
 
-        function openInquiryModal(title, id, type, price) {
-            modalContainer.innerHTML = `
-                <div class="modal-card animate-fade">
-                    <button class="close-modal" onclick="closeModal()"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="3" stroke-linecap="round"/></svg></button>
-                    <div style="margin-bottom: 30px;">
-                        <h2 style="font-size: 32px; font-weight: 800; font-style: italic;">Ask about this property.</h2>
-                        <p style="font-size: 9px; font-weight: 800; color: var(--brand-orange); text-transform: uppercase; margin-top: 10px;">${title}</p>
-                    </div>
-                    <form id="inquiry-form">
-                        <div class="form-group">
-                            <label>Full Name</label>
-                            <input type="text" id="i-name" class="form-input" value="${state.user?.name || ''}" required>
-                        </div>
-                        <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 15px;">
-                            <div class="form-group">
-                                <label>Phone</label>
-                                <input type="tel" id="i-phone" class="form-input" value="${state.user?.phone || ''}" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Email</label>
-                                <input type="email" id="i-email" class="form-input" value="${state.user?.email || ''}" required>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Message</label>
-                            <textarea id="i-msg" class="form-input" style="height: 100px; resize: none" placeholder="Tell the owner why you are interested..."></textarea>
-                        </div>
-                        <button type="submit" class="form-submit" id="inquiry-submit-btn">Send Inquiry</button>
-                    </form>
+function renderListingImages() {
+    const grid = document.getElementById('listing-img-grid');
+    if (!grid) return;
+    const uploadBtn = grid.querySelector('label');
+    grid.innerHTML = '';
+    tempListingImages.forEach((src, i) => {
+        const box = document.createElement('div');
+        box.className = 'uploaded-img-box';
+        box.innerHTML = `<img src="${src}"><button class="remove-img-btn" onclick="removeTempImg(${i})">×</button>`;
+        grid.appendChild(box);
+    });
+    if (tempListingImages.length < 8 && uploadBtn) grid.appendChild(uploadBtn);
+}
+
+function removeTempImg(i) {
+    tempListingImages.splice(i, 1);
+    renderListingImages();
+}
+
+function openInquiryModal(title, id, type, price) {
+    modalContainer.innerHTML = `
+        <div class="modal-card animate-fade">
+            <button class="close-modal" onclick="closeModal()"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="3" stroke-linecap="round"/></svg></button>
+            <div style="margin-bottom: 30px;">
+                <h2 style="font-size: 32px; font-weight: 800; font-style: italic;">Ask about this property.</h2>
+                <p style="font-size: 9px; font-weight: 800; color: var(--brand-orange); text-transform: uppercase; margin-top: 10px;">${title}</p>
+            </div>
+            <form id="inquiry-form">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="i-name" class="form-input" value="${state.user?.name || ''}" required>
                 </div>
-            `;
-            modalContainer.classList.add('active');
-            document.getElementById('inquiry-form').onsubmit = (e) => {
-                e.preventDefault();
-                const inquiryData = { 
-                    action: 'submit_inquiry',
-                    propertyName: title,
-                    propertyId: id,
-                    propertyType: type,
-                    propertyPrice: price,
-                    userName: document.getElementById('i-name').value,
-                    userPhone: document.getElementById('i-phone').value,
-                    userEmail: document.getElementById('i-email').value,
-                    message: document.getElementById('i-msg').value
-                };
-                modalContainer.innerHTML = `
-                    <div class="modal-card animate-fade text-center">
-                        <div style="width: 80px; height: 80px; background: #e6ffed; color: #2ecc71; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 30px;">
-                            <svg width="40" height="40" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-                        </div>
-                        <h2 style="font-size: 32px; font-weight: 800; font-style: italic;">Sent!</h2>
-                        <p style="font-size: 9px; font-weight: 800; color: var(--medium-gray); text-transform: uppercase; margin-top: 10px;">Your inquiry has been sent to the owner.</p>
-                        <button class="form-submit" style="margin-top: 30px;" onclick="closeModal()">Back to Listings</button>
+                <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="tel" id="i-phone" class="form-input" value="${state.user?.phone || ''}" required>
                     </div>
-                `;
-                fetch(GAS_WEBAPP_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify(inquiryData)
-                }).catch(err => console.error("Send failed", err));
-            };
-        }
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="i-email" class="form-input" value="${state.user?.email || ''}" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Message</label>
+                    <textarea id="i-msg" class="form-input" style="height: 100px; resize: none" placeholder="Tell the owner why you are interested..."></textarea>
+                </div>
+                <button type="submit" class="form-submit" id="inquiry-submit-btn">Send Inquiry</button>
+            </form>
+        </div>
+    `;
+    modalContainer.classList.add('active');
+    document.getElementById('inquiry-form').onsubmit = (e) => {
+        e.preventDefault();
+        const inquiryData = { 
+            action: 'submit_inquiry',
+            propertyName: title,
+            propertyId: id,
+            propertyType: type,
+            propertyPrice: price,
+            userName: document.getElementById('i-name').value,
+            userPhone: document.getElementById('i-phone').value,
+            userEmail: document.getElementById('i-email').value,
+            message: document.getElementById('i-msg').value
+        };
+        modalContainer.innerHTML = `
+            <div class="modal-card animate-fade text-center">
+                <div style="width: 80px; height: 80px; background: #e6ffed; color: #2ecc71; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 30px;">
+                    <svg width="40" height="40" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                </div>
+                <h2 style="font-size: 32px; font-weight: 800; font-style: italic;">Sent!</h2>
+                <p style="font-size: 9px; font-weight: 800; color: var(--medium-gray); text-transform: uppercase; margin-top: 10px;">Your inquiry has been sent to the owner.</p>
+                <button class="form-submit" style="margin-top: 30px;" onclick="closeModal()">Back to Listings</button>
+            </div>
+        `;
+        fetch(GAS_WEBAPP_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(inquiryData)
+        }).catch(err => console.error("Send failed", err));
+    };
+}
 
-        // Init
-        window.addEventListener('hashchange', () => router.handleHashChange());
-        window.addEventListener('scroll', () => {
-            const nav = document.getElementById('navbar');
-            nav.classList.toggle('scrolled', window.scrollY > 20);
-        });
-        document.getElementById('global-search-form').onsubmit = (e) => {
-            e.preventDefault();
-            const val = document.getElementById('global-search-input').value;
-            router.navigate(`#/search?q=${encodeURIComponent(val)}`);
-        };
-        document.getElementById('mobile-search-input').onkeyup = (e) => {
-            if (e.key === 'Enter') {
-                router.navigate(`#/search?q=${encodeURIComponent(e.target.value)}`);
-            }
-        };
-        document.getElementById('mobile-profile-btn').onclick = () => {
-            if (state.user) openProfileModal();
-            else openLoginModal(false);
-        };
+// Init
+window.addEventListener('hashchange', () => router.handleHashChange());
+window.addEventListener('scroll', () => {
+    const nav = document.getElementById('navbar');
+    nav.classList.toggle('scrolled', window.scrollY > 20);
+});
+document.getElementById('global-search-form').onsubmit = (e) => {
+    e.preventDefault();
+    const val = document.getElementById('global-search-input').value;
+    router.navigate(`#/search?q=${encodeURIComponent(val)}`);
+};
+document.getElementById('mobile-search-input').onkeyup = (e) => {
+    if (e.key === 'Enter') {
+        router.navigate(`#/search?q=${encodeURIComponent(e.target.value)}`);
+    }
+};
+document.getElementById('mobile-profile-btn').onclick = () => {
+    if (state.user) openProfileModal();
+    else openLoginModal(false);
+};
 
-        // Start Up
-        fetchMarketplace();
-        setInterval(syncPrivateStatus, 30000);
-        router.handleHashChange();
-    </script>
+// Start Up
+fetchMarketplace();
+setInterval(syncPrivateStatus, 30000);
+router.handleHashChange();
+</script>
 </body>
 </html>
