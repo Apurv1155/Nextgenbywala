@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,7 +19,7 @@
             --border: #E9ECEF;
             --shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
             --transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-            --radius: 20px;
+            --radius: 24px;
         }
 
         * {
@@ -49,8 +48,8 @@
 
         /* Components */
         .glass-nav {
-            background: rgba(250, 249, 246, 0.8);
-            backdrop-filter: blur(12px);
+            background: rgba(250, 249, 246, 0.85);
+            backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--border);
         }
 
@@ -65,6 +64,8 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            border: none;
+            cursor: pointer;
         }
 
         .btn-calm:hover {
@@ -80,6 +81,8 @@
             border-radius: var(--radius);
             font-weight: 500;
             transition: var(--transition);
+            background: transparent;
+            cursor: pointer;
         }
 
         .btn-outline:hover {
@@ -137,6 +140,28 @@
             100% { transform: scale(0.8); opacity: 0.5; }
         }
 
+        /* Progress Bar */
+        .progress-bar-container {
+            width: 100%;
+            height: 4px;
+            background: #f1f3f5;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 12px 0;
+            display: none;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 30%;
+            border-radius: 2px;
+            animation: progressLoop 1.5s infinite ease-in-out;
+        }
+        @keyframes progressLoop {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(330%); }
+        }
+
         /* Animations */
         .reveal { animation: revealAnim 0.8s ease-out forwards; }
         @keyframes revealAnim {
@@ -161,11 +186,41 @@
             box-shadow: 0 0 0 4px rgba(107, 144, 128, 0.1);
         }
 
-        /* Mobile Adjustments */
+        /* Suggestions Slider */
+        .suggestion-slider-container {
+            display: flex;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            gap: 24px;
+            padding-bottom: 24px;
+            padding-top: 10px;
+        }
+        .suggestion-slider-container::-webkit-scrollbar { display: none; }
+        .suggestion-card {
+            min-width: 280px;
+            max-width: 280px;
+        }
+
+        /* Filter Panel Animation */
+        #filter-panel {
+            transition: max-height 0.4s ease-out, opacity 0.3s ease-out, margin 0.3s ease;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        #filter-panel.active {
+            max-height: 200px;
+            opacity: 1;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Hide scrollbar but keep functionality */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
         @media (max-width: 768px) {
             .mobile-hide { display: none; }
-            .mobile-padding { padding: 16px; }
-            .nav-inner { padding: 0 16px; }
         }
     </style>
 </head>
@@ -221,7 +276,7 @@
     </div>
 
     <!-- Modals Overlay -->
-    <div id="modal-container" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-4 bg-slate-900/10 backdrop-blur-sm">
+    <div id="modal-container" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-4 bg-slate-900/20 backdrop-blur-sm">
         <!-- Injected -->
     </div>
 
@@ -232,7 +287,7 @@
 
     <script>
         /**
-         * CORE APP LOGIC (PRESERVED)
+         * CORE APP LOGIC
          */
         const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbz36Ajz6rXGm_QTRiLuBDiOz4sK0M-NrailgSVYc8PUOsq2nUnmMX0kFsOwnBA2CqtBsQ/exec";
 
@@ -255,7 +310,10 @@
         const showLoader = (show) => {
             const loader = document.getElementById('global-loader');
             if (show) loader.style.display = 'flex';
-            else { loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 600); }
+            else { 
+                loader.style.opacity = '0'; 
+                setTimeout(() => { loader.style.display = 'none'; loader.style.opacity = '1'; }, 600); 
+            }
         };
 
         async function fetchMarketplace() {
@@ -274,7 +332,7 @@
             try {
                 const resp = await fetch(`${GAS_WEBAPP_URL}?action=fetch_statuses`);
                 const result = await resp.json();
-                if (result.status === 'success') { /* Sync logic */ }
+                if (result.status === 'success') { /* Sync logic preserved */ }
             } catch (e) {}
         }
 
@@ -282,7 +340,13 @@
             navigate(path) { window.location.hash = path; },
             refresh() { this.handleHashChange(); },
             handleHashChange() {
-                const hash = window.location.hash || '#/';
+                let hash = window.location.hash || '#/';
+                // Always land on Home if hash is invalid or at root
+                if (hash === '' || hash === '#') {
+                    hash = '#/';
+                    window.location.hash = '#/';
+                }
+
                 document.querySelectorAll('.fixed.bottom-6 a').forEach(el => {
                     const isActive = el.dataset.path === hash;
                     el.classList.toggle('text-[#6B9080]', isActive);
@@ -293,7 +357,7 @@
                 content.innerHTML = '';
                 window.scrollTo({ top: 0, behavior: 'smooth' });
 
-                if (hash === '#/' || hash === '') renderHome(content);
+                if (hash === '#/') renderHome(content);
                 else if (hash.startsWith('#/property/')) renderDetails(content, hash.split('/').pop());
                 else if (hash === '#/search' || hash.startsWith('#/search?')) renderSearch(content, new URLSearchParams(hash.split('?')[1] || ''));
                 else if (hash === '#/favs') renderSearch(content, null, true);
@@ -321,43 +385,42 @@
             }
         }
 
-        /**
-         * RENDERERS - NEW CALM UI
-         */
+        /** RENDERERS */
 
-        function renderPropertyCard(p) {
+        function renderPropertyCard(p, isSuggestion = false) {
             const isSaved = state.savedIds.includes(p.id);
             const cardImages = (p.images && p.images.length > 0) ? p.images.slice(0, 3) : ['https://picsum.photos/400/300'];
             
             return `
-                <article class="property-card flex flex-col reveal cursor-pointer" onclick="router.navigate('#/property/${p.id}')">
-                    <div class="img-slider group">
+                <article class="${isSuggestion ? 'suggestion-card' : ''} property-card flex flex-col reveal cursor-pointer group" onclick="router.navigate('#/property/${p.id}')">
+                    <div class="${isSuggestion ? 'h-36' : 'h-[240px]'} img-slider">
                         ${cardImages.map((img, i) => `
                             <img src="${img}" class="slider-img ${i === 0 ? 'active' : ''}">
                         `).join('')}
                         <div class="absolute top-4 left-4">
                             <span class="px-3 py-1 bg-white/90 backdrop-blur-md text-[9px] font-bold uppercase tracking-wider text-teal-800 rounded-full border border-teal-100 shadow-sm">${p.type}</span>
                         </div>
-                        <button onclick="toggleSave(event, '${p.id}')" class="absolute top-4 right-4 w-9 h-9 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-slate-400 hover:text-rose-400 transition-all ${isSaved ? 'text-rose-500' : ''}">
+                        ${!isSuggestion ? `
+                        <button onclick="toggleSave(event, '${p.id}')" class="absolute top-4 right-4 w-9 h-9 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-slate-400 hover:text-rose-400 transition-all ${isSaved ? 'text-rose-500 shadow-sm shadow-rose-200' : ''}">
                             <svg class="w-5 h-5" fill="${isSaved ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" stroke-width="1.5"/></svg>
-                        </button>
+                        </button>` : ''}
                     </div>
 
-                    <div class="p-6 flex-1 flex flex-col">
-                        <h3 class="text-lg font-semibold text-slate-800 mb-1 line-clamp-1">${p.title}</h3>
-                        <p class="text-xs text-slate-500 line-clamp-1 mb-6 flex items-center gap-1">
-                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-width="1.5"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-width="1.5"/></svg>
+                    <div class="${isSuggestion ? 'p-4' : 'p-6'} flex-1 flex flex-col">
+                        <h3 class="${isSuggestion ? 'text-sm' : 'text-lg'} font-semibold text-slate-800 mb-1 line-clamp-1 group-hover:text-teal-700 transition-colors">${p.title}</h3>
+                        <p class="text-[10px] text-slate-500 line-clamp-1 mb-4 flex items-center gap-1">
+                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-width="1.5"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-width="1.5"/></svg>
                              ${p.location}
                         </p>
                         
-                        <div class="mt-auto pt-5 border-t border-slate-50 flex items-center justify-between">
+                        <div class="mt-auto pt-3 border-t border-slate-50 flex items-center justify-between">
                             <div>
-                                <p class="text-xl font-semibold text-teal-700 leading-none mb-1">${formatCurrency(p.price)}</p>
-                                <p class="text-[10px] font-medium text-slate-400 uppercase tracking-widest">${p.area} SQ.FT</p>
+                                <p class="${isSuggestion ? 'text-base' : 'text-xl'} font-semibold text-teal-700 leading-none mb-1">${formatCurrency(p.price)}</p>
                             </div>
+                            ${!isSuggestion ? `
                             <div class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-teal-700 group-hover:bg-teal-700 group-hover:text-white transition-all">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 8l4 4m0 0l-4 4m4-4H3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            </div>
+                            </div>` : ''}
                         </div>
                     </div>
                 </article>
@@ -368,15 +431,14 @@
             container.innerHTML = `
                 <section class="max-w-7xl mx-auto px-6 mb-20 text-center">
                     <div class="max-w-3xl mx-auto reveal">
-                        <h1 class="text-4xl lg:text-5xl font-semibold tracking-tight leading-tight mb-6">Find your calm place in the city.</h1>
-                        <p class="text-slate-500 text-lg font-light mb-10">Exclusive access to hand-picked, verified properties for a peaceful living experience.</p>
+                        <h1 class="text-4xl lg:text-5xl font-semibold tracking-tight leading-tight mb-6">Experience the calm of Nestjen.</h1>
+                        <p class="text-slate-500 text-lg font-light mb-10">Exclusive verified real estate assets curated for peaceful living. Find your next sanctuary in the heart of the city.</p>
                         
                         <div class="flex flex-col md:flex-row gap-4 justify-center">
-                            <div class="relative flex-1 max-w-md">
-                                <input type="text" id="home-search" placeholder="Search neighborhood..." class="input-calm w-full h-14 pl-12">
-                                <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2"/></svg>
-                            </div>
-                            <button onclick="router.navigate('#/search')" class="btn-calm h-14 px-8">Explore All</button>
+                            <button onclick="router.navigate('#/search')" class="btn-calm h-14 px-10 gap-2 shadow-lg shadow-teal-700/10">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2"/></svg>
+                                Explore Marketplace
+                            </button>
                         </div>
                     </div>
                 </section>
@@ -384,90 +446,118 @@
                 <section class="max-w-7xl mx-auto px-6 mb-24">
                     <div class="flex items-end justify-between mb-10">
                         <div>
-                            <h2 class="text-2xl font-semibold">New Arrivals</h2>
-                            <p class="text-xs text-slate-400 font-medium uppercase tracking-[0.2em] mt-1">Lately added verified assets</p>
+                            <h2 class="text-2xl font-semibold">New Additions</h2>
+                            <p class="text-xs text-slate-400 font-medium uppercase tracking-[0.2em] mt-1">Our latest verified listings</p>
                         </div>
+                        <a href="#/search" class="text-sm font-semibold text-[#6B9080] hover:underline underline-offset-4 hidden md:block">View all listings</a>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         ${state.properties.length > 0 ? 
                             state.properties.slice(0, 9).map(p => renderPropertyCard(p)).join('') : 
-                            Array(6).fill(0).map(() => `<div class="aspect-[16/11] bg-slate-100 rounded-[20px] animate-pulse"></div>`).join('')
+                            Array(6).fill(0).map(() => `<div class="aspect-[16/11] bg-slate-100 rounded-[24px] animate-pulse"></div>`).join('')
                         }
                     </div>
                 </section>
             `;
             startCardSliders();
-            
-            // Search bind
-            const hSearch = document.getElementById('home-search');
-            if(hSearch) hSearch.onkeypress = (e) => {
-                if(e.key === 'Enter') router.navigate(`#/search?q=${encodeURIComponent(hSearch.value)}`);
-            };
+        }
+
+        function toggleSearchFilters() {
+            const panel = document.getElementById('filter-panel');
+            panel.classList.toggle('active');
         }
 
         function renderSearch(container, params, isFavMode = false) {
             let filtered = [...state.properties];
-            if (isFavMode) filtered = filtered.filter(p => state.savedIds.includes(p.id));
-            else if (params) {
-                const q = params.get('q')?.toLowerCase() || '';
-                const type = params.get('type') || 'All';
-                if (q) filtered = filtered.filter(p => p.title.toLowerCase().includes(q) || p.location.toLowerCase().includes(q));
-                if (type !== 'All') filtered = filtered.filter(p => p.type === type);
+            const qStr = params?.get('q')?.toLowerCase() || '';
+            const typeFilter = params?.get('type') || 'All';
+
+            if (isFavMode) {
+                filtered = filtered.filter(p => state.savedIds.includes(p.id));
+            } else {
+                if (qStr) filtered = filtered.filter(p => p.title.toLowerCase().includes(qStr) || p.location.toLowerCase().includes(qStr));
+                if (typeFilter !== 'All') filtered = filtered.filter(p => p.type === typeFilter);
             }
 
             container.innerHTML = `
-                <div class="max-w-7xl mx-auto px-6 flex flex-col lg:flex-row gap-12">
-                    <aside class="w-full lg:w-64 shrink-0">
-                        <div class="sticky top-28 bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm">
-                            <h3 class="text-sm font-semibold mb-6">Filters</h3>
-                            <div class="space-y-6">
-                                <div>
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 block">Category</label>
-                                    <div class="flex flex-wrap gap-2">
-                                        ${['All', 'Flat', 'Shop', 'Plot'].map(t => `
-                                            <button class="px-4 py-2 rounded-full text-xs font-medium transition-all ${(!params && t === 'All') || (params?.get('type') === t) ? 'bg-[#6B9080] text-white' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}" onclick="applyFilter('type', '${t}')">${t}</button>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                                <button onclick="router.navigate('#/favs')" class="w-full py-3 bg-slate-100 text-slate-600 rounded-2xl text-xs font-semibold hover:bg-[#6B9080] hover:text-white transition-all">View Saved</button>
+                <div class="max-w-7xl mx-auto px-6">
+                    <div class="reveal mb-12">
+                        <div class="flex flex-col md:flex-row md:items-center gap-4">
+                            <div class="relative flex-1">
+                                <input type="text" id="search-input-field" value="${qStr}" placeholder="Search neighborhood, city..." class="input-calm w-full pl-12 h-14">
+                                <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2"/></svg>
+                            </div>
+                            <button onclick="toggleSearchFilters()" class="btn-outline h-14 px-6 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" stroke-width="2"/></svg>
+                                Filter
+                            </button>
+                            <button onclick="router.navigate('#/favs')" class="btn-outline h-14 px-6 flex items-center gap-2 ${isFavMode ? 'bg-[#6B9080] text-white' : ''}">
+                                <svg class="w-5 h-5" fill="${isFavMode ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" stroke-width="1.5"/></svg>
+                                ${isFavMode ? 'Saved Sanctuaries' : 'Favorites'}
+                            </button>
+                        </div>
+
+                        <div id="filter-panel" class="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 ${typeFilter !== 'All' ? 'active' : ''}">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 block">Categories</label>
+                            <div class="flex flex-wrap gap-3">
+                                ${['All', 'Flat', 'Shop', 'Plot'].map(t => `
+                                    <button class="px-6 py-2.5 rounded-full text-xs font-semibold transition-all ${typeFilter === t ? 'bg-[#6B9080] text-white shadow-md shadow-teal-700/10' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}" onclick="applyFilter('type', '${t}')">${t}</button>
+                                `).join('')}
                             </div>
                         </div>
-                    </aside>
-                    
-                    <section class="flex-1">
-                        <div class="mb-10">
-                            <h2 class="text-2xl font-semibold">${isFavMode ? 'Your Saved Vault' : filtered.length + ' Properties Found'}</h2>
-                            <p class="text-xs text-slate-400 font-medium uppercase tracking-[0.2em] mt-1">${isFavMode ? 'Your hand-picked collection' : 'Based on current criteria'}</p>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            ${filtered.map(p => renderPropertyCard(p)).join('')}
-                        </div>
-                        ${filtered.length === 0 ? '<div class="text-center py-32 opacity-30 text-xl italic">No listings match your search.</div>' : ''}
-                    </section>
+                    </div>
+
+                    <div class="mb-10 reveal">
+                        <h2 class="text-3xl font-semibold">${isFavMode ? 'Your Collection' : filtered.length + ' Properties Found'}</h2>
+                        <p class="text-xs text-slate-400 font-medium uppercase tracking-[0.2em] mt-2">${isFavMode ? 'Hand-picked for peaceful living' : 'Curated listings based on your discovery'}</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        ${filtered.map(p => renderPropertyCard(p)).join('')}
+                    </div>
+                    ${filtered.length === 0 ? `<div class="text-center py-40 bg-white/50 rounded-[40px] border border-dashed border-slate-200">
+                        <p class="text-slate-400 italic text-lg">No sanctuaries match your criteria.</p>
+                        <button onclick="router.navigate('#/search')" class="mt-4 text-[#6B9080] font-semibold underline underline-offset-4">Reset Discovery</button>
+                    </div>` : ''}
                 </div>
             `;
             startCardSliders();
+            const sInput = document.getElementById('search-input-field');
+            if(sInput) sInput.onkeyup = (e) => {
+                if(e.key === 'Enter') applyFilter('q', sInput.value);
+            };
         }
 
         function renderDetails(content, id) {
             const p = state.properties.find(item => item.id === id);
-            if (!p) { content.innerHTML = '<div class="text-center py-40">Not found</div>'; return; }
+            if (!p) { content.innerHTML = '<div class="text-center py-40">Dossier Not Found</div>'; return; }
+
+            const suggestions = state.properties.filter(item => item.type === p.type && item.id !== p.id).slice(0, 8);
 
             content.innerHTML = `
                 <div class="max-w-7xl mx-auto px-6 reveal">
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
-                        <!-- Media Section -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-20">
+                        <!-- Media Section with Sliding Functionality -->
                         <div class="lg:col-span-7">
-                            <div class="relative h-[480px] rounded-[32px] overflow-hidden shadow-sm group cursor-zoom-in mb-6" onclick="openLightbox('${p.images[0]}')">
-                                <img id="detail-main-img" src="${p.images[0]}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+                            <div class="relative h-[520px] rounded-[32px] overflow-hidden shadow-sm group cursor-zoom-in mb-6">
+                                <img id="detail-main-img" src="${p.images[0]}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" onclick="openLightbox(this.src)">
+                                
+                                <!-- Left/Right Buttons for Carousel -->
+                                <button onclick="navigateDetailImg(-1)" class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-10">
+                                    <svg class="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2.5"/></svg>
+                                </button>
+                                <button onclick="navigateDetailImg(1)" class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-10">
+                                    <svg class="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2.5"/></svg>
+                                </button>
+
                                 <div class="absolute bottom-6 right-6">
-                                     <span class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 shadow-lg">Enlarge</span>
+                                     <span class="bg-white/90 backdrop-blur-md px-5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity">Enlarge Gallery</span>
                                 </div>
                             </div>
                             <div class="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
                                 ${p.images.map((img, i) => `
-                                    <div class="w-24 h-20 shrink-0 rounded-2xl overflow-hidden border-2 transition-all cursor-pointer ${i === 0 ? 'border-[#6B9080]' : 'border-transparent opacity-60'}" onclick="updateDetailImg(this, '${img}')">
+                                    <div class="detail-thumb w-24 h-20 shrink-0 rounded-2xl overflow-hidden border-2 transition-all cursor-pointer ${i === 0 ? 'border-[#6B9080]' : 'border-transparent opacity-60'}" onclick="updateDetailImg(this, '${img}')">
                                         <img src="${img}" class="w-full h-full object-cover">
                                     </div>
                                 `).join('')}
@@ -480,9 +570,9 @@
                                 <div class="mb-8">
                                     <div class="flex items-center gap-2 mb-4">
                                         <span class="bg-[#6B9080]/10 text-[#6B9080] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">${p.type}</span>
-                                        <span class="text-xs text-slate-400">ID: #${p.id.split('-').pop().toUpperCase()}</span>
+                                        <span class="text-xs text-slate-400">#${p.id.split('-').pop().toUpperCase()}</span>
                                     </div>
-                                    <h1 class="text-3xl font-semibold mb-2">${p.title}</h1>
+                                    <h1 class="text-3xl font-semibold mb-2 leading-tight">${p.title}</h1>
                                     <p class="text-slate-500 flex items-center gap-2 text-sm">
                                          <svg class="w-4 h-4 text-[#6B9080]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-width="2"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-width="2"/></svg>
                                          ${p.location}
@@ -490,35 +580,102 @@
                                 </div>
 
                                 <div class="grid grid-cols-2 gap-6 pb-8 border-b border-slate-50 mb-8">
-                                    <div><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Price</p><h4 class="text-2xl font-semibold text-[#6B9080]">${formatCurrency(p.price)}</h4></div>
-                                    <div><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Space</p><h4 class="text-xl font-semibold">${p.area} <span class="text-xs text-slate-400 font-normal">Sq.Ft</span></h4></div>
+                                    <div><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Asking Price</p><h4 class="text-2xl font-semibold text-[#6B9080]">${formatCurrency(p.price)}</h4></div>
+                                    <div><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Space</p><h4 class="text-xl font-semibold">${p.area} <span class="text-xs text-slate-400 font-normal">Sq.Ft</span></h4></div>
                                 </div>
 
-                                <div class="flex-1 space-y-6">
+                                <div class="flex-1 space-y-8">
                                     <div>
-                                        <h4 class="text-sm font-semibold mb-3">About</h4>
+                                        <h4 class="text-sm font-semibold mb-3">Narrative</h4>
                                         <p class="text-slate-500 text-sm leading-relaxed">${p.description}</p>
                                     </div>
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        ${p.amenities ? p.amenities.map(a => `<div class="flex items-center gap-2 text-xs text-slate-600 bg-slate-50 px-3 py-2 rounded-xl"><div class="w-1 h-1 rounded-full bg-[#6B9080]"></div> ${a}</div>`).join('') : ''}
+                                        ${p.amenities ? p.amenities.map(a => `<div class="flex items-center gap-2 text-xs text-slate-600 bg-slate-50 px-3 py-2.5 rounded-xl shadow-sm border border-slate-100/50"><div class="w-1.5 h-1.5 rounded-full bg-[#6B9080]"></div> ${a}</div>`).join('') : ''}
                                     </div>
                                 </div>
 
                                 <div class="mt-12 space-y-3">
-                                    <button onclick="openWhatsApp('${p.title}', '${p.location}', '${formatCurrency(p.price)}')" class="btn-calm w-full h-14 rounded-2xl gap-2">
+                                    <!-- Swapped positions: Inquiry first, WhatsApp second -->
+                                    <button onclick="openInquiryModal('${p.title}', '${p.id}', '${p.type}', '${formatCurrency(p.price)}')" class="btn-calm w-full h-14 rounded-2xl gap-3 shadow-lg shadow-teal-700/10">
+                                        Send Formal Inquiry
+                                    </button>
+                                    <button onclick="openWhatsApp('${p.title}', '${p.location}', '${formatCurrency(p.price)}')" class="btn-outline w-full h-14 rounded-2xl gap-3 flex items-center justify-center">
                                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.246 2.248 3.484 5.232 3.484 8.412-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.309 1.656zm6.224-3.52c1.541.951 3.278 1.454 5.051 1.455h.001c5.51 0 9.991-4.482 9.994-9.995 0-2.671-1.04-5.181-2.93-7.071-1.889-1.891-4.398-2.932-7.068-2.932-5.509 0-9.99 4.482-9.994 9.994-.001 2.014.569 3.967 1.647 5.676l-.427 1.558 1.758-.461zm11.734-6.87c-.311-.156-1.845-.91-2.134-1.014-.289-.104-.499-.156-.708.156-.208.312-.807 1.014-.988 1.221-.181.208-.363.234-.674.078-.311-.156-1.316-.484-2.504-1.544-.925-.824-1.548-1.841-1.73-2.152-.181-.312-.019-.481.136-.636.14-.139.311-.363.466-.545.156-.181.208-.312.311-.519.104-.208.052-.389-.026-.545-.078-.156-.708-1.714-.971-2.338-.256-.608-.517-.525-.708-.535l-.604-.011c-.208 0-.547.078-.833.389-.286.312-1.092 1.066-1.092 2.6s1.117 3.012 1.274 3.22c.156.208 2.199 3.359 5.328 4.71.744.322 1.325.515 1.777.659.747.237 1.427.203 1.965.123.599-.089 1.845-.754 2.107-1.442.263-.688.263-1.273.184-1.396-.078-.124-.289-.208-.6-.363z"/></svg>
-                                Message Owner
-                            </button>
-                            <button onclick="openInquiryModal('${p.title}', '${p.id}', '${p.type}', '${formatCurrency(p.price)}')" class="btn-outline w-full h-14 rounded-2xl">Send Formal Dossier</button>
+                                        Establish Connection
+                                    </button>
+                                </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Sliding Suggestions Carousel -->
+                ${suggestions.length > 0 ? `
+                <section class="max-w-7xl mx-auto px-6 pt-20 border-t border-slate-100 mb-10 overflow-hidden">
+                    <div class="mb-10 flex items-center justify-between">
+                        <div>
+                            <h2 class="text-2xl font-semibold">Recommended Sanctuaries</h2>
+                            <p class="text-xs text-slate-400 font-medium uppercase tracking-[0.2em] mt-1">Based on this dossier</p>
+                        </div>
+                        <div class="flex gap-2">
+                             <button onclick="slideSuggestions('left')" class="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2"/></svg></button>
+                             <button onclick="slideSuggestions('right')" class="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2"/></svg></button>
+                        </div>
+                    </div>
+                    <div id="suggestion-carousel" class="suggestion-slider-container no-scrollbar">
+                        ${suggestions.map(s => renderPropertyCard(s, true)).join('')}
+                    </div>
+                </section>
+                ` : ''}
             `;
+            initAutoSliding();
         }
 
-        /**
-         * HELPERS
-         */
+        /** HELPERS & LOGIC */
+
+        function slideSuggestions(dir) {
+            const carousel = document.getElementById('suggestion-carousel');
+            if(!carousel) return;
+            const scrollAmt = 304; // card width + gap
+            carousel.scrollBy({ left: dir === 'left' ? -scrollAmt : scrollAmt, behavior: 'smooth' });
+        }
+
+        let slideInterval;
+        function initAutoSliding() {
+            if (slideInterval) clearInterval(slideInterval);
+            slideInterval = setInterval(() => {
+                const carousel = document.getElementById('suggestion-carousel');
+                if(!carousel) return;
+                if (carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 10) {
+                    carousel.scrollTo({ left: 0, behavior: 'smooth' });
+                } else {
+                    carousel.scrollBy({ left: 304, behavior: 'smooth' });
+                }
+            }, 6000);
+        }
+
+        function navigateDetailImg(dir) {
+            const mainImg = document.getElementById('detail-main-img');
+            const propertyId = window.location.hash.split('/').pop();
+            const p = state.properties.find(item => item.id === propertyId);
+            if (!p || !p.images) return;
+            
+            let currentSrc = mainImg.getAttribute('src');
+            let idx = p.images.indexOf(currentSrc);
+            if (idx === -1) idx = 0;
+
+            let nextIdx = (idx + dir + p.images.length) % p.images.length;
+            const nextSrc = p.images[nextIdx];
+            
+            mainImg.src = nextSrc;
+            
+            // Sync highlight with thumbnails
+            const thumbs = document.querySelectorAll('.detail-thumb');
+            thumbs.forEach((t, i) => {
+                t.classList.toggle('border-[#6B9080]', i === nextIdx);
+                t.classList.toggle('border-transparent', i !== nextIdx);
+                t.classList.toggle('opacity-60', i !== nextIdx);
+            });
+        }
 
         let sliderInterval;
         function startCardSliders() {
@@ -537,8 +694,13 @@
 
         function updateDetailImg(el, src) {
             document.getElementById('detail-main-img').src = src;
-            el.parentElement.querySelectorAll('div').forEach(d => d.classList.remove('border-[#6B9080]'));
+            const parent = el.parentElement;
+            parent.querySelectorAll('.detail-thumb').forEach(d => {
+                d.classList.remove('border-[#6B9080]');
+                d.classList.add('border-transparent', 'opacity-60');
+            });
             el.classList.add('border-[#6B9080]');
+            el.classList.remove('border-transparent', 'opacity-60');
         }
 
         function openLightbox(src) {
@@ -590,8 +752,8 @@
                     </button>
                     
                     <div class="mb-10 text-center">
-                        <h2 class="text-2xl font-semibold mb-2">${isRegister ? 'Join Nestjen' : 'Welcome Back'}</h2>
-                        <p class="text-sm text-slate-400">Please enter your credentials</p>
+                        <h2 class="text-2xl font-semibold mb-2">${isRegister ? 'Join Nestjen' : 'Welcome Home'}</h2>
+                        <p class="text-sm text-slate-400">Join our verified calm neighborhood</p>
                     </div>
 
                     <form id="auth-form" class="space-y-4">
@@ -604,11 +766,17 @@
                                 <input type="date" id="a-dob" class="input-calm" required>
                             </div>
                         ` : ''}
-                        <button type="submit" class="btn-calm w-full h-14 mt-4" id="auth-submit-btn">${isRegister ? 'Create Account' : 'Sign In'}</button>
+                        
+                        <div class="progress-bar-container" id="auth-progress-bar">
+                            <div class="progress-bar-fill"></div>
+                        </div>
+
+                        <button type="submit" class="btn-calm w-full h-14 mt-4 shadow-lg shadow-teal-700/10" id="auth-submit-btn">${isRegister ? 'Create Portfolio' : 'Sign In'}</button>
                     </form>
 
-                    <div class="mt-8 text-center">
-                         <button onclick="openLoginModal(${!isRegister})" class="text-xs font-semibold text-[#6B9080]">${isRegister ? 'Already have an account? Sign In' : 'Need an account? Sign Up'}</button>
+                    <div class="mt-8 text-center text-xs font-medium text-[#6B9080]">
+                         ${isRegister ? 'Already have a portfolio?' : 'Need an invitation?'} 
+                         <button onclick="openLoginModal(${!isRegister})" class="font-semibold text-blue-600 hover:text-blue-700 transition-colors ml-1">${isRegister ? 'Sign In' : 'Register'}</button>
                     </div>
                 </div>
             `;
@@ -618,56 +786,71 @@
             document.getElementById('auth-form').onsubmit = async (e) => {
                 e.preventDefault();
                 const btn = document.getElementById('auth-submit-btn');
+                const progressBar = document.getElementById('auth-progress-bar');
                 const email = document.getElementById('a-email').value.trim();
                 const pass = document.getElementById('a-pass').value.trim();
-                btn.innerText = 'Synchronizing...'; btn.disabled = true;
+                
+                btn.innerText = 'Synchronizing...';
+                btn.disabled = true;
+                progressBar.style.display = 'block';
 
                 if (isRegister) {
                     const newUser = { name: document.getElementById('a-name').value, email, phone: document.getElementById('a-phone').value, password: pass, dob: document.getElementById('a-dob').value, photo: "" };
                     try {
-                        await fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'sync_user', user: newUser }) });
-                        state.user = newUser; localStorage.setItem('estate_user', JSON.stringify(newUser)); closeModal(); updateNavActions(); router.refresh();
-                    } catch { alert('Network Error'); btn.innerText = 'Register'; btn.disabled = false; }
+                        fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'sync_user', user: newUser }) });
+                        // Update UI immediately
+                        state.user = newUser; 
+                        localStorage.setItem('estate_user', JSON.stringify(newUser)); 
+                        closeModal(); 
+                        updateNavActions(); 
+                        router.refresh();
+                    } catch { 
+                        alert('Network Error'); btn.innerText = 'Register'; btn.disabled = false; progressBar.style.display = 'none';
+                    }
                 } else {
                     try {
                         const resp = await fetch(`${GAS_WEBAPP_URL}?action=verify_user&email=${encodeURIComponent(email)}&password=${encodeURIComponent(pass)}`);
                         const result = await resp.json();
                         if (result.status === 'success') { state.user = result.user; localStorage.setItem('estate_user', JSON.stringify(result.user)); closeModal(); updateNavActions(); router.refresh(); }
-                        else { alert(result.message); btn.innerText = 'Sign In'; btn.disabled = false; }
-                    } catch { alert('Auth Error'); btn.innerText = 'Sign In'; btn.disabled = false; }
+                        else { 
+                            alert(result.message); btn.innerText = 'Sign In'; btn.disabled = false; progressBar.style.display = 'none';
+                        }
+                    } catch { 
+                        alert('Auth Error'); btn.innerText = 'Sign In'; btn.disabled = false; progressBar.style.display = 'none';
+                    }
                 }
             };
         }
 
         function openProfileModal() {
             modalContainer.innerHTML = `
-                <div class="bg-white rounded-[40px] w-full max-w-lg overflow-hidden reveal shadow-2xl">
+                <div class="bg-white rounded-[40px] w-full max-w-lg overflow-hidden reveal shadow-2xl relative border border-slate-50">
                     <div class="h-40 bg-[#6B9080]/10 relative">
-                        <button class="absolute top-6 right-6 text-slate-500 hover:text-slate-900" onclick="closeModal()">
+                        <button class="absolute top-6 right-6 text-slate-500 hover:text-slate-900 bg-white/50 backdrop-blur rounded-full p-1.5" onclick="closeModal()">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="2"/></svg>
                         </button>
-                        <div class="absolute -bottom-10 left-10 w-24 h-24 rounded-3xl border-4 border-white overflow-hidden shadow-lg">
+                        <div class="absolute -bottom-10 left-10 w-24 h-24 rounded-3xl border-4 border-white overflow-hidden shadow-xl">
                             <img src="${state.user.photo || 'https://picsum.photos/200/200'}" class="w-full h-full object-cover">
                         </div>
                     </div>
                     <div class="p-10 pt-16">
                         <h3 class="text-2xl font-semibold mb-1">${state.user.name}</h3>
-                        <p class="text-xs text-slate-400 font-medium tracking-widest uppercase mb-10">Premium Estate Holder</p>
+                        <p class="text-[10px] text-slate-400 font-bold tracking-[0.2em] uppercase mb-10">Premium Portfolio Holder</p>
                         
                         <div class="grid grid-cols-2 gap-4 mb-10">
-                            <div class="bg-slate-50 p-6 rounded-3xl text-center">
-                                <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">My Feed</label>
+                            <div class="bg-slate-50 p-6 rounded-3xl text-center border border-slate-100/50">
+                                <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">My Assets</label>
                                 <span class="text-2xl font-semibold">0</span>
                             </div>
-                            <div class="bg-slate-50 p-6 rounded-3xl text-center">
-                                <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Saved</label>
+                            <div class="bg-slate-50 p-6 rounded-3xl text-center border border-slate-100/50">
+                                <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Favorites</label>
                                 <span class="text-2xl font-semibold">${state.savedIds.length}</span>
                             </div>
                         </div>
 
                         <div class="flex flex-col gap-3">
-                            <button onclick="openAddListingModal()" class="btn-calm w-full h-14">List New Property</button>
-                            <button onclick="handleLogout()" class="w-full py-4 text-rose-500 text-xs font-semibold hover:bg-rose-50 rounded-2xl transition-colors">Sign Out</button>
+                            <button onclick="openAddListingModal()" class="btn-calm w-full h-14 shadow-lg shadow-teal-700/10">Publish New Listing</button>
+                            <button onclick="handleLogout()" class="w-full py-4 text-rose-400 text-xs font-semibold hover:bg-rose-50 rounded-2xl transition-colors">Terminate Session</button>
                         </div>
                     </div>
                 </div>
@@ -681,40 +864,57 @@
         function openAddListingModal() {
             tempImages = [];
             modalContainer.innerHTML = `
-                <div class="bg-white rounded-[40px] w-full max-w-2xl p-10 reveal shadow-2xl overflow-hidden">
+                <div class="bg-white rounded-[40px] w-full max-w-2xl p-10 reveal shadow-2xl overflow-hidden relative border border-slate-50">
                     <button class="absolute top-8 right-8 text-slate-400" onclick="closeModal()">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="2"/></svg>
                     </button>
-                    <div class="mb-10"><h2 class="text-2xl font-semibold">List a New Asset</h2><p class="text-sm text-slate-400 mt-1">Share details for verification</p></div>
+                    <div class="mb-10">
+                        <h2 class="text-2xl font-semibold">List a New Asset</h2>
+                        <p class="text-sm text-slate-400 mt-1 uppercase tracking-widest text-[9px] font-bold">Verification process required</p>
+                    </div>
                     <form id="listing-form" class="space-y-6">
                         <div>
-                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 block">Official Photos (Min 4)</label>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 block">Official Photography (Min 4)</label>
                             <div class="grid grid-cols-4 gap-4" id="listing-img-grid">
-                                <label class="aspect-square bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-[#6B9080] transition-all overflow-hidden">
+                                <label class="aspect-square bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-[#6B9080] transition-all overflow-hidden group">
                                     <input type="file" multiple accept="image/*" class="hidden" onchange="handleListingUpload(this)">
-                                    <svg class="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2"/></svg>
+                                    <svg class="w-6 h-6 text-slate-300 group-hover:text-[#6B9080]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2"/></svg>
                                 </label>
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-6">
-                            <input type="text" id="l-title" class="input-calm" placeholder="Dossier Title" required>
-                            <select id="l-type" class="input-calm"><option value="Flat">Residency</option><option value="Shop">Retail</option><option value="Plot">Plot</option></select>
+                            <input type="text" id="l-title" class="input-calm" placeholder="Asset Title" required>
+                            <select id="l-type" class="input-calm"><option value="Flat">Residency</option><option value="Shop">Commercial</option><option value="Plot">Land/Plot</option></select>
                         </div>
                         <div class="grid grid-cols-2 gap-6">
                             <input type="number" id="l-price" class="input-calm" placeholder="Price (₹)" required>
                             <input type="number" id="l-area" class="input-calm" placeholder="Area (Sq.Ft)" required>
                         </div>
-                        <input type="text" id="l-location" class="input-calm w-full" placeholder="Address, City" required>
-                        <button type="submit" class="btn-calm w-full h-16 text-[11px] uppercase tracking-widest font-bold" id="listing-submit-btn">Publish Dossier</button>
+                        <input type="text" id="l-location" class="input-calm w-full" placeholder="Neighborhood, City" required>
+                        
+                        <div class="progress-bar-container" id="listing-progress-bar">
+                            <div class="progress-bar-fill"></div>
+                        </div>
+
+                        <button type="submit" class="btn-calm w-full h-16 text-[11px] uppercase tracking-widest font-bold shadow-lg shadow-teal-700/10" id="listing-submit-btn">Transmit Dossier</button>
                     </form>
                 </div>
             `;
             modalContainer.classList.remove('hidden');
             document.getElementById('listing-form').onsubmit = (e) => {
-                e.preventDefault(); if (tempImages.length < 4) { alert('We need at least 4 photos for verification.'); return; }
+                e.preventDefault(); 
+                if (tempImages.length < 4) { alert('We need at least 4 photos for verification.'); return; }
+                
                 const newReq = { id: 'p-' + Date.now(), title: document.getElementById('l-title').value, type: document.getElementById('l-type').value, price: document.getElementById('l-price').value, area: document.getElementById('l-area').value, location: document.getElementById('l-location').value, images: tempImages };
-                state.pendingRequests.push(newReq); closeModal(); openProfileModal();
-                fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'add_listing_request', property: newReq }) });
+                
+                // Optimized UX: Update screen first, upload in background
+                state.pendingRequests.push(newReq);
+                closeModal(); 
+                openProfileModal();
+
+                // Fire and forget upload
+                fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'add_listing_request', property: newReq }) })
+                    .catch(err => console.error("Background upload failed", err));
             };
         }
 
@@ -728,7 +928,7 @@
             const uploadBtn = grid.querySelector('label'); grid.innerHTML = '';
             tempImages.forEach((src, i) => {
                 const box = document.createElement('div'); box.className = 'relative aspect-square rounded-2xl overflow-hidden shadow-sm group';
-                box.innerHTML = `<img src="${src}" class="w-full h-full object-cover"><button type="button" class="absolute top-1 right-1 w-6 h-6 bg-rose-500 text-white rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" onclick="removeTempImg(${i})">×</button>`;
+                box.innerHTML = `<img src="${src}" class="w-full h-full object-cover"><button type="button" class="absolute top-1.5 right-1.5 w-6 h-6 bg-rose-500 text-white rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" onclick="removeTempImg(${i})">×</button>`;
                 grid.appendChild(box);
             });
             if (tempImages.length < 8 && uploadBtn) grid.appendChild(uploadBtn);
@@ -738,45 +938,83 @@
 
         function openInquiryModal(title, id, type, price) {
             modalContainer.innerHTML = `
-                <div class="bg-white rounded-[40px] w-full max-w-xl p-10 reveal shadow-2xl relative">
+                <div class="bg-white rounded-[40px] w-full max-w-xl p-10 reveal shadow-2xl relative border border-slate-50">
                     <button class="absolute top-8 right-8 text-slate-400" onclick="closeModal()">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="2"/></svg>
                     </button>
-                    <div class="mb-10"><h2 class="text-2xl font-semibold">Request Dossier</h2><p class="text-xs text-slate-400 mt-1 uppercase tracking-widest">${title}</p></div>
+                    <div class="mb-10">
+                        <h2 class="text-2xl font-semibold">Inquiry Dossier</h2>
+                        <p class="text-xs text-slate-400 mt-1 uppercase tracking-widest font-bold">${title}</p>
+                    </div>
                     <form id="inquiry-form" class="space-y-4">
                         <input type="text" id="i-name" class="input-calm w-full" value="${state.user?.name || ''}" placeholder="Full Name" required>
                         <div class="grid grid-cols-2 gap-4">
                             <input type="tel" id="i-phone" class="input-calm" value="${state.user?.phone || ''}" placeholder="Phone" required>
                             <input type="email" id="i-email" class="input-calm" value="${state.user?.email || ''}" placeholder="Email" required>
                         </div>
-                        <textarea id="i-msg" class="input-calm w-full h-32 resize-none" placeholder="Special requirements or questions..."></textarea>
-                        <button type="submit" class="btn-calm w-full h-16 uppercase tracking-widest text-[11px] font-bold" id="inquiry-submit-btn">Send Formal Inquiry</button>
+                        <textarea id="i-msg" class="input-calm w-full h-32 resize-none" placeholder="Special requirements or questions regarding this sanctuary..."></textarea>
+                        
+                        <div class="progress-bar-container" id="inquiry-progress-bar">
+                            <div class="progress-bar-fill"></div>
+                        </div>
+
+                        <button type="submit" class="btn-calm w-full h-16 uppercase tracking-widest text-[11px] font-bold shadow-lg shadow-teal-700/10" id="inquiry-submit-btn">Send Official Inquiry</button>
                     </form>
                 </div>
             `;
             modalContainer.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+
             document.getElementById('inquiry-form').onsubmit = (e) => {
                 e.preventDefault();
                 const d = { action: 'submit_inquiry', propertyName: title, propertyId: id, propertyType: type, propertyPrice: price, userName: document.getElementById('i-name').value, userPhone: document.getElementById('i-phone').value, userEmail: document.getElementById('i-email').value, message: document.getElementById('i-msg').value };
+                
+                // Optimized UX: Update screen immediately
                 modalContainer.innerHTML = `
                     <div class="bg-white rounded-[40px] w-full max-w-md p-12 text-center reveal shadow-2xl border border-teal-50">
-                        <div class="w-20 h-20 bg-teal-50 text-[#6B9080] rounded-full flex items-center justify-center mx-auto mb-8"><svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"></path></svg></div>
-                        <h2 class="text-2xl font-semibold mb-4">Request Sent</h2>
-                        <p class="text-slate-400 text-sm leading-relaxed">The owner will establishes a connection shortly.</p>
-                        <button class="btn-calm w-full h-14 mt-10" onclick="closeModal()">Back to Listings</button>
+                        <div class="w-20 h-20 bg-teal-50 text-[#6B9080] rounded-full flex items-center justify-center mx-auto mb-8 shadow-sm">
+                            <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"></path></svg>
+                        </div>
+                        <h2 class="text-2xl font-semibold mb-4">Inquiry Sent</h2>
+                        <p class="text-slate-400 text-sm leading-relaxed">Connecting in the background. Connection will be established shortly.</p>
+                        <button class="btn-calm w-full h-14 mt-10 shadow-lg shadow-teal-700/10" onclick="closeModal()">Back to Listings</button>
                     </div>
                 `;
-                fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(d) });
+
+                // Fire background upload
+                fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(d) })
+                    .catch(err => console.error("Inquiry upload failed", err));
             };
         }
 
         // Init
         window.addEventListener('hashchange', () => router.handleHashChange());
-        window.addEventListener('scroll', () => document.getElementById('navbar').classList.toggle('bg-white/90', window.scrollY > 40));
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('navbar');
+            if(window.scrollY > 40) {
+                nav.classList.add('bg-white/90', 'shadow-sm');
+                nav.classList.remove('py-4');
+                nav.classList.add('py-2');
+            } else {
+                nav.classList.remove('bg-white/90', 'shadow-sm');
+                nav.classList.remove('py-2');
+                nav.classList.add('py-4');
+            }
+        });
+
         document.getElementById('mobile-profile-btn').onclick = () => state.user ? openProfileModal() : openLoginModal(false);
 
+        // App Initialization
         fetchMarketplace();
-        setInterval(syncPrivateStatus, 30000);
+        setInterval(syncPrivateStatus, 45000);
+        
+        // Final check to ensure first screen is home
+        if (!window.location.hash || window.location.hash === '#' || window.location.hash === '#/') {
+            window.location.hash = '#/';
+        } else {
+            // Optional: If you always want home on REFRESH specifically, uncomment below
+            // window.location.hash = '#/';
+        }
         router.handleHashChange();
     </script>
 </body>
