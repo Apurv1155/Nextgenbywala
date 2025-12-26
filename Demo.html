@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Stream & Dream | The Editorial Archive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0D0D0D;
+            --accent: #B89352;
+            --bg: #FDFBFA;
+            --card: #FFFFFF;
+            --border: #F2EDE4;
+            --transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            --text-muted: #8E8E93;
+        }
+
+        .dark {
+            --primary: #FDFBFA;
+            --accent: #D4AF37;
+            --bg: #050505;
+            --card: #121212;
+            --border: #242424;
+            --text-muted: #636366;
+        }
+
+        * { 
+            margin: 0; padding: 0; box-sizing: border-box; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+            outline: none !important;
+        }
+        
+        body { 
+            background: var(--bg); color: var(--primary); 
+            overflow-x: hidden; min-height: 100vh; font-size: 14px; 
+            scroll-behavior: smooth; letter-spacing: -0.015em;
+            transition: background var(--transition), color var(--transition);
+        }
+
+        h1, h2, h3, .serif { font-family: 'Playfair Display', serif; }
+        
+        .glass { background: rgba(253, 251, 250, 0.7); backdrop-filter: blur(40px) saturate(180%); border-bottom: 1px solid var(--border); transition: var(--transition); }
+        .dark .glass { background: rgba(18, 18, 18, 0.7); border-color: var(--border); }
+
+        .btn { padding: 12px 24px; border-radius: 100px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; transition: var(--transition); font-size: 0.65rem; cursor: pointer; border: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-primary { background: var(--primary); color: var(--bg); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--primary); }
+        
+        .input-sd { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 20px; transition: var(--transition); width: 100%; font-size: 0.9rem; color: var(--primary); }
+        .input-sd:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(184, 147, 82, 0.1); }
+
+        .hidden { display: none !important; }
+        .reveal { animation: revealIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes revealIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        #drawer { transform: translateX(100%); transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); z-index: 2000; background: var(--bg); color: var(--primary); border-left: 1px solid var(--border); }
+        #drawer.open { transform: translateX(0); }
+        
+        .badge { background: var(--accent); color: white; min-width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; position: absolute; top: -4px; right: -4px; font-weight: 800; border: 2px solid var(--bg); }
+        
+        .product-card { transition: var(--transition); }
+        .product-card:hover { transform: translateY(-6px); }
+        .product-card img { transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
+        .product-card:hover img { transform: scale(1.05); }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+
+        .heart-icon { transition: var(--transition); cursor: pointer; }
+        .heart-icon.active { fill: #FF4D4D; stroke: #FF4D4D; transform: scale(1.1); }
+
+        .add-to-bag-trigger { opacity: 0; transform: translateY(10px); transition: var(--transition); }
+        .product-card:hover .add-to-bag-trigger { opacity: 1; transform: translateY(0); }
+        
+        @media (max-width: 768px) { 
+            .add-to-bag-trigger { opacity: 1; transform: none; }
+            .hero-text { font-size: 3.5rem !important; line-height: 1 !important; }
+            .mobile-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 16px !important; }
+            .section-px { padding-left: 20px; padding-right: 20px; }
+        }
+
+        /* Order Tracking Bar */
+        .step-container { position: relative; flex: 1; }
+        .step-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); transition: var(--transition); position: relative; z-index: 2; }
+        .step-dot.active { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+        .step-line { position: absolute; top: 4.5px; left: 50%; width: 100%; height: 1px; background: var(--border); z-index: 1; }
+        .step-line.active { background: var(--accent); }
+
+        /* Loader Animation */
+        #loader { transition: opacity 0.8s ease-out; }
+        .loader-bar { width: 40px; height: 1px; background: var(--text-muted); position: relative; overflow: hidden; }
+        .loader-bar::after { content: ''; position: absolute; left: -100%; top: 0; width: 100%; height: 100%; background: var(--primary); animation: slide 1.5s infinite; }
+        @keyframes slide { 100% { left: 100%; } }
+
+        .theme-switch-btn { padding: 10px; border-radius: 50%; transition: var(--transition); border: 1px solid var(--border); }
+        .theme-switch-btn:hover { background: var(--border); }
+
+        /* Floating Nav */
+        .floating-nav { 
+            position: fixed; 
+            bottom: 24px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            z-index: 999; 
+            display: flex; 
+            gap: 12px;
+            background: rgba(var(--primary-rgb, 13, 13, 13), 0.1); 
+            backdrop-filter: blur(24px) saturate(200%);
+            border: 1px solid var(--border);
+            padding: 8px;
+            border-radius: 32px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .nav-button {
+            width: 48px;
+            height: 48px;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            background: var(--card);
+            color: var(--primary);
+        }
+        .nav-button.active {
+            background: var(--primary);
+            color: var(--bg);
+        }
+    </style>
+</head>
+<body class="no-scrollbar">
+
+    <!-- Seamless Loader -->
+    <div id="loader" class="fixed inset-0 bg-[#FDFBFA] dark:bg-[#050505] z-[9999] flex flex-col items-center justify-center">
+        <div class="loader-bar"></div>
+        <p class="mt-8 text-[7px] font-black tracking-[1.5em] text-gray-400 uppercase">Stream & Dream</p>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 h-20 glass z-[1000] flex items-center px-6 md:px-12">
+        <div class="max-w-[1800px] mx-auto w-full flex justify-between items-center">
+            <a href="javascript:void(0)" onclick="setView('home')" class="text-lg font-black tracking-[-0.05em] uppercase shrink-0">S <span class="opacity-20 font-light">&</span> D</a>
+            
+            <div class="hidden lg:flex items-center gap-14">
+                <a href="javascript:void(0)" onclick="setView('home')" class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 hover:opacity-100 transition-opacity">Aura</a>
+                <a href="javascript:void(0)" onclick="setView('shop')" class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 hover:opacity-100 transition-opacity">Archive</a>
+                <a href="javascript:void(0)" onclick="setView('wishlist')" class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 hover:opacity-100 transition-opacity">Wishlist</a>
+                <a href="javascript:void(0)" onclick="setView('orders')" class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 hover:opacity-100 transition-opacity">Pipeline</a>
+            </div>
+
+            <div class="flex items-center gap-3 md:gap-8">
+                <button onclick="toggleTheme()" class="theme-switch-btn" id="theme-btn">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" stroke-width="1.5"></path></svg>
+                </button>
+                <button onclick="toggleAdmin()" class="p-2 opacity-30 hover:opacity-100 transition-opacity" title="Terminal Console">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </button>
+                <button onclick="toggleCart(true)" class="relative p-2 transition-transform hover:scale-110">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" stroke-width="1.5"></path></svg>
+                    <span id="cart-badge" class="badge hidden">0</span>
+                </button>
+                <button onclick="setView('profile')" class="w-9 h-9 rounded-full border border-border flex items-center justify-center text-muted hover:text-accent hover:border-accent transition-all" title="Profile">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Floating Nav Bar -->
+    <div class="floating-nav">
+        <button onclick="setView('home')" id="float-home" class="nav-button active" title="Home">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </button>
+        <button onclick="setView('wishlist')" id="float-wish" class="nav-button" title="Favorites">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </button>
+    </div>
+
+    <!-- Canvas -->
+    <main id="app" class="pt-20 min-h-screen pb-32"></main>
+
+    <!-- Footer -->
+    <footer class="py-16 border-t border-border mb-20">
+        <div class="max-w-[1800px] mx-auto px-6 flex flex-col items-center">
+            <h2 class="text-[10px] font-black mb-8 tracking-[0.5em] uppercase opacity-30">The Editorial Collection</h2>
+            <div class="flex gap-10 text-[8px] font-black uppercase tracking-[0.3em] text-muted mb-8">
+                <a href="#" class="hover:text-primary transition-colors">Twitter</a>
+                <a href="#" class="hover:text-primary transition-colors">Archive</a>
+                <a href="#" class="hover:text-primary transition-colors">Ahmedabad</a>
+            </div>
+            <p class="text-[7px] font-bold text-muted uppercase tracking-[0.2em]">&copy; NextGen@2025. Editorial Studio.</p>
+        </div>
+    </footer>
+
+    <!-- Bag Drawer -->
+    <div id="overlay" class="fixed inset-0 bg-black/10 backdrop-blur-md z-[1900] hidden opacity-0 transition-opacity duration-500" onclick="toggleCart(false)"></div>
+    <div id="drawer" class="fixed inset-y-0 right-0 w-full max-w-sm p-10 flex flex-col">
+        <div class="flex justify-between items-center mb-14">
+            <h2 class="text-xl font-black tracking-tight uppercase">Bag</h2>
+            <button onclick="toggleCart(false)" class="text-xl opacity-20 hover:opacity-100 transition-opacity">✕</button>
+        </div>
+        <div id="cart-items" class="flex-1 overflow-y-auto no-scrollbar space-y-10"></div>
+        <div id="cart-footer" class="pt-10 border-t border-border mt-8"></div>
+    </div>
+
+    <!-- Modal Root -->
+    <div id="modal-container" class="fixed inset-0 z-[3000] hidden flex items-center justify-center bg-black/40 backdrop-blur-3xl p-4" onclick="if(event.target === this) closeModal()"></div>
+
+    <script>
+        // --- DATA HUB ---
+        const PRODUCTS = [
+            { id: 'S1', name: "Midnight Ghost Hoodie", category: "Essentials", description: "Extreme-weight 480GSM organic cotton. Sculpted oversized fit with modular drawstrings.", price: 8999, offerPrice: 6499, stock: 12, sizes: "S,M,L,XL", images: ["https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=1000"], rating: 4.8, reviews: [{user: "Apurv", text: "The definitive archive hoodie. Perfection.", rating: 5}, {user: "Sarah", text: "Quality is ethereal.", rating: 5}] },
+            { id: 'S2', name: "Champagne Tech Parka", category: "Outerwear", description: "Multi-layered water-repellent tech shell. Sculpted architectural form. Modular storm hood.", price: 16999, offerPrice: 0, stock: 4, sizes: "M,L", images: ["https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=1000"], rating: 4.5, reviews: [] },
+            { id: 'S3', name: "Ivory Distressed Archive", category: "Archive", description: "Heavily washed ivory archive cargos with 14 modular pockets. Vintage industrial rivets.", price: 12499, offerPrice: 9999, stock: 9, sizes: "S,M,L", images: ["https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=1000"], rating: 4.9, reviews: [] },
+            { id: 'S4', name: "Obsidian Shell Gilet", category: "Archive", description: "Lightweight architectural vest with hidden internal storage and laser-cut venting.", price: 7999, offerPrice: 0, stock: 10, sizes: "M,L,XL", images: ["https://images.unsplash.com/photo-1614031679232-00e9867bf75e?q=80&w=1000"], rating: 4.2, reviews: [] },
+            { id: 'S5', name: "Concrete Boxy Tee", category: "Essentials", description: "300GSM heavy combed cotton. Boxy cut with reinforced collar.", price: 3999, offerPrice: 2999, stock: 20, sizes: "S,M,L,XL", images: ["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=1000"], rating: 4.7, reviews: [] },
+            { id: 'S6', name: "Shadow Pleated Trouser", category: "Essentials", description: "Double-pleated wool blend with fluid movement. Hidden zip closure.", price: 10999, offerPrice: 0, stock: 15, sizes: "M,L", images: ["https://images.unsplash.com/photo-1552913903-34feddb36718?q=80&w=1000"], rating: 4.6, reviews: [] },
+            { id: 'S7', name: "Oatmeal Knit Archive", category: "Limited", description: "Hand-knitted mohair with gradient ivory transitions. Sculpted fit.", price: 14999, offerPrice: 0, stock: 3, sizes: "S,M,L", images: ["https://images.unsplash.com/photo-1610652119156-f6336e382d33?q=80&w=1000"], rating: 5.0, reviews: [] },
+            { id: 'S8', name: "Void Tactical Jacket", category: "Outerwear", description: "Next-gen tactical shell with laser-cut ventilation and articulated elbows.", price: 19999, offerPrice: 16499, stock: 2, sizes: "L,XL", images: ["https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?q=80&w=1000"], rating: 4.4, reviews: [] }
+        ];
+
+        const ORDER_STEPS = ['Ordered', 'Confirmed', 'Shipped', 'Out for Delivery', 'Delivered'];
+
+        const state = {
+            view: 'home',
+            theme: localStorage.getItem('sd_theme') || 'light',
+            mode: localStorage.getItem('sd_mode') || 'client',
+            adminTab: 'stock',
+            products: JSON.parse(localStorage.getItem('sd_products')) || PRODUCTS,
+            orders: JSON.parse(localStorage.getItem('sd_orders')) || [
+                { id: 'ORD-A77', customer: { name: 'nextge.bywala', address: 'Ahmedabad' }, item: { id: 'S1', name: 'Midnight Ghost Hoodie', size: 'M', qty: 1, price: 6499 }, status: 'Shipped', date: new Date().toISOString() },
+                { id: 'ORD-Z12', customer: { name: 'nextge.bywala', address: 'Ahmedabad' }, item: { id: 'S3', name: 'Ivory Distressed Archive', size: 'L', qty: 1, price: 9999 }, status: 'Confirmed', date: new Date(Date.now() - 86400000).toISOString() }
+            ],
+            cart: JSON.parse(localStorage.getItem('sd_cart')) || [],
+            wishlist: JSON.parse(localStorage.getItem('sd_wishlist')) || [],
+            offers: JSON.parse(localStorage.getItem('sd_offers')) || [{title: "SPRING DROP", val: "Save 30%"}, {title: "ARCHIVE SALE", val: "UP TO 50% OFF"}],
+            activeCat: 'All',
+            searchQuery: '',
+            priceRange: 20000,
+            selSize: 'M'
+        };
+
+        // --- THEME ---
+        function toggleTheme() {
+            state.theme = state.theme === 'light' ? 'dark' : 'light';
+            localStorage.setItem('sd_theme', state.theme);
+            applyTheme();
+        }
+        function applyTheme() {
+            document.documentElement.className = state.theme;
+            const btn = document.getElementById('theme-btn');
+            if(btn) {
+                btn.innerHTML = state.theme === 'light' 
+                    ? `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" stroke-width="1.5"></path></svg>`
+                    : `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" stroke-width="1.5"></path></svg>`;
+            }
+        }
+
+        // --- NAVIGATION ---
+        function setView(v) { 
+            state.view = v; 
+            render(); 
+            window.scrollTo({top: 0, behavior: 'smooth'}); 
+            // Update floating nav active state
+            document.getElementById('float-home').classList.toggle('active', v === 'home' || v === 'shop');
+            document.getElementById('float-wish').classList.toggle('active', v === 'wishlist');
+        }
+        function toggleAdmin() { state.mode = (state.mode === 'admin' ? 'client' : 'admin'); localStorage.setItem('sd_mode', state.mode); setView('home'); }
+        
+        function sync() {
+            localStorage.setItem('sd_products', JSON.stringify(state.products));
+            localStorage.setItem('sd_orders', JSON.stringify(state.orders));
+            localStorage.setItem('sd_cart', JSON.stringify(state.cart));
+            localStorage.setItem('sd_wishlist', JSON.stringify(state.wishlist));
+            updateBadges();
+        }
+
+        function updateBadges() {
+            const b = document.getElementById('cart-badge');
+            const count = state.cart.reduce((a, b) => a + b.qty, 0);
+            b.innerText = count; b.classList.toggle('hidden', count === 0);
+        }
+
+        function toggleWish(id, e) {
+            if(e) e.stopPropagation();
+            const idx = state.wishlist.indexOf(id);
+            if(idx === -1) state.wishlist.push(id); else state.wishlist.splice(idx, 1);
+            sync(); render();
+        }
+
+        // --- RENDER VIEWS ---
+        function render() {
+            const root = document.getElementById('app');
+            root.innerHTML = '';
+            if (state.mode === 'admin') { renderAdmin(root); return; }
+            
+            if (state.view === 'home') renderHome(root);
+            else if (state.view === 'shop') renderShop(root);
+            else if (state.view === 'wishlist') renderWishlist(root);
+            else if (state.view === 'orders') renderOrders(root);
+            else if (state.view === 'profile') renderProfile(root);
+            else if (state.view.startsWith('product-')) renderDetail(root, state.view.split('-')[1]);
+        }
+
+        function renderHome(c) {
+            c.innerHTML = `
+                <section class="max-w-[1800px] mx-auto px-4 md:px-12 py-6 md:py-10 reveal">
+                    <div class="h-[75vh] md:h-[85vh] rounded-[40px] md:rounded-[60px] bg-border overflow-hidden relative group">
+                        <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=3000" class="absolute inset-0 w-full h-full object-cover opacity-90 transition-transform duration-[20s] group-hover:scale-105">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                        <div class="absolute bottom-16 left-8 md:bottom-24 md:left-24 text-white max-w-5xl">
+                            <p class="text-[9px] md:text-[11px] font-black uppercase tracking-[0.5em] mb-6 opacity-60">Archive Vol. 02 / Ahmedabad</p>
+                            <h1 class="hero-text text-7xl md:text-[10rem] font-black tracking-tighter leading-[0.8] mb-12">Pure<br>Flow<span class="text-[var(--accent)]">.</span></h1>
+                            <button onclick="setView('shop')" class="btn btn-primary !rounded-full !px-20 !py-6 shadow-2xl">Access Discovery</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="max-w-7xl mx-auto px-6 md:px-16 pt-32">
+                    <div class="mb-20 flex flex-col md:flex-row gap-6 md:items-center">
+                        <div class="flex-1 relative">
+                            <input type="text" oninput="state.searchQuery=this.value; renderFilteredGrid()" placeholder="Explore pieces..." class="input-sd !rounded-full pl-16 border-transparent focus:border-accent">
+                            <svg class="w-4 h-4 absolute left-7 top-1/2 -translate-y-1/2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2"></path></svg>
+                        </div>
+                        <button onclick="openFilterModal()" class="btn btn-outline !rounded-full px-10 border-border hover:border-accent transition-colors">Filter</button>
+                    </div>
+                    <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-14 mobile-grid">
+                        <!-- Content -->
+                    </div>
+                </section>
+
+                <section class="max-w-[1800px] mx-auto px-6 md:px-16 py-40">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        ${state.offers.map(o => `
+                            <div onclick="setView('shop')" class="h-[40vh] rounded-[40px] bg-card border border-border overflow-hidden relative group cursor-pointer transition-all hover:border-accent">
+                                <div class="absolute inset-0 flex flex-col items-center justify-center text-center p-12">
+                                    <h3 class="text-4xl font-black tracking-tighter mb-4 uppercase">${o.title}</h3>
+                                    <p class="text-[9px] font-black uppercase tracking-[0.4em] text-accent mb-10">${o.val}</p>
+                                    <button class="btn btn-outline !rounded-full !px-12 pointer-events-none group-hover:bg-primary group-hover:text-bg transition-colors">Explore</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </section>
+            `;
+            renderFilteredGrid();
+        }
+
+        function renderFilteredGrid() {
+            const grid = document.getElementById('product-grid');
+            if(!grid) return;
+            const filtered = state.products.filter(p => 
+                (state.activeCat === 'All' || p.category === state.activeCat) &&
+                p.name.toLowerCase().includes(state.searchQuery.toLowerCase()) &&
+                (Number(p.offerPrice || p.price) <= state.priceRange)
+            );
+            grid.innerHTML = filtered.length ? filtered.map(p => renderCard(p)).join('') : '<div class="col-span-full py-40 text-center opacity-20 text-[10px] uppercase tracking-widest font-black">No matches in archive</div>';
+        }
+
+        function renderShop(c) { setView('home'); }
+
+        function renderCard(p) {
+            const isWish = state.wishlist.includes(p.id);
+            const price = Number(p.offerPrice || p.price);
+            return `
+                <div class="product-card group relative cursor-pointer" onclick="setView('product-${p.id}')">
+                    <div class="aspect-[3/4] rounded-[30px] md:rounded-[48px] overflow-hidden bg-card border border-border mb-8 relative">
+                        <img src="${p.images[0]}" class="w-full h-full object-cover">
+                        <button onclick="toggleWish('${p.id}', event)" class="absolute top-6 right-6 p-2.5 rounded-full bg-bg/20 backdrop-blur-xl hover:bg-bg transition-all shadow-xl">
+                            <svg class="w-3.5 h-3.5 heart-icon ${isWish?'active':''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke-width="2"/></svg>
+                        </button>
+                        <div class="add-to-bag-trigger absolute inset-x-6 bottom-6 flex gap-3">
+                            <button onclick="event.stopPropagation(); addToCart('${p.id}')" class="flex-1 bg-bg text-primary py-4 rounded-2xl shadow-2xl hover:bg-primary hover:text-bg transition-all flex items-center justify-center">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" stroke-width="1.5"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-[9px] font-black opacity-30 uppercase tracking-widest mb-2">${p.category}</p>
+                    <h3 class="font-bold text-base mb-1 truncate">${p.name}</h3>
+                    <p class="font-bold text-sm">₹${price.toLocaleString()}</p>
+                </div>
+            `;
+        }
+
+        function renderDetail(c, id) {
+            const p = state.products.find(x => x.id === id);
+            if(!p) return setView('home');
+            const isWish = state.wishlist.includes(p.id);
+
+            c.innerHTML = `
+                <div class="max-w-[1500px] mx-auto px-6 md:px-12 py-12 md:py-16 reveal">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-20 lg:gap-32 mb-40">
+                        <div class="space-y-8">
+                            ${p.images.map(img => `<img src="${img}" class="w-full rounded-[40px] md:rounded-[60px] border border-border">`).join('')}
+                        </div>
+                        <div class="lg:sticky lg:top-32 h-fit space-y-16">
+                            <div>
+                                <p class="text-[10px] font-black text-accent uppercase tracking-[0.5em] mb-6">${p.category}</p>
+                                <h1 class="text-6xl md:text-8xl font-black tracking-tighter leading-[0.8] mb-10">${p.name}</h1>
+                                <div class="flex items-center gap-8 mb-10">
+                                    <p class="text-3xl font-bold">₹${Number(p.offerPrice || p.price).toLocaleString()}</p>
+                                    <div class="flex items-center text-accent text-sm">★★★★★ <span class="opacity-30 text-[10px] ml-3 font-black uppercase tracking-widest">(${p.reviews.length} Verified)</span></div>
+                                </div>
+                                <p class="opacity-50 leading-relaxed text-lg font-light max-w-lg">${p.description}</p>
+                            </div>
+                            <div class="space-y-6">
+                                <p class="text-[10px] font-black uppercase tracking-widest opacity-30">Volume</p>
+                                <div class="flex flex-wrap gap-4">
+                                    ${p.sizes.split(',').map(s => `<div onclick="state.selSize='${s}'; render()" class="w-16 h-16 border border-border rounded-2xl flex items-center justify-center font-bold text-xs cursor-pointer transition-all ${state.selSize===s?'bg-primary text-bg border-primary shadow-xl':'hover:border-primary'}">${s}</div>`).join('')}
+                                </div>
+                            </div>
+                            <div class="flex gap-4">
+                                <button onclick="addToCart('${p.id}')" class="flex-1 btn btn-primary !py-6 !rounded-[24px] shadow-2xl text-xs">Acquire Piece</button>
+                                <button onclick="toggleWish('${p.id}')" class="w-18 h-18 border border-border rounded-[24px] flex items-center justify-center hover:bg-border transition-colors">
+                                    <svg class="w-5 h-5 heart-icon ${isWish?'active':''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke-width="1.5"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-40 border-t border-border pt-24">
+                        <h2 class="text-3xl font-black mb-16 tracking-tighter uppercase">Curated Archive</h2>
+                        <div class="grid grid-cols-2 md:grid-cols-6 gap-8 mobile-grid">
+                            ${state.products.filter(x=>x.id!==id).slice(0,6).map(s => renderCard(s)).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderProfile(c) {
+            const userOrders = state.orders.filter(o => o.customer.name === 'nextge.bywala').reverse();
+            c.innerHTML = `
+                <div class="max-w-[1200px] mx-auto px-6 py-12 md:py-24 reveal">
+                    <button onclick="setView('home')" class="mb-12 flex items-center gap-4 text-[9px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                        Back
+                    </button>
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-20">
+                        <!-- User Card -->
+                        <div class="md:col-span-4 space-y-8">
+                            <div class="bg-card border border-border rounded-[48px] p-12 text-center shadow-sm">
+                                <div class="w-32 h-32 bg-border rounded-full mx-auto mb-10 flex items-center justify-center text-4xl font-black border border-accent/20 text-muted">A</div>
+                                <h1 class="text-4xl font-black mb-3 uppercase tracking-tighter">nextge.bywala</h1>
+                                <p class="opacity-30 uppercase tracking-[0.4em] text-[8px] font-black mb-12">Ahmedabad Private Curator</p>
+                                <div class="space-y-4 text-left pt-12 border-t border-border">
+                                    <div class="p-6 bg-bg rounded-[24px] border border-border">
+                                        <p class="text-[8px] font-black opacity-30 mb-2 uppercase">Identity</p>
+                                        <p class="font-bold text-xs truncate">nextge.bywala@gmail.com</p>
+                                    </div>
+                                    <div class="p-6 bg-bg rounded-[24px] border border-border">
+                                        <p class="text-[8px] font-black opacity-30 mb-2 uppercase">Sync Hub</p>
+                                        <p class="font-bold text-xs truncate">Ahmedabad, GJ</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Orders Archive -->
+                        <div class="md:col-span-8 space-y-12">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-4xl font-black tracking-tighter uppercase">Pipeline Archive.</h2>
+                                <span class="text-[9px] font-black opacity-20 uppercase tracking-widest">${userOrders.length} Entries</span>
+                            </div>
+                            ${userOrders.length ? userOrders.map(o => `
+                                <div class="p-10 border border-border rounded-[48px] bg-card flex flex-col gap-10">
+                                    <div class="flex items-center gap-8">
+                                        <img src="${(state.products.find(p=>p.id===o.item.id)?.images[0])}" class="w-20 h-28 rounded-[20px] object-cover border border-border">
+                                        <div class="flex-1">
+                                            <div class="flex justify-between mb-4">
+                                                <p class="text-[9px] font-black opacity-20 uppercase">${o.id}</p>
+                                                <p class="text-[9px] font-black text-accent uppercase tracking-widest">${new Date(o.date).toLocaleDateString()}</p>
+                                            </div>
+                                            <h4 class="text-3xl font-black mb-2 tracking-tighter uppercase">${o.item.name}</h4>
+                                            <p class="text-[9px] font-black opacity-30 uppercase">Size ${o.item.size} // ₹${o.item.price.toLocaleString()}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Moving Status Bar -->
+                                    <div class="px-4 py-8 bg-bg rounded-[32px] border border-border overflow-x-auto no-scrollbar">
+                                        <div class="flex justify-between min-w-[500px] md:min-w-0 mb-8 px-2">
+                                            ${ORDER_STEPS.map((step, idx) => `
+                                                <div class="flex flex-col items-center step-container">
+                                                    <div class="step-dot ${ORDER_STEPS.indexOf(o.status) >= idx ? 'active' : ''}"></div>
+                                                    ${idx < ORDER_STEPS.length - 1 ? `<div class="step-line ${ORDER_STEPS.indexOf(o.status) > idx ? 'active' : ''}"></div>` : ''}
+                                                    <p class="absolute top-6 text-[7px] font-black uppercase tracking-widest whitespace-nowrap mt-2 ${ORDER_STEPS.indexOf(o.status) >= idx ? 'text-primary' : 'opacity-10'}">${step}</p>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('') : '<div class="py-40 text-center opacity-10 text-[10px] uppercase tracking-widest font-black">Archive currently empty</div>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderOrders(c) { setView('profile'); }
+        function renderWishlist(c) {
+            const items = state.products.filter(p => state.wishlist.includes(p.id));
+            c.innerHTML = `
+                <div class="max-w-7xl mx-auto px-6 md:px-12 py-24 reveal">
+                    <h1 class="text-7xl md:text-[8rem] font-black tracking-tighter mb-24 uppercase">Wishlist.</h1>
+                    ${items.length ? `<div class="grid grid-cols-2 md:grid-cols-4 gap-10 mobile-grid">${items.map(p => renderCard(p)).join('')}</div>` : `<div class="py-40 text-center opacity-10 text-[10px] uppercase tracking-widest font-black">No pieces saved</div>`}
+                </div>
+            `;
+        }
+
+        // --- ADMIN MODULE ---
+        function renderAdmin(c) {
+            c.innerHTML = `
+                <div class="max-w-7xl mx-auto px-6 md:px-12 pt-24 pb-40 reveal">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-10 mb-20">
+                        <div class="flex items-center gap-8">
+                            <button onclick="setView('home')" class="p-4 border border-border rounded-full hover:bg-border transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-width="2"></path></svg>
+                            </button>
+                            <h1 class="text-7xl font-black tracking-tighter uppercase">Terminal.</h1>
+                        </div>
+                        <div class="flex bg-border p-1.5 rounded-[20px] overflow-x-auto no-scrollbar">
+                            ${['stock', 'orders', 'offers', 'reviews'].map(t => `
+                                <button onclick="state.adminTab='${t}'; render()" class="px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${state.adminTab===t?'bg-primary text-bg shadow-xl':'opacity-30'}">${t}</button>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div id="admin-canvas"></div>
+                </div>
+            `;
+            const v = document.getElementById('admin-canvas');
+            if(state.adminTab === 'stock') renderAdminStock(v);
+            else if(state.adminTab === 'orders') renderAdminOrders(v);
+            else if(state.adminTab === 'offers') renderAdminOffers(v);
+            else if(state.adminTab === 'reviews') renderAdminReviews(v);
+        }
+
+        function renderAdminStock(v) {
+            v.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-16">
+                    <div class="lg:col-span-4 bg-card border border-border p-10 rounded-[40px] h-fit">
+                        <h3 class="text-xl font-black mb-8 uppercase tracking-tight">Add Piece</h3>
+                        <form id="p-form" class="space-y-5">
+                            <input type="text" id="p-name" placeholder="Piece Label" class="input-sd" required>
+                            <select id="p-cat" class="input-sd">
+                                <option>Essentials</option><option>Archive</option><option>Outerwear</option><option>Limited</option>
+                            </select>
+                            <textarea id="p-desc" placeholder="Manifesto..." class="input-sd h-28"></textarea>
+                            <div class="grid grid-cols-2 gap-4">
+                                <input type="number" id="p-price" placeholder="Price" class="input-sd" required>
+                                <input type="number" id="p-stock" placeholder="Vault" class="input-sd" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-full h-16 !rounded-2xl text-[8px]">Inject Asset</button>
+                        </form>
+                    </div>
+                    <div class="lg:col-span-8 space-y-6">
+                        ${state.products.map(p => `
+                            <div class="flex items-center justify-between p-6 bg-card border border-border rounded-[32px]">
+                                <div class="flex items-center gap-6">
+                                    <img src="${p.images[0]}" class="w-12 h-16 object-cover rounded-xl border border-border">
+                                    <div><h4 class="font-bold text-xs uppercase">${p.name}</h4><p class="text-[8px] opacity-30 font-bold uppercase mt-1">STOCK: ${p.stock}</p></div>
+                                </div>
+                                <button onclick="deleteProd('${p.id}')" class="text-red-400 p-4">✕</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            document.getElementById('p-form').onsubmit = (e) => {
+                e.preventDefault();
+                const newP = { id:'S'+Date.now(), name:document.getElementById('p-name').value, description:document.getElementById('p-desc').value, category:document.getElementById('p-cat').value, price:Number(document.getElementById('p-price').value), stock:Number(document.getElementById('p-stock').value), sizes:"S,M,L,XL", images:["https://via.placeholder.com/600x800"], reviews:[], rating: 5.0 };
+                state.products.push(newP); sync(); render();
+            };
+        }
+
+        function renderAdminOrders(v) {
+            v.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    ${state.orders.map(o => `
+                        <div class="bg-card border border-border p-10 rounded-[40px] flex flex-col justify-between transition-all hover:border-accent">
+                            <div>
+                                <div class="flex justify-between mb-8">
+                                    <p class="text-[9px] font-black opacity-20 uppercase">${o.id}</p>
+                                    <span class="text-[9px] font-black uppercase text-accent tracking-widest">${o.status}</span>
+                                </div>
+                                <h4 class="text-3xl font-black mb-8">₹${(o.item.price * o.item.qty).toLocaleString()}</h4>
+                                <p class="text-[9px] font-black opacity-40 uppercase mb-2">Destination</p>
+                                <p class="text-xs font-bold truncate mb-10">${o.customer.address}</p>
+                            </div>
+                            <div class="space-y-4">
+                                <p class="text-[8px] font-black opacity-20 uppercase">Update Status</p>
+                                <select onchange="updateStatus('${o.id}', this.value)" class="input-sd !py-3 !text-[9px] font-black uppercase tracking-[0.2em] bg-bg border-none">
+                                    ${ORDER_STEPS.map(s => `<option value="${s}" ${o.status===s?'selected':''}>${s}</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+                    `).reverse().join('')}
+                </div>
+            `;
+        }
+
+        function renderAdminOffers(v) {
+            v.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-16">
+                    <div class="lg:col-span-5 bg-card border border-border p-12 rounded-[40px] h-fit">
+                        <h3 class="text-xl font-black mb-8 uppercase">Broadcast</h3>
+                        <form id="off-form" class="space-y-6">
+                            <input type="text" id="off-title" placeholder="Campaign Label" class="input-sd" required>
+                            <input type="text" id="off-val" placeholder="Value (e.g. 50% OFF)" class="input-sd" required>
+                            <button type="submit" class="btn btn-primary w-full h-16 !rounded-2xl">Broadcast</button>
+                        </form>
+                    </div>
+                    <div class="lg:col-span-7 space-y-8">
+                        ${state.offers.map(o => `
+                            <div class="p-12 bg-primary text-bg rounded-[40px] flex justify-between items-center shadow-lg">
+                                <div><p class="text-[9px] font-black uppercase tracking-[0.4em] text-accent mb-3">Live Broadcast</p><h4 class="text-4xl font-black tracking-tight">${o.title}</h4></div>
+                                <button onclick="state.offers=state.offers.filter(x=>x.title!=='${o.title}'); render()" class="text-accent p-6">✕</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            document.getElementById('off-form').onsubmit = (e) => {
+                e.preventDefault();
+                state.offers.push({title: document.getElementById('off-title').value.toUpperCase(), val: document.getElementById('off-val').value}); sync(); render();
+            }
+        }
+
+        function renderAdminReviews(v) {
+            const revs = state.products.flatMap(p => p.reviews.map(r => ({...r, prod: p.name})));
+            v.innerHTML = `
+                <div class="space-y-6">
+                    ${revs.length ? revs.map(r => `
+                        <div class="p-10 bg-card border border-border rounded-[40px] flex justify-between items-center shadow-sm">
+                            <div class="flex-1">
+                                <p class="text-[9px] font-black text-accent uppercase mb-3">${r.prod}</p>
+                                <h4 class="text-lg font-bold mb-2 uppercase">${r.user} <span class="text-accent text-xs ml-4">★★★★★</span></h4>
+                                <p class="opacity-50 italic font-light text-sm">"${r.text}"</p>
+                            </div>
+                        </div>
+                    `).join('') : '<div class="py-20 text-center opacity-10 text-[10px] uppercase tracking-widest font-black">No reviews found</div>'}
+                </div>
+            `;
+        }
+
+        // --- BAG & CHECKOUT ---
+        function toggleCart(open) {
+            const dr = document.getElementById('drawer'); const ov = document.getElementById('overlay');
+            if(open) { renderCart(); dr.classList.add('open'); ov.classList.remove('hidden'); setTimeout(()=>ov.style.opacity='1',10); }
+            else { dr.classList.remove('open'); ov.style.opacity='0'; setTimeout(()=>ov.classList.add('hidden'),500); }
+        }
+        function renderCart() {
+            const wrap = document.getElementById('cart-items'); const foot = document.getElementById('cart-footer');
+            if(state.cart.length === 0) { wrap.innerHTML = `<div class="py-20 text-center opacity-10 text-[10px] uppercase tracking-widest font-black">Bag is empty</div>`; foot.innerHTML=''; return; }
+            wrap.innerHTML = state.cart.map((item, idx) => {
+                const p = state.products.find(x => x.id === item.id);
+                return `
+                    <div class="flex gap-8 items-center reveal">
+                        <img src="${p.images[0]}" class="w-20 h-28 object-cover rounded-2xl border border-border">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-xs mb-1 uppercase">${p.name}</h4>
+                            <p class="text-[8px] opacity-30 font-bold uppercase tracking-widest mb-4">SIZE ${item.size} // ₹${Number(p.offerPrice || p.price).toLocaleString()}</p>
+                            <div class="flex items-center gap-5">
+                                <button onclick="updateQty(${idx},-1)" class="w-8 h-8 rounded-lg border border-border flex items-center justify-center font-bold text-xs">-</button>
+                                <span class="font-bold text-[10px]">${item.qty}</span>
+                                <button onclick="updateQty(${idx},1)" class="w-8 h-8 rounded-lg border border-border flex items-center justify-center font-bold text-xs">+</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            const total = state.cart.reduce((a, b) => a + (Number(state.products.find(x=>x.id===b.id).offerPrice || state.products.find(x=>x.id===b.id).price) * b.qty), 0);
+            foot.innerHTML = `
+                <div class="flex justify-between items-end mb-10"><p class="text-[10px] font-black opacity-30 uppercase tracking-widest">Bag Value</p><p class="text-3xl font-bold">₹${total.toLocaleString()}</p></div>
+                <button onclick="openCheckout()" class="btn btn-primary w-full h-16 !rounded-2xl text-[8px] uppercase tracking-[0.2em]">Acquire Selection</button>
+            `;
+        }
+        function addToCart(id) { const ex = state.cart.find(x => x.id === id && x.size === state.selSize); if(ex) ex.qty++; else state.cart.push({ id, size: state.selSize, qty: 1 }); sync(); renderCart(); toggleCart(true); }
+        function updateQty(idx, d) { state.cart[idx].qty += d; if(state.cart[idx].qty <= 0) state.cart.splice(idx, 1); sync(); renderCart(); }
+        function openCheckout() { toggleCart(false); const l = document.getElementById('modal-container'); l.classList.remove('hidden'); renderCheckout(l); }
+        function renderCheckout(mw, step=1, addr={}) {
+            if(step === 1) {
+                mw.innerHTML = `
+                    <div class="bg-card w-full max-w-xl rounded-[48px] p-16 reveal relative shadow-2xl border border-border" onclick="event.stopPropagation()">
+                        <button onclick="closeModal()" class="absolute top-10 right-10 text-xl opacity-20 hover:opacity-100">✕</button>
+                        <h2 class="text-3xl font-black mb-12 uppercase tracking-tighter">Identity.</h2>
+                        <form id="check-form" class="space-y-5">
+                            <input type="text" id="c-name" placeholder="Name" class="input-sd" required value="nextge.bywala">
+                            <input type="text" id="c-addr" placeholder="Metadata Sync (Address)..." class="input-sd" required value="Ahmedabad, India">
+                            <div class="grid grid-cols-2 gap-4">
+                                <input type="text" id="c-city" placeholder="City" class="input-sd" required value="Ahmedabad">
+                                <input type="text" id="c-pin" placeholder="Pin" class="input-sd" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-full h-16 mt-6 !rounded-2xl text-[8px] uppercase tracking-widest">Review Sync</button>
+                        </form>
+                    </div>
+                `;
+                document.getElementById('check-form').onsubmit = (e) => {
+                    e.preventDefault();
+                    renderCheckout(mw, 2, { name: document.getElementById('c-name').value, addr: document.getElementById('c-addr').value, city: document.getElementById('c-city').value, pin: document.getElementById('c-pin').value });
+                };
+            } else {
+                const total = state.cart.reduce((a, b) => a + (Number(state.products.find(x=>x.id===b.id).offerPrice || state.products.find(x=>x.id===b.id).price) * b.qty), 0);
+                mw.innerHTML = `
+                    <div class="bg-card w-full max-w-xl rounded-[48px] p-16 reveal shadow-2xl border border-border" onclick="event.stopPropagation()">
+                        <h2 class="text-3xl font-black mb-12 uppercase tracking-tighter">Confirm Transmit.</h2>
+                        <div class="p-8 bg-bg rounded-[32px] text-[10px] font-bold uppercase tracking-widest opacity-50 space-y-4 mb-10 border border-border">
+                            <p class="text-primary flex justify-between"><span>Curator</span> <span>${addr.name}</span></p>
+                            <p class="flex justify-between"><span>Target Hub</span> <span>${addr.city}</span></p>
+                            <p class="pt-6 border-t border-border text-[9px] font-medium leading-relaxed opacity-70 uppercase tracking-normal">Path: ${addr.addr}</p>
+                        </div>
+                        <div class="flex justify-between items-end mb-10 pt-8 border-t border-border"><p class="text-[10px] font-black opacity-30 uppercase tracking-widest">Transaction</p><p class="text-4xl font-black tracking-tighter">₹${total.toLocaleString()}</p></div>
+                        <button id="final-btn" onclick="finalize('${JSON.stringify(addr).replace(/"/g, '&quot;')}')" class="btn btn-primary w-full h-20 text-[9px] !rounded-full shadow-2xl uppercase tracking-[0.3em]">Complete Transmit</button>
+                    </div>
+                `;
+            }
+        }
+        function finalize(addrJson) {
+            const btn = document.getElementById('final-btn'); btn.disabled = true; btn.innerText = "Transmitting Path...";
+            const addr = JSON.parse(addrJson.replace(/&quot;/g, '"'));
+            setTimeout(() => {
+                state.cart.forEach(item => {
+                    const p = state.products.find(x => x.id === item.id);
+                    state.orders.push({ id: 'ORD-'+Math.random().toString(36).substr(2,8).toUpperCase(), customer: { name: addr.name, address: `${addr.addr}, ${addr.city} - ${addr.pin}` }, item: { id: p.id, name: p.name, size: item.size, qty: item.qty, price: Number(p.offerPrice || p.price) }, status: 'Ordered', date: new Date().toISOString() });
+                });
+                state.cart = []; sync(); closeModal(); setView('profile');
+            }, 1800);
+        }
+
+        // --- FILTERS ---
+        function openFilterModal() {
+            const mw = document.getElementById('modal-container');
+            mw.classList.remove('hidden');
+            const cats = ['All', ...new Set(PRODUCTS.map(p => p.category))];
+            mw.innerHTML = `
+                <div class="bg-card w-full max-w-xl rounded-[48px] p-16 reveal relative shadow-2xl border border-border" onclick="event.stopPropagation()">
+                    <button onclick="closeModal()" class="absolute top-10 right-10 text-xl opacity-20">✕</button>
+                    <h2 class="text-3xl font-black mb-12 uppercase tracking-tighter">Archive Filters.</h2>
+                    <div class="space-y-12">
+                        <div>
+                            <p class="text-[9px] font-black opacity-30 uppercase tracking-widest mb-6">Archive Category</p>
+                            <div class="flex flex-wrap gap-3">
+                                ${cats.map(cat => `<button onclick="state.activeCat='${cat}'; closeModal(); setView('home')" class="px-6 py-3 rounded-full border border-border text-[9px] font-black uppercase tracking-widest transition-all ${state.activeCat===cat?'bg-primary text-bg border-primary':'opacity-30 hover:opacity-100 hover:border-primary'}">${cat}</button>`).join('')}
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-[9px] font-black opacity-30 uppercase tracking-widest mb-6">Price Ceiling: ₹${state.priceRange.toLocaleString()}</p>
+                            <input type="range" min="1000" max="25000" step="1000" value="${state.priceRange}" oninput="state.priceRange=this.value; this.nextElementSibling.innerText='₹'+Number(this.value).toLocaleString();" class="w-full accent-accent">
+                            <p class="text-[10px] font-black mt-4 text-center opacity-30 uppercase tracking-widest">₹${state.priceRange.toLocaleString()}</p>
+                        </div>
+                        <button onclick="closeModal(); setView('home')" class="btn btn-primary w-full h-16 !rounded-2xl uppercase tracking-widest text-[8px]">Apply Synthesis</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- UTILS ---
+        function updateStatus(id, s) { const o=state.orders.find(x=>x.id===id); if(o){o.status=s; sync(); render();} }
+        function deleteProd(id) { if(confirm('Purge piece permanently?')){state.products=state.products.filter(p=>p.id!==id); sync(); render();} }
+        function closeModal() { document.getElementById('modal-container').classList.add('hidden'); }
+
+        function init() {
+            applyTheme();
+            setTimeout(() => { document.getElementById('loader').style.opacity = '0'; setTimeout(() => document.getElementById('loader').classList.add('hidden'), 800); }, 800);
+            sync(); render();
+        }
+        init();
+    </script>
+</body>
+</html>
