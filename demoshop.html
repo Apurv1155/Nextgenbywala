@@ -3,195 +3,527 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Stream & Dream | Premium Men's Wear</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Stream & Dream | Premium Fashion Node</title>
     <style>
         :root {
-            --primary: #000000;
-            --accent: #0071e3;
-            --bg: #fbfbfd;
-            --white: #ffffff;
-            --gray-100: #f5f5f7;
-            --gray-200: #e8e8ed;
-            --gray-400: #86868b;
-            --gray-600: #424245;
-            --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
-            --shadow-lg: 0 20px 40px rgba(0,0,0,0.08);
-            --radius-xl: 28px;
-            --radius-lg: 18px;
-            --radius-md: 12px;
-            --transition-premium: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            --accent: #ff3f6c;
+            --primary: #282c3f;
+            --bg: #ffffff;
+            --gray-subtle: #f5f5f6;
+            --gray-border: #eaeaec;
+            --gray-text: #94969f;
+            --gray-dark: #535766;
+            --radius-lux: 32px;
+            --radius-card: 12px;
+            --shadow-lux: 0 20px 40px rgba(40, 44, 63, 0.08);
+            --glass: rgba(255, 255, 255, 0.98);
+            --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             -webkit-font-smoothing: antialiased;
             -webkit-tap-highlight-color: transparent;
-            scrollbar-width: none;
         }
-        *::-webkit-scrollbar { display: none; }
 
         body {
             background-color: var(--bg);
             color: var(--primary);
             overflow-x: hidden;
-            padding-bottom: 90px;
+            line-height: 1.5;
         }
 
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-        .flex { display: flex; }
-        .grid { display: grid; }
-        .justify-between { justify-content: space-between; }
-        .items-center { align-items: center; }
-        .hidden { display: none !important; }
-
-        /* Navigation */
+        /* PREMIUM NAVIGATION */
         nav {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            height: 64px;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: saturate(180%) blur(20px);
-            z-index: 1000;
-            border-bottom: 1px solid var(--gray-200);
+            height: 80px;
+            background: var(--glass);
+            backdrop-filter: blur(30px);
+            z-index: 5000;
+            border-bottom: 1px solid var(--gray-border);
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
         }
-        .nav-inner { height: 100%; display: flex; align-items: center; justify-content: space-between; }
-        .logo { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; text-transform: uppercase; cursor: pointer; }
-        
-        .nav-links { display: none; gap: 32px; }
-        @media (min-width: 768px) { .nav-links { display: flex; } }
-        .nav-links a { text-decoration: none; color: var(--primary); font-size: 13px; font-weight: 600; opacity: 0.7; transition: 0.2s; }
-        .nav-links a:hover { opacity: 1; color: var(--accent); }
 
-        .cart-trigger { position: relative; cursor: pointer; padding: 8px; }
-        .badge { position: absolute; top: 0; right: 0; background: var(--accent); color: white; font-size: 9px; font-weight: 800; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-
-        /* Views */
-        .section-view { padding-top: 80px; min-height: 100vh; animation: fadeIn 0.5s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Hero */
-        .hero { padding: 40px 0 20px; text-align: center; }
-        .hero h1 { font-size: clamp(32px, 8vw, 64px); font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 12px; }
-        .hero p { font-size: 18px; color: var(--gray-400); max-width: 500px; margin: 0 auto; }
-
-        /* Filter Panel (Slide-in) */
-        #filter-panel {
-            position: fixed; top: 0; right: -100%; width: 400px; height: 100vh;
-            background: white; z-index: 2000; transition: var(--transition-premium);
-            box-shadow: -20px 0 60px rgba(0,0,0,0.1); padding: 40px;
+        .nav-inner {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
-        #filter-panel.active { right: 0; }
-        @media (max-width: 500px) { #filter-panel { width: 100%; } }
-        .filter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
-        .filter-group { margin-bottom: 30px; }
-        .filter-group label { display: block; font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--gray-400); margin-bottom: 15px; }
 
-        /* Product Grid */
-        .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 60px; }
-        @media (min-width: 768px) { .product-grid { grid-template-columns: repeat(4, 1fr); gap: 30px; } }
+        .brand-logo {
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #000;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .search-container {
+            flex: 1;
+            max-width: 600px;
+            margin: 0 40px;
+            position: relative;
+        }
+
+        .search-bar {
+            width: 100%;
+            background: var(--gray-subtle);
+            border: 1px solid transparent;
+            padding: 12px 15px 12px 45px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .search-bar:focus {
+            background: #fff;
+            border-color: var(--gray-border);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+
+        .search-icon-svg {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.6;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+        }
+
+        .nav-icon-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            position: relative;
+            transition: 0.3s;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .nav-icon-btn:hover { color: var(--accent); transform: translateY(-2px); }
+
+        .nav-icon-label {
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-count {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: var(--accent);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 900;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #fff;
+        }
+
+        @media (max-width: 768px) {
+            nav { height: 70px; }
+            .search-container { margin: 0 15px; }
+            .nav-actions { gap: 15px; }
+            .nav-icon-label { display: none; }
+            .brand-logo { font-size: 14px; letter-spacing: 1.5px; }
+        }
+
+        /* MAIN LAYOUT */
+        main {
+            margin-top: 100px;
+            padding: 0 20px 100px;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* AESTHETIC OFFER BANNER */
+        .premium-hero {
+            width: 100%;
+            height: 320px;
+            background: linear-gradient(135deg, #1a1c2c 0%, #4a192c 100%);
+            border-radius: var(--radius-card);
+            margin-bottom: 50px;
+            display: flex;
+            align-items: center;
+            padding: 0 60px;
+            position: relative;
+            overflow: hidden;
+            color: #fff;
+            animation: fadeIn 1s ease;
+        }
+
+        .premium-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255,63,108,0.2) 0%, transparent 70%);
+            filter: blur(60px);
+        }
+
+        .hero-content h1 {
+            font-size: 42px;
+            font-weight: 900;
+            letter-spacing: -1px;
+            line-height: 1.1;
+            margin-bottom: 10px;
+        }
+
+        .hero-content p {
+            font-size: 18px;
+            opacity: 0.9;
+            margin-bottom: 25px;
+            font-weight: 300;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: var(--accent);
+            padding: 8px 20px;
+            border-radius: 4px;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 2px;
+        }
+
+        @media (max-width: 768px) {
+            .premium-hero { height: 200px; padding: 0 25px; }
+            .hero-content h1 { font-size: 24px; }
+            .hero-content p { font-size: 14px; margin-bottom: 15px; }
+        }
+
+        .section-header {
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .filter-scroller {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            padding-bottom: 10px;
+        }
+
+        .filter-chip {
+            white-space: nowrap;
+            padding: 10px 24px;
+            border-radius: 50px;
+            border: 1px solid var(--gray-border);
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            cursor: pointer;
+            background: #fff;
+            transition: var(--transition);
+        }
+
+        .filter-chip.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 8px 20px rgba(40, 44, 63, 0.15);
+        }
+
+        /* GRID SYSTEM */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) { .product-grid { grid-template-columns: repeat(3, 1fr); gap: 30px; } }
+        @media (min-width: 1024px) { .product-grid { grid-template-columns: repeat(4, 1fr); gap: 40px; } }
 
         .product-card {
-            background: var(--white);
-            border-radius: var(--radius-xl);
-            padding: 12px;
-            transition: var(--transition-premium);
-            border: 1px solid rgba(0,0,0,0.02);
-            position: relative;
+            background: #fff;
             cursor: pointer;
+            position: relative;
+            transition: var(--transition);
+            border-radius: var(--radius-card);
         }
-        .product-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-lg); }
-        .card-img { width: 100%; aspect-ratio: 1/1.2; border-radius: var(--radius-lg); background: var(--gray-100); overflow: hidden; margin-bottom: 12px; }
-        .card-img img { width: 100%; height: 100%; object-fit: cover; transition: 0.6s; }
-        .product-card:hover .card-img img { transform: scale(1.1); }
-        .tag { position: absolute; top: 24px; left: 24px; background: #ff3b30; color: white; font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 8px; text-transform: uppercase; z-index: 2; }
 
-        .card-info h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
-        .card-info p { font-size: 12px; color: var(--gray-400); margin-bottom: 12px; line-height: 1.4; height: 34px; overflow: hidden; }
-        .price-row { display: flex; align-items: center; gap: 8px; }
-        .price { font-size: 17px; font-weight: 800; }
-        .old-price { font-size: 13px; color: var(--gray-400); text-decoration: line-through; }
+        .product-card:hover { transform: translateY(-10px); }
 
-        /* Product Detail View (Fixed Full Screen Overlay for Mobile feel) */
-        .full-detail-view {
-            position: fixed; inset: 0; background: white; z-index: 3000;
-            display: none; overflow-y: auto; padding-top: 20px; padding-bottom: 100px;
-            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        .card-image-box {
+            width: 100%;
+            aspect-ratio: 3 / 4;
+            overflow: hidden;
+            background: var(--gray-subtle);
+            border-radius: var(--radius-card);
+            position: relative;
         }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .detail-layout { display: grid; grid-template-columns: 1fr; gap: 40px; margin-top: 20px; }
-        @media (min-width: 768px) { .detail-layout { grid-template-columns: 1.2fr 1fr; gap: 60px; } }
-        
-        .gallery-main { width: 100%; aspect-ratio: 1/1.2; border-radius: var(--radius-xl); overflow: hidden; background: var(--gray-100); }
-        .gallery-main img { width: 100%; height: 100%; object-fit: cover; }
-        .gallery-thumbs { display: flex; gap: 12px; margin-top: 15px; overflow-x: auto; padding-bottom: 5px; }
-        .thumb { width: 75px; height: 95px; border-radius: 12px; overflow: hidden; cursor: pointer; border: 2.5px solid transparent; flex-shrink: 0; transition: 0.3s; }
-        .thumb.active { border-color: var(--accent); }
-        .thumb img { width: 100%; height: 100%; object-fit: cover; }
 
-        .detail-info h1 { font-size: clamp(28px, 4vw, 42px); font-weight: 800; letter-spacing: -1.5px; margin-bottom: 10px; line-height: 1; }
-        .detail-price { font-size: 28px; font-weight: 800; margin-bottom: 24px; color: var(--accent); }
-        .detail-desc { color: var(--gray-600); line-height: 1.7; margin-bottom: 30px; font-size: 16px; }
-        
-        .size-grid { display: flex; gap: 10px; margin-bottom: 35px; flex-wrap: wrap; }
-        .size-box { width: 56px; height: 56px; border-radius: 16px; border: 1.5px solid var(--gray-200); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; cursor: pointer; transition: 0.2s; }
-        .size-box.active { background: var(--primary); color: white; border-color: var(--primary); }
-        
-        .add-btn-large { width: 100%; padding: 22px; background: var(--primary); color: white; border-radius: 22px; border: none; font-size: 16px; font-weight: 800; cursor: pointer; transition: 0.3s; letter-spacing: 1px; text-transform: uppercase; }
-        .add-btn-large:hover { background: var(--accent); transform: scale(1.02); }
+        .card-image-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+        }
 
-        /* Checkout Form View */
-        .checkout-view { display: none; margin-top: 40px; animation: fadeIn 0.5s ease; }
-        .checkout-card { background: var(--gray-100); padding: 32px; border-radius: 30px; border: 1px solid var(--gray-200); }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--gray-400); margin-bottom: 8px; }
-        .form-input { width: 100%; padding: 16px 20px; border-radius: 16px; border: 1.5px solid var(--gray-200); background: white; outline: none; font-size: 14px; font-weight: 700; transition: 0.3s; }
-        .form-input:focus { border-color: var(--accent); }
+        .product-card:hover .card-image-box img { transform: scale(1.12); }
 
-        /* Reviews */
-        .reviews-section { margin-top: 80px; padding-top: 60px; border-top: 1px solid var(--gray-200); }
-        .review-card { background: white; padding: 28px; border-radius: 24px; margin-bottom: 24px; border: 1px solid var(--gray-100); }
-        .rev-header { display: flex; align-items: center; gap: 15px; margin-bottom: 18px; }
-        .rev-avatar { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; background: var(--gray-200); }
-        .rev-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .rev-name { font-weight: 800; font-size: 15px; }
+        .wish-heart-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 10;
+            background: rgba(255,255,255,0.95);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: 0.3s;
+        }
 
-        /* Tracking Bar */
-        .track-card { background: white; padding: 30px; border-radius: 28px; border: 1px solid var(--gray-200); margin-bottom: 24px; }
-        .track-progress { height: 6px; background: var(--gray-100); border-radius: 10px; margin: 30px 0; position: relative; overflow: hidden; }
-        .track-fill { height: 100%; background: var(--accent); width: 0%; transition: 1.5s ease-in-out; border-radius: 10px; }
-        .track-labels { display: flex; justify-content: space-between; }
-        .track-step { font-size: 10px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; }
-        .track-step.active { color: var(--accent); }
+        .wish-heart-btn.active svg { fill: var(--accent); stroke: var(--accent); }
+        .wish-heart-btn:hover { transform: scale(1.1); }
 
-        /* Suggested Grid */
-        .suggested-section { margin-top: 80px; }
-        .section-title { font-size: 24px; font-weight: 800; margin-bottom: 30px; letter-spacing: -0.5px; }
+        .card-info { padding: 16px 8px; }
+        .card-brand { font-size: 15px; font-weight: 900; color: #000; margin-bottom: 3px; }
+        .card-name { font-size: 13px; color: var(--gray-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-pricing { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+        .price-now { font-size: 15px; font-weight: 900; }
+        .price-was { font-size: 13px; color: var(--gray-text); text-decoration: line-through; }
+        .discount-label { font-size: 13px; color: #ff905a; font-weight: 800; }
 
-        /* Bag Tab */
-        .bag-item { display: flex; gap: 20px; padding: 20px; background: white; border-radius: 24px; border: 1px solid var(--gray-100); margin-bottom: 16px; }
-        .bag-item img { width: 85px; height: 110px; border-radius: 16px; object-fit: cover; }
-        .remove-btn { color: #ff3b30; font-size: 11px; font-weight: 800; cursor: pointer; background: none; border: none; margin-top: 10px; }
+        /* PRODUCT DETAIL OVERLAY */
+        #detail-view-overlay {
+            position: fixed;
+            inset: 0;
+            background: #fff;
+            z-index: 6000;
+            display: none;
+            flex-direction: column;
+            animation: luxeSlideUp 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+        }
 
-        /* Bottom Tab Nav Mobile */
-        .mobile-nav { position: fixed; bottom: 20px; left: 20px; right: 20px; height: 72px; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); border-radius: 36px; display: flex; justify-content: space-around; align-items: center; z-index: 1100; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        @media (min-width: 768px) { .mobile-nav { display: none; } }
-        .m-nav-item { color: white; opacity: 0.5; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; text-decoration: none; }
-        .m-nav-item.active { opacity: 1; color: var(--accent); }
-        .m-nav-item span { font-size: 9px; font-weight: 800; text-transform: uppercase; }
+        @keyframes luxeSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-        .toast { position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--primary); color: white; padding: 14px 28px; border-radius: 16px; font-weight: 800; font-size: 13px; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 5000; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .toast.show { transform: translateX(-50%) translateY(0); }
-        
-        /* Search Bar Styles */
-        .search-container { position: relative; flex: 1; max-width: 400px; margin: 0 30px; }
-        .search-input { width: 100%; background: var(--gray-100); border: none; padding: 10px 20px 10px 45px; border-radius: 20px; font-weight: 600; outline: none; font-size: 14px; }
-        .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--gray-400); }
+        .detail-navbar {
+            padding: 15px 25px;
+            border-bottom: 1px solid var(--gray-border);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .detail-close-btn {
+            cursor: pointer;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--gray-subtle);
+            transition: 0.3s;
+        }
+
+        .detail-close-btn:hover { background: var(--gray-border); }
+
+        .detail-scroller {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 120px;
+        }
+
+        .detail-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (min-width: 1024px) {
+            .detail-grid { flex-direction: row; padding: 40px 20px; gap: 80px; }
+            .detail-gallery { flex: 1.5; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+            .detail-content-side { flex: 1; position: sticky; top: 20px; height: fit-content; }
+        }
+
+        .detail-gallery img { width: 100%; display: block; border-radius: var(--radius-card); }
+
+        .detail-content-side { padding: 25px; }
+        .detail-brand-name { font-size: 32px; font-weight: 900; margin-bottom: 6px; letter-spacing: -0.5px; }
+        .detail-product-name { font-size: 20px; color: var(--gray-dark); margin-bottom: 35px; font-weight: 500; }
+
+        .detail-price-box { border-top: 1px solid var(--gray-border); padding: 30px 0; margin-bottom: 30px; }
+        .price-big { font-size: 30px; font-weight: 900; display: flex; align-items: baseline; gap: 18px; }
+
+        .detail-selectors { margin-bottom: 45px; }
+        .selector-label { font-weight: 900; font-size: 14px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+        .size-circles { display: flex; gap: 15px; flex-wrap: wrap; }
+        .size-circle {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            border: 1.5px solid var(--gray-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .size-circle.active { border-color: var(--accent); color: var(--accent); background: #fff1f4; box-shadow: 0 4px 15px rgba(255, 63, 108, 0.15); }
+
+        /* STICKY ACTIONS */
+        .sticky-footer-actions {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--gray-border);
+            display: flex;
+            gap: 15px;
+            z-index: 200;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.06);
+        }
+        @media (min-width: 1024px) { .sticky-footer-actions { position: static; padding: 0; border: none; box-shadow: none; margin-top: 50px; } }
+
+        .btn-luxe {
+            flex: 1;
+            height: 60px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 900;
+            font-size: 16px;
+            text-transform: uppercase;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: var(--transition);
+        }
+        .btn-luxe:active { transform: scale(0.95); }
+        .btn-add-bag { background: var(--accent); color: #fff; box-shadow: 0 10px 30px rgba(255, 63, 108, 0.3); }
+        .btn-wish-outline { background: #fff; border: 2px solid var(--gray-border); color: var(--primary); }
+        .btn-wish-outline:hover { border-color: var(--primary); }
+
+        /* TRANSMISSION HISTORY (Orders) */
+        .orders-container { max-width: 900px; margin: 40px auto; }
+        .order-card-lux {
+            background: #fff;
+            border: 1px solid var(--gray-border);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 25px;
+            position: relative;
+            transition: 0.3s;
+        }
+        .order-card-lux:hover { box-shadow: 0 10px 30px rgba(0,0,0,0.03); }
+        .order-header-info { display: flex; justify-content: space-between; margin-bottom: 25px; border-bottom: 1px solid var(--gray-subtle); padding-bottom: 18px; }
+        .order-id-tag { font-weight: 900; font-size: 14px; text-transform: uppercase; color: #000; }
+        .order-date-tag { font-size: 13px; color: var(--gray-text); font-weight: 800; }
+
+        .order-progress-track { margin-top: 35px; position: relative; }
+        .progress-bar-bg { height: 6px; background: var(--gray-subtle); border-radius: 10px; position: relative; }
+        .progress-bar-fill { height: 100%; background: #03a685; border-radius: 10px; transition: width 1.5s cubic-bezier(0.19, 1, 0.22, 1); }
+        .progress-nodes { display: flex; justify-content: space-between; position: absolute; top: -6px; left: 0; width: 100%; }
+        .p-node { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 4px solid var(--gray-border); transition: 0.5s; }
+        .p-node.completed { border-color: #03a685; background: #03a685; transform: scale(1.1); }
+        .progress-labels { display: flex; justify-content: space-between; margin-top: 15px; font-size: 10px; font-weight: 900; text-transform: uppercase; color: var(--gray-text); }
+
+        /* CART DRAWER */
+        #cart-drawer-overlay {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100%;
+            max-width: 440px;
+            height: 100%;
+            background: #fff;
+            z-index: 7000;
+            display: none;
+            flex-direction: column;
+            box-shadow: -30px 0 60px rgba(0,0,0,0.1);
+            animation: luxeSlideInRight 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        @keyframes luxeSlideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+        .cart-header { padding: 30px; border-bottom: 1px solid var(--gray-border); display: flex; justify-content: space-between; align-items: center; }
+        .cart-scroll-area { flex: 1; overflow-y: auto; padding: 30px; }
+        .cart-item-row { display: flex; gap: 20px; margin-bottom: 30px; padding-bottom: 25px; border-bottom: 1px solid var(--gray-subtle); position: relative; }
+        .cart-item-row img { width: 90px; height: 120px; object-fit: cover; border-radius: 8px; }
+        .cart-item-info h4 { font-size: 15px; font-weight: 900; }
+        .cart-item-info p { font-size: 13px; color: var(--gray-dark); margin: 6px 0; font-weight: 500; }
+        .cart-remove-trigger { position: absolute; top: 0; right: 0; cursor: pointer; opacity: 0.5; transition: 0.2s; }
+        .cart-remove-trigger:hover { opacity: 1; color: var(--accent); }
+
+        .cart-footer-node { padding: 30px; border-top: 1px solid var(--gray-border); background: #fcfcfd; }
+        .total-summary-row { display: flex; justify-content: space-between; margin-bottom: 30px; font-weight: 900; font-size: 20px; letter-spacing: -0.5px; }
+
+        /* CHECKOUT MODAL */
+        #checkout-overlay-node {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(12px);
+            z-index: 8000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .checkout-luxe-box { background: #fff; width: 100%; max-width: 520px; border-radius: 24px; padding: 40px; box-shadow: var(--shadow-lux); animation: fadeIn 0.4s ease; }
+        .luxe-input { width: 100%; padding: 18px; border: 2px solid var(--gray-border); border-radius: 12px; font-weight: 800; font-size: 15px; margin-bottom: 20px; outline: none; transition: 0.3s; }
+        .luxe-input:focus { border-color: var(--primary); background: var(--gray-subtle); }
+        .luxe-payment-badge { background: #f7f8f9; border: 2px solid #282c3f; padding: 22px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin: 15px 0 35px; }
+
+        /* UTILS */
+        .hidden { display: none !important; }
+        .lux-title { font-size: 22px; font-weight: 900; text-transform: uppercase; margin-bottom: 30px; letter-spacing: 2px; text-align: center; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
     </style>
 <script type="importmap">
 {
@@ -199,414 +531,514 @@
     "react": "https://esm.sh/react@^19.2.3",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
     "react-router-dom": "https://esm.sh/react-router-dom@^7.11.0",
     "@google/genai": "https://esm.sh/@google/genai@^1.34.0"
   }
 }
 </script>
 </head>
-<body class="no-scrollbar">
+<body>
 
-    <!-- Navbar -->
+    <!-- NAVIGATION -->
     <nav>
-        <div class="container nav-inner">
-            <div class="logo" onclick="navigateTo('shop')">STREAM & DREAM</div>
+        <div class="nav-inner">
+            <div class="brand-logo" onclick="location.reload()">STREAM & DREAM</div>
             
-            <div class="search-container hidden md:flex">
-                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                <input type="text" class="search-input" placeholder="Search premium matrix..." oninput="handleSearch(this.value)">
+            <div class="search-container">
+                <input type="text" id="global-search-input" class="search-bar" placeholder="Search for luxury collections..." oninput="handleLiveSearch()">
+                <div class="search-icon-svg">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                </div>
             </div>
 
-            <div class="nav-links">
-                <a href="#" onclick="navigateTo('shop')">Studio</a>
-                <a href="#" onclick="navigateTo('orders')">Tracking</a>
-                <a href="#" onclick="navigateTo('profile')">Identify</a>
-            </div>
-            <div class="cart-trigger" onclick="navigateTo('bag')">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                <span class="badge" id="bag-count">0</span>
+            <div class="nav-actions">
+                <div class="nav-icon-btn" onclick="showNavView('profile')">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span class="nav-icon-label">You</span>
+                </div>
+                <div class="nav-icon-btn" onclick="showNavView('wishlist')">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                    <div id="wishlist-count-badge" class="badge-count hidden">0</div>
+                    <span class="nav-icon-label">Wishlist</span>
+                </div>
+                <div class="nav-icon-btn" onclick="openCartDrawer()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    <div id="cart-count-badge" class="badge-count">0</div>
+                    <span class="nav-icon-label">Bag</span>
+                </div>
             </div>
         </div>
     </nav>
 
-    <!-- SHOP VIEW -->
-    <section id="shop-view" class="section-view container">
-        <div class="hero reveal">
-            <h1>Curated Essentials.</h1>
-            <p>High-end men's wear engineered for the modern dreamer matrix.</p>
-        </div>
+    <!-- MAIN APP WRAPPER -->
+    <main>
+        
+        <!-- CATALOG VIEW -->
+        <section id="view-catalog-node">
+            <!-- AESTHETIC HERO OFFER -->
+            <div class="premium-hero">
+                <div class="hero-content">
+                    <span class="hero-badge">NEW SEASON</span>
+                    <h1>ARCHITECTURAL <br> ESSENTIALS.</h1>
+                    <p>Experience the definitive silhouette of the modern vanguard.</p>
+                    <div style="font-weight: 900; font-size: 14px; text-transform: uppercase; color: var(--accent); letter-spacing: 1px;">Flat 30% OFF - Pulse Dropping Soon</div>
+                </div>
+            </div>
 
-        <div class="flex justify-between items-center" style="margin-bottom: 30px;">
-            <div style="background: white; padding: 12px 24px; border-radius: 20px; border: 1px solid var(--gray-200); font-weight: 800; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 10px;" onclick="toggleFilterPanel()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 21v-7m0-4V3m8 18v-9m0-4V3m8 18v-5m0-4V3M1 14h6m2-6h6m2 8h6"/></svg>
-                FILTER MATRIX
+            <div class="section-header">
+                <div class="filter-scroller">
+                    <div class="filter-chip active" onclick="setCategoryFilter('All', this)">All Styles</div>
+                    <div class="filter-chip" onclick="setCategoryFilter('Men T-Shirts', this)">Essential Tees</div>
+                    <div class="filter-chip" onclick="setCategoryFilter('Men Shirts', this)">Premium Shirts</div>
+                </div>
             </div>
-        </div>
+            <div class="product-grid" id="main-catalog-grid">
+                <!-- Products dynamically injected -->
+            </div>
+        </section>
 
-        <div class="product-grid" id="product-grid">
-            <!-- Items injected by JS -->
-        </div>
-    </section>
+        <!-- WISHLIST VIEW -->
+        <section id="view-wishlist-node" class="hidden">
+            <h2 class="lux-title">My Aesthetic Sanctuary</h2>
+            <div class="product-grid" id="wishlist-grid-anchor">
+                <!-- Wishlist items injected -->
+            </div>
+            <div id="wishlist-empty-state" class="hidden" style="text-align:center; padding:100px 0;">
+                <div style="opacity: 0.3; margin-bottom: 20px;">
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                </div>
+                <p style="color: var(--gray-text); font-weight: 800; font-size: 16px;">Your sanctuary is currently empty.</p>
+                <button class="btn-luxe btn-wish-outline" style="margin-top: 25px; max-width: 250px; margin-left:auto; margin-right:auto;" onclick="showNavView('catalog')">CONTINUE EXPLORING</button>
+            </div>
+        </section>
 
-    <!-- FILTER PANEL -->
-    <div id="filter-panel">
-        <div class="filter-header">
-            <h3 style="font-weight: 800; font-size: 20px;">Filters</h3>
-            <div style="cursor: pointer; font-size: 24px;" onclick="toggleFilterPanel()">&times;</div>
-        </div>
-        <div class="filter-group">
-            <label>Price Range</label>
-            <input type="range" id="f-price" min="0" max="5000" step="100" style="width: 100%; accent-color: black;" oninput="updateRangeLabel(this.value)">
-            <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; margin-top: 8px;">
-                <span>₹0</span>
-                <span id="f-price-val">₹5000</span>
+        <!-- ORDERS VIEW -->
+        <section id="view-orders-node" class="hidden">
+            <h2 class="lux-title">Transmission History</h2>
+            <div id="orders-list-anchor"></div>
+        </section>
+
+        <!-- PROFILE VIEW -->
+        <section id="view-profile-node" class="hidden">
+            <div style="max-width: 600px; margin: 50px auto; text-align: center;">
+                <div style="width: 120px; height: 120px; background: #1a1c2c; color: #fff; border-radius: 50%; margin: 0 auto 25px; display: flex; align-items: center; justify-content: center; font-size: 42px; font-weight: 900; box-shadow: 0 15px 30px rgba(0,0,0,0.1);">AV</div>
+                <h2 style="font-size: 32px; font-weight: 900; letter-spacing: -1px;">Apurv Vala</h2>
+                <p style="color: var(--gray-text); font-weight: 700; margin-bottom: 45px;">nextge.bywala@gmail.com</p>
+                <div style="text-align: left; background: #fafbfc; border: 1px solid var(--gray-border); padding: 35px; border-radius: 20px;">
+                    <p style="font-size: 11px; font-weight: 900; color: var(--gray-text); text-transform: uppercase; letter-spacing: 1px;">Default Authorization Node</p>
+                    <p style="font-weight: 800; font-size: 17px; margin-top: 8px; color: #000;">C-15, Maruti-2, Singarva, Ahmedabad – 382430</p>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 30px;">
+                    <button class="btn-luxe btn-wish-outline" onclick="showNavView('orders')">TRANSMISSIONS</button>
+                    <button class="btn-luxe btn-wish-outline" onclick="showNavView('wishlist')">WISHLIST</button>
+                </div>
             </div>
-        </div>
-        <div class="filter-group">
-            <label>Style Category</label>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button class="size-box" id="btn-tshirt" onclick="setFilterType('T-Shirt', this)">T-Shirts</button>
-                <button class="size-box" id="btn-shirt" onclick="setFilterType('Shirt', this)">Shirts</button>
-                <button class="size-box active" id="btn-all" onclick="setFilterType('All', this)">All</button>
+        </section>
+
+    </main>
+
+    <!-- PRODUCT DETAIL OVERLAY -->
+    <div id="detail-view-overlay">
+        <div class="detail-navbar">
+            <div class="detail-close-btn" onclick="closeProductDetail()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m15 18-6-6 6-6"/></svg>
             </div>
+            <span style="font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;">Style Definition</span>
         </div>
-        <div class="filter-group">
-            <label>Color Node</label>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <div onclick="setFilterColor('White', this)" class="size-box" style="background:#fff; border:1px solid #ddd;">W</div>
-                <div onclick="setFilterColor('Black', this)" class="size-box" style="background:#000; color:#fff; border:none;">B</div>
-                <div onclick="setFilterColor('All', this)" class="size-box active">All</div>
-            </div>
+        <div class="detail-scroller" id="detail-inject-anchor">
+            <!-- Content Injected -->
         </div>
-        <button class="add-btn-large" style="margin-top: 20px;" onclick="applyFilterPulse()">Apply Matrix</button>
     </div>
 
-    <!-- PRODUCT DETAIL VIEW -->
-    <div id="full-detail-modal" class="full-detail-view">
-        <div class="container">
-            <div onclick="closeDetail()" style="cursor: pointer; display: flex; align-items: center; gap: 10px; margin-bottom: 30px; font-weight: 800; font-size: 13px; text-transform: uppercase; color: var(--gray-400);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                Back to Studio
+    <!-- CART DRAWER -->
+    <div id="cart-drawer-overlay">
+        <div class="cart-header">
+            <h3 style="font-weight: 900; text-transform: uppercase; font-size: 16px; letter-spacing: 1px;">Shopping Bag</h3>
+            <div class="detail-close-btn" onclick="closeCartDrawer()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </div>
-            
-            <div id="detail-content">
-                <!-- Dynamic detail injected -->
+        </div>
+        <div class="cart-scroll-area" id="cart-items-anchor"></div>
+        <div class="cart-footer-node">
+            <div class="total-summary-row">
+                <span>Total Amount</span>
+                <span id="cart-total-value">₹0</span>
             </div>
+            <button class="btn-luxe btn-add-bag" style="width: 100%; height: 64px;" onclick="openCheckoutModal()">SECURE AUTHORIZATION</button>
+        </div>
+    </div>
 
-            <!-- ENHANCED PRODUCT DETAIL VIEW (BELOW CONTENT) -->
-            <div id="enhanced-footer-view">
-                <div id="checkout-section" class="checkout-view">
-                    <div class="checkout-card">
-                        <h2 style="font-size: 28px; font-weight: 800; margin-bottom: 12px; letter-spacing: -1px;">Shipping Logic</h2>
-                        <p style="color: var(--gray-400); font-weight: 600; font-size: 14px; margin-bottom: 30px;">Verify node address before dispatch.</p>
-                        <form id="order-form">
-                            <div class="form-group">
-                                <label>Identity</label>
-                                <input type="text" class="form-input" id="ship-name" value="Apurv Vala" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label>Pulse Node</label>
-                                <input type="text" class="form-input" id="ship-phone" value="+91 1234567890" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label>Delivery Coordinates</label>
-                                <textarea class="form-input" id="ship-address" rows="3" style="resize:none;" placeholder="Enter specific node address...">C-15, Maruti-2, Singarva, Ahmedabad – 382430</textarea>
-                            </div>
-                            <button type="submit" class="add-btn-large" style="background: var(--accent);">Confirm Transmission (COD)</button>
-                        </form>
-                    </div>
+    <!-- CHECKOUT MODAL -->
+    <div id="checkout-overlay-node">
+        <div class="checkout-luxe-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <h3 style="font-weight: 900; text-transform: uppercase; font-size: 18px; letter-spacing: 1px;">Shipment Credentials</h3>
+                <div class="detail-close-btn" style="width:36px; height:36px;" onclick="document.getElementById('checkout-overlay-node').style.display='none'">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12"/></svg>
                 </div>
+            </div>
+            <input type="text" id="chk-name-in" class="luxe-input" placeholder="Full Name" value="Apurv Vala">
+            <input type="text" id="chk-phone-in" class="luxe-input" placeholder="Mobile Node" value="+91 1234567890">
+            <textarea id="chk-addr-in" class="luxe-input" placeholder="Transmission Endpoint Address" style="height: 120px; resize: none;">C-15, Maruti-2, Singarva, Ahmedabad – 382430</textarea>
+            
+            <p style="font-size: 11px; font-weight: 900; color: var(--gray-text); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 1px;">Authorization Protocol</p>
+            <div class="luxe-payment-badge">
+                <span style="font-weight: 900; font-size: 15px;">CASH ON DELIVERY</span>
+                <span style="background: #03a685; color: #fff; font-size: 10px; font-weight: 900; padding: 6px 14px; border-radius: 6px;">SECURE NODE</span>
+            </div>
+            <button class="btn-luxe btn-add-bag" style="width: 100%; height: 68px;" onclick="finalizeTransmission()">CONFIRM TRANSMISSION</button>
+        </div>
+    </div>
 
-                <div class="reviews-section" id="reviews-hook">
-                    <h2 class="section-title">Client Feedback</h2>
-                    <div id="reviews-container">
-                        <!-- Dynamic hardcoded review -->
-                        <div class="review-card">
-                            <div class="rev-header">
-                                <div class="rev-avatar"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Apurv"></div>
-                                <div>
-                                    <div class="rev-name">Apurv Vala</div>
-                                    <div style="color:#ff9500; font-size:10px;">★★★★★</div>
-                                </div>
-                            </div>
-                            <p style="font-size:14px; line-height:1.6; color:var(--gray-600);">Exceptional weave quality. The matrix fit is precisely as described. A luxury pulse for my wardrobe. The shipping was prompt and the packaging felt truly premium.</p>
+    <script>
+        // PREMIUM CORE DATA
+        const PRODUCTS = [
+            { id: 101, brand: "Stream & Dream", name: "Heritage Pima Cotton Tee", category: "Men T-Shirts", price: 1899, orgPrice: 2499, img: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=800", images: ["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1581655353564-df123a1eb820?auto=format&fit=crop&q=80&w=800"], desc: "Handpicked Pima cotton for an elite silhouette that defines luxury and endurance. Engineered for high performance.", discount: "24% OFF" },
+            { id: 102, brand: "Stream & Dream", name: "Oxford Master Button-Down", category: "Men Shirts", price: 2999, orgPrice: 3999, img: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800", images: ["https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1620012253295-c15cc3e65df4?auto=format&fit=crop&q=80&w=800"], desc: "Crisp, breathable Oxford weave for high-stakes environments and professional dominance. Clean architectural design.", discount: "25% OFF" },
+            { id: 103, brand: "S&D Luxury", name: "Indigo Selvedge Armor Shirt", category: "Men Shirts", price: 4999, orgPrice: 6499, img: "https://images.unsplash.com/photo-1550910100-348633c5e87a?auto=format&fit=crop&q=80&w=800", images: ["https://images.unsplash.com/photo-1550910100-348633c5e87a?auto=format&fit=crop&q=80&w=800"], desc: "Raw Indigo selvedge denim built to chronicle your journey through decades of wear. The armor of modern explorers.", discount: "23% OFF" },
+            { id: 104, brand: "Stream & Dream", name: "Heavy French Terry Hoodie", category: "Men T-Shirts", price: 3499, orgPrice: 4499, img: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&q=80&w=800", images: ["https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&q=80&w=800"], desc: "Luxe heavyweight terry with signature cloud-finish interior for redefined urban comfort. A soft structural drop.", discount: "22% OFF" },
+            { id: 105, brand: "Stream & Dream", name: "Urban Boxy Graphic Tee", category: "Men T-Shirts", price: 1599, orgPrice: 1999, img: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&q=80&w=800", images: ["https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&q=80&w=800"], desc: "Modern oversized silhouette with high-density minimalist screen branding. Pure street luxury redefined.", discount: "20% OFF" },
+            { id: 106, brand: "Stream & Dream", name: "Italian Linen Breezer Shirt", category: "Men Shirts", price: 3199, orgPrice: 3999, img: "https://images.unsplash.com/photo-1604691815944-68b3f446036a?auto=format&fit=crop&q=80&w=800", images: ["https://images.unsplash.com/photo-1604691815944-68b3f446036a?auto=format&fit=crop&q=80&w=800"], desc: "Pure Italian linen woven for elite breathability and crisp tropical aesthetics. Definitive summer elegance.", discount: "20% OFF" },
+            { id: 107, brand: "S&D Retro", name: "V-Block Stripe Polo", category: "Men T-Shirts", price: 2199, orgPrice: 2799, img: "https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?auto=format&fit=crop&q=80&w=800", images: ["https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?auto=format&fit=crop&q=80&w=800"], desc: "Vintage sports heritage meets high-tension performance pique. Sharp contrast stripes for active dominance.", discount: "21% OFF" },
+            { id: 108, brand: "Stream & Dream", name: "Midnight Brushed Flannel", category: "Men Shirts", price: 2599, orgPrice: 3299, img: "https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&q=80&w=800", images: ["https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&q=80&w=800"], desc: "Winter essential soft-brushed flannel with premium bone buttons and tailored fit. Dark aesthetic mastery.", discount: "21% OFF" }
+        ];
+
+        // PERSISTENT STATE
+        let bag = JSON.parse(localStorage.getItem('sd_bag')) || [];
+        let wishlistIds = JSON.parse(localStorage.getItem('sd_wishlist')) || [];
+        let transmissions = JSON.parse(localStorage.getItem('sd_transmissions')) || [];
+        let currentFilter = 'All';
+
+        // CORE ENGINE
+        function initApp() {
+            renderCatalog(PRODUCTS);
+            updateCartBadge();
+            updateWishlistBadge();
+        }
+
+        function renderCatalog(items) {
+            const grid = document.getElementById('main-catalog-grid');
+            grid.innerHTML = items.map(p => `
+                <div class="product-card" onclick="openProductDetail(${p.id})">
+                    <div class="card-image-box">
+                        <img src="${p.img}" loading="lazy">
+                        <div class="wish-heart-btn ${wishlistIds.includes(p.id) ? 'active' : ''}" onclick="event.stopPropagation(); toggleWishlist(${p.id}, this)">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                        </div>
+                    </div>
+                    <div class="card-info">
+                        <div class="card-brand">${p.brand}</div>
+                        <div class="card-name">${p.name}</div>
+                        <div class="card-pricing">
+                            <span class="price-now">₹${p.price}</span>
+                            <span class="price-was">₹${p.orgPrice}</span>
+                            <span class="discount-label">(${p.discount})</span>
                         </div>
                     </div>
                 </div>
+            `).join('');
+        }
 
-                <div class="suggested-section">
-                    <h2 class="section-title">Matrix Suggested</h2>
-                    <div class="product-grid" id="suggested-grid">
-                        <!-- Suggestions -->
+        function handleLiveSearch() {
+            const query = document.getElementById('global-search-input').value.toLowerCase();
+            const filtered = PRODUCTS.filter(p => 
+                p.name.toLowerCase().includes(query) || 
+                p.brand.toLowerCase().includes(query) ||
+                p.category.toLowerCase().includes(query)
+            );
+            renderCatalog(filtered);
+        }
+
+        function setCategoryFilter(cat, el) {
+            currentFilter = cat;
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            renderCatalog(cat === 'All' ? PRODUCTS : PRODUCTS.filter(p => p.category === cat));
+        }
+
+        function openProductDetail(id) {
+            const p = PRODUCTS.find(x => x.id === id);
+            if(!p) return;
+            const overlay = document.getElementById('detail-view-overlay');
+            const anchor = document.getElementById('detail-inject-anchor');
+            
+            overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+
+            anchor.innerHTML = `
+                <div class="detail-grid">
+                    <div class="detail-gallery">
+                        ${(p.images || [p.img]).map(img => `<img src="${img}">`).join('')}
+                    </div>
+                    <div class="detail-content-side">
+                        <div class="detail-brand-name">${p.brand}</div>
+                        <div class="detail-product-name">${p.name}</div>
+                        <div class="detail-price-box">
+                            <div class="price-big">
+                                ₹${p.price} <span style="font-size:20px; color:var(--gray-text); text-decoration:line-through; font-weight:400; margin-left:15px;">₹${p.orgPrice}</span>
+                                <span style="font-size:20px; color:#ff905a; margin-left:15px; font-weight:800;">(${p.discount})</span>
+                            </div>
+                            <p style="color:#03a685; font-weight:900; font-size:12px; margin-top:12px; letter-spacing:0.5px;">INCLUSIVE OF ALL TAXES</p>
+                        </div>
+                        <div class="detail-selectors">
+                            <div class="selector-label">Select Performance Size</div>
+                            <div class="size-circles">
+                                <div class="size-circle active">S</div>
+                                <div class="size-circle">M</div>
+                                <div class="size-circle">L</div>
+                                <div class="size-circle">XL</div>
+                                <div class="size-circle">XXL</div>
+                            </div>
+                        </div>
+                        <p style="font-size:16px; color:var(--gray-dark); line-height:1.8; font-weight:500; margin-bottom:40px;">${p.desc}</p>
+                        
+                        <div style="margin-top:50px; border-top:1px solid var(--gray-border); padding-top:40px;">
+                            <h4 style="font-weight:900; font-size:15px; margin-bottom:25px; letter-spacing:1px; text-transform:uppercase;">EXPERT NODE REVIEWS</h4>
+                            <div style="display:flex; gap:20px; background:var(--gray-subtle); padding:25px; border-radius:16px;">
+                                <div style="width:48px; height:48px; background:#1a1c2c; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; flex-shrink:0; font-size:18px;">AV</div>
+                                <div>
+                                    <p style="font-weight:900; font-size:14px; color:#000;">Apurv Vala <span style="color:#03a685; font-size:10px; margin-left:12px;">✔ VERIFIED VANGUARD</span></p>
+                                    <p style="font-size:14px; margin-top:8px; color:var(--gray-dark); font-weight:500; font-style:italic;">" Textile density is phenomenal. It captures that rare balance between luxury drape and athletic resilience. Optimized for longevity. "</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:60px;">
+                            <h4 style="font-weight:900; font-size:15px; margin-bottom:25px; letter-spacing:1px; text-transform:uppercase;">SUGGESTED SYNC</h4>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                                ${PRODUCTS.filter(x => x.id !== p.id).slice(0, 2).map(x => `
+                                    <div onclick="openProductDetail(${x.id})">
+                                        <img src="${x.img}" style="width:100%; border-radius:8px; aspect-ratio:3/4; object-fit:cover; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                                        <p style="font-size:13px; font-weight:900; margin-top:12px; color:#000;">${x.name}</p>
+                                        <p style="font-size:13px; font-weight:900; color:var(--accent); margin-top:2px;">₹${x.price}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
+                <div class="sticky-footer-actions">
+                    <button class="btn-luxe btn-wish-outline" onclick="toggleWishlist(${p.id}, this)">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="${wishlistIds.includes(p.id) ? 'var(--accent)' : 'none'}" stroke="${wishlistIds.includes(p.id) ? 'var(--accent)' : 'currentColor'}" stroke-width="2.5"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                        Wishlist
+                    </button>
+                    <button class="btn-luxe btn-add-bag" onclick="addToBag(${p.id})">
+                        ADD TO BAG
+                    </button>
+                </div>
+            `;
+            anchor.scrollTop = 0;
+        }
 
-    <!-- BAG VIEW -->
-    <section id="bag-view" class="section-view container hidden">
-        <h2 style="font-size: 32px; font-weight: 800; margin-bottom: 30px; letter-spacing: -1.5px;">Bag Workspace</h2>
-        <div id="bag-items">
-            <!-- Items -->
-        </div>
-        <div id="bag-empty" class="hidden" style="text-align: center; padding: 100px 0; color: var(--gray-400); font-weight: 700;">Your matrix is empty.</div>
-    </section>
+        function closeProductDetail() {
+            document.getElementById('detail-view-overlay').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
 
-    <!-- ORDERS VIEW -->
-    <section id="orders-view" class="section-view container hidden">
-        <h2 style="font-size: 32px; font-weight: 800; margin-bottom: 40px; letter-spacing: -1.5px;">Active Tracking</h2>
-        <div id="orders-list">
-            <!-- Tracking items -->
-        </div>
-    </section>
+        function toggleWishlist(id, el) {
+            const idx = wishlistIds.indexOf(id);
+            if(idx > -1) {
+                wishlistIds.splice(idx, 1);
+            } else {
+                wishlistIds.push(id);
+            }
+            localStorage.setItem('sd_wishlist', JSON.stringify(wishlistIds));
+            updateWishlistBadge();
+            
+            // Refresh current catalog view
+            if(!document.getElementById('view-catalog-node').classList.contains('hidden')) {
+                renderCatalog(PRODUCTS.filter(p => (currentFilter === 'All' || p.category === currentFilter)));
+            }
+            // If in wishlist view, refresh it
+            if(!document.getElementById('view-wishlist-node').classList.contains('hidden')) {
+                renderWishlist();
+            }
+        }
 
-    <!-- PROFILE VIEW -->
-    <section id="profile-view" class="section-view container hidden">
-        <div style="text-align: center; padding: 40px 0;">
-            <div style="width: 120px; height: 120px; background: var(--gray-100); border-radius: 50%; margin: 0 auto 25px; overflow: hidden; border: 4px solid white; box-shadow: var(--shadow-sm);">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Apurv" style="width:100%; height:100%;">
-            </div>
-            <h2 style="font-size: 28px; font-weight: 800; letter-spacing: -1px;">Apurv Vala</h2>
-            <p style="color: var(--gray-400); font-weight: 700; font-size: 13px; margin-top: 5px;">nextge.bywala@gmail.com</p>
-            <div style="display: inline-block; background: var(--primary); color: white; padding: 8px 24px; border-radius: 12px; font-size: 10px; font-weight: 800; margin-top: 20px; text-transform: uppercase; letter-spacing: 1.5px;">Authorized Identity</div>
-        </div>
-    </section>
+        function updateWishlistBadge() {
+            const badge = document.getElementById('wishlist-count-badge');
+            badge.innerText = wishlistIds.length;
+            if(wishlistIds.length > 0) badge.classList.remove('hidden');
+            else badge.classList.add('hidden');
+        }
 
-    <!-- MOBILE NAV -->
-    <div class="mobile-nav">
-        <div class="m-nav-item active" id="m-shop" onclick="navigateTo('shop')">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
-            <span>Studio</span>
-        </div>
-        <div class="m-nav-item" id="m-orders" onclick="navigateTo('orders')">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20"/><path d="m17 5-5-3-5 3"/><path d="m17 19-5 3-5-3"/><path d="M2 7.15v9.7a2 2 0 0 0 1.15 1.8l7.45 3.5a2 2 0 0 0 1.8 0l7.45-3.5a2 2 0 0 0 1.15-1.8V7.15a2 2 0 0 0-1.15-1.8l-7.45-3.5a2 2 0 0 0-1.8 0l-7.45 3.5A2 2 0 0 0 2 7.15Z"/></svg>
-            <span>Tracking</span>
-        </div>
-        <div class="m-nav-item" id="m-bag" onclick="navigateTo('bag')">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-            <span>Bag</span>
-        </div>
-        <div class="m-nav-item" id="m-profile" onclick="navigateTo('profile')">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span>Me</span>
-        </div>
-    </div>
+        function openCartDrawer() {
+            document.getElementById('cart-drawer-overlay').style.display = 'flex';
+            renderCartItems();
+        }
 
-    <div class="toast" id="toast">Update Sync</div>
+        function closeCartDrawer() {
+            document.getElementById('cart-drawer-overlay').style.display = 'none';
+        }
 
-    <script>
-        // DEMO PRODUCTS (EACH WITH MULTIPLE HARDCODED IMAGES)
-        const demoProducts = [
-            { id: 101, name: "Pima Cotton Essential", category: "T-Shirt", price: 1899, stock: 12, color: "White", images: ["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1562157873-818bc0726f68?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1554568218-0f1715e72254?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&q=80&w=800"], desc: "High-density matrix cotton with a luxury silk-soft finish. Our most celebrated essential.", badge: "NEW" },
-            { id: 102, name: "Oxford Button Down", category: "Shirt", price: 2499, stock: 8, color: "White", images: ["https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1621072156002-e2fccdc0b176?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1598911510795-7e944405908b?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1594932224828-b4b057b6d6ec?auto=format&fit=crop&q=80&w=800"], desc: "Crisp architectural cotton tailored for a refined silhouette. Office to evening seamless transition.", badge: "TOP-TIER" },
-            { id: 103, name: "Heavyweight Boxy Tee", category: "T-Shirt", price: 1499, stock: 15, color: "Black", images: ["https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&q=80&w=800"], desc: "Structural drop shoulder cut. Engineered for the modern urban explorer.", badge: "URBAN" },
-            { id: 104, name: "Midnight Linen Layer", category: "Shirt", price: 3200, stock: 5, color: "Black", images: ["https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1603252109303-2751441dd157?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1607345366928-199e648ce8c8?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1594932224828-b4b057b6d6ec?auto=format&fit=crop&q=80&w=800"], desc: "Breathable Italian linen dyed in midnight obsidian. Luxury vacation pulse.", badge: "LIMITED" },
-            { id: 105, name: "Vintage Striped Polo", category: "T-Shirt", price: 2199, stock: 10, color: "Olive", images: ["https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=800"], desc: "Retro-matrix vertical stripes with high-polish knit. A classic dream.", badge: "BESTSELLER" },
-            { id: 106, name: "Pastel Sky Breezer", category: "Shirt", price: 2800, stock: 7, color: "Sky", images: ["https://images.unsplash.com/photo-1604691815944-6864f9cf17ab?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800"], desc: "Featherweight cotton poplin in dream-sky hues. Endless comfort.", badge: "CORE" },
-            { id: 107, name: "Indigo Denim Utility", category: "Shirt", price: 3800, stock: 4, color: "Indigo", images: ["https://images.unsplash.com/photo-1589310243389-96a5483213a8?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1495121605193-b116b5b9c5fe?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1550991152-12460a1618dd?auto=format&fit=crop&q=80&w=800"], desc: "Authentic indigo-dyed utility shirt. Built for the modern pioneer.", badge: "RUGGED" },
-            { id: 108, name: "Sandwash Oversized Tee", category: "T-Shirt", price: 1100, stock: 20, color: "Sand", images: ["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1491336477066-31156b5e4f35?auto=format&fit=crop&q=80&w=800", "https://images.unsplash.com/photo-1491336477066-31156b5e4f35?auto=format&fit=crop&q=80&w=800"], desc: "Earthy pigment-dyed tee with a lived-in luxury feel. Street-ready.", badge: "VALUE" }
-        ];
+        function addToBag(id) {
+            const p = PRODUCTS.find(x => x.id === id);
+            bag.push(p);
+            localStorage.setItem('sd_bag', JSON.stringify(bag));
+            updateCartBadge();
+            openCartDrawer();
+            closeProductDetail();
+        }
 
-        let state = {
-            products: JSON.parse(localStorage.getItem('sd_products')) || demoProducts,
-            cart: JSON.parse(localStorage.getItem('sd_cart')) || [],
-            orders: JSON.parse(localStorage.getItem('sd_orders')) || [
-                { id: 'ORD-7721', productName: "Oxford Button Down", price: 2499, status: "Shipped", date: "2023-11-20", img: demoProducts[1].images[0] }
-            ],
-            filter: { category: 'All', price: 5000, color: 'All' },
-            activeProduct: null,
-            searchQuery: ''
-        };
+        function renderCartItems() {
+            const anchor = document.getElementById('cart-items-anchor');
+            const totalVal = document.getElementById('cart-total-value');
+            if(bag.length === 0) {
+                anchor.innerHTML = `
+                <div style="text-align:center; padding:80px 0;">
+                    <div style="opacity:0.15; margin-bottom:15px;">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    </div>
+                    <p style="color:var(--gray-text); font-weight:800; font-size:14px; text-transform:uppercase; letter-spacing:1px;">Your bag is empty.</p>
+                </div>`;
+                totalVal.innerText = '₹0';
+                return;
+            }
+            anchor.innerHTML = bag.map((item, idx) => `
+                <div class="cart-item-row">
+                    <img src="${item.img}">
+                    <div class="cart-item-info">
+                        <h4>${item.brand}</h4>
+                        <p>${item.name}</p>
+                        <p>Size: M</p>
+                        <p style="font-weight:900; font-size:16px; margin-top:10px; color:#000;">₹${item.price}</p>
+                    </div>
+                    <div class="cart-remove-trigger" onclick="removeFromBag(${idx})">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </div>
+                </div>
+            `).join('');
+            const total = bag.reduce((acc, curr) => acc + curr.price, 0);
+            totalVal.innerText = `₹${total}`;
+        }
 
-        function navigateTo(v) {
-            document.querySelectorAll('.section-view').forEach(s => s.classList.add('hidden'));
-            document.getElementById(v + '-view').classList.remove('hidden');
-            document.querySelectorAll('.m-nav-item').forEach(i => i.classList.remove('active'));
-            document.getElementById('m-' + v)?.classList.add('active');
-            if(v === 'shop') renderProducts();
-            if(v === 'bag') renderBag();
-            if(v === 'orders') renderOrders();
+        function removeFromBag(idx) {
+            bag.splice(idx, 1);
+            localStorage.setItem('sd_bag', JSON.stringify(bag));
+            updateCartBadge();
+            renderCartItems();
+        }
+
+        function updateCartBadge() {
+            document.getElementById('cart-count-badge').innerText = bag.length;
+        }
+
+        function openCheckoutModal() {
+            if(bag.length === 0) return;
+            document.getElementById('checkout-overlay-node').style.display = 'flex';
+        }
+
+        function finalizeTransmission() {
+            const newTrans = {
+                id: 'TX-' + Math.floor(Math.random()*900000 + 100000),
+                items: [...bag],
+                total: bag.reduce((a,c) => a + c.price, 0),
+                date: new Date().toLocaleDateString(),
+                status: 'Ordered',
+                customer: document.getElementById('chk-name-in').value,
+                address: document.getElementById('chk-addr-in').value
+            };
+            transmissions.unshift(newTrans);
+            localStorage.setItem('sd_transmissions', JSON.stringify(transmissions));
+            bag = [];
+            localStorage.setItem('sd_bag', JSON.stringify([]));
+            updateCartBadge();
+            document.getElementById('checkout-overlay-node').style.display = 'none';
+            closeCartDrawer();
+            showNavView('orders');
+        }
+
+        function showNavView(view) {
+            document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
+            document.getElementById('view-' + view + '-node').classList.remove('hidden');
+            if(view === 'orders') renderOrders();
+            if(view === 'wishlist') renderWishlist();
+            if(view === 'catalog') renderCatalog(PRODUCTS);
             window.scrollTo(0,0);
         }
 
-        function toggleFilterPanel() { document.getElementById('filter-panel').classList.toggle('active'); }
-        function updateRangeLabel(v) { document.getElementById('f-price-val').innerText = '₹' + v; }
-
-        function setFilterType(t, el) {
-            document.querySelectorAll('.filter-group button').forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
-            state.filter.category = t;
-        }
-
-        function setFilterColor(c, el) {
-            el.parentNode.querySelectorAll('.size-box').forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
-            state.filter.color = c;
-        }
-
-        function handleSearch(q) {
-            state.searchQuery = q.toLowerCase();
-            applyFilterPulse();
-        }
-
-        function applyFilterPulse() {
-            state.filter.price = parseInt(document.getElementById('f-price').value);
-            let filtered = state.products.filter(p => {
-                const matchPrice = p.price <= state.filter.price;
-                const matchType = state.filter.category === 'All' || p.category === state.filter.category;
-                const matchColor = state.filter.color === 'All' || p.color === state.filter.color;
-                const matchSearch = p.name.toLowerCase().includes(state.searchQuery);
-                return matchPrice && matchType && matchColor && matchSearch;
-            });
-            renderProducts(filtered);
-            if(document.getElementById('filter-panel').classList.contains('active')) toggleFilterPanel();
-        }
-
-        function renderProducts(arr = state.products) {
-            const grid = document.getElementById('product-grid');
-            grid.innerHTML = arr.map(p => `
-                <div class="product-card reveal" onclick="viewDetail(${p.id})">
-                    <div class="tag">${p.badge}</div>
-                    <div class="card-img"><img src="${p.images[0]}" loading="lazy"></div>
-                    <div class="card-info">
-                        <h3>${p.name}</h3>
-                        <p>${p.desc}</p>
-                        <div class="price">₹${p.price}</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function viewDetail(id) {
-            const p = state.products.find(x => x.id === id);
-            state.activeProduct = p;
-            const modal = document.getElementById('full-detail-modal');
-            modal.style.display = 'block';
-            document.body.style.overflow = 'hidden';
-
-            document.getElementById('detail-content').innerHTML = `
-                <div class="detail-layout">
-                    <div class="gallery-side">
-                        <div class="gallery-main"><img id="main-d-img" src="${p.images[0]}"></div>
-                        <div class="gallery-thumbs">
-                            ${p.images.map((img, i) => `<img src="${img}" class="thumb ${i==0?'active':''}" onclick="setDImg('${img}', this)">`).join('')}
-                        </div>
-                    </div>
-                    <div class="info-pane">
-                        <p style="font-size:11px; font-weight:800; color:var(--accent); text-transform:uppercase; margin-bottom:12px;">Premium ${p.category} Matrix</p>
-                        <h1>${p.name}</h1>
-                        <div class="detail-price">₹${p.price}</div>
-                        <p class="detail-desc">${p.desc}</p>
-                        <label style="font-size:11px; font-weight:800; margin-bottom:15px; display:block;">FIT SCALE</label>
-                        <div class="size-grid">
-                            <div class="size-box" onclick="selS(this)">S</div>
-                            <div class="size-box active" onclick="selS(this)">M</div>
-                            <div class="size-box" onclick="selS(this)">L</div>
-                            <div class="size-box" onclick="selS(this)">XL</div>
-                        </div>
-                        <button class="add-btn-large" onclick="openCheckoutForm()">Transmit to Bag</button>
-                    </div>
-                </div>
-            `;
-
-            // Suggestions Grid
-            const sug = state.products.filter(x => x.id !== id).slice(0, 4);
-            document.getElementById('suggested-grid').innerHTML = sug.map(s => `
-                <div class="product-card" onclick="viewDetail(${s.id})">
-                    <div class="card-img"><img src="${s.images[0]}"></div>
-                    <div class="card-info">
-                        <h3>${s.name}</h3>
-                        <div class="price">₹${s.price}</div>
-                    </div>
-                </div>
-            `).join('');
+        function renderWishlist() {
+            const anchor = document.getElementById('wishlist-grid-anchor');
+            const emptyState = document.getElementById('wishlist-empty-state');
+            const wishes = PRODUCTS.filter(p => wishlistIds.includes(p.id));
             
-            document.getElementById('checkout-section').style.display = 'none';
-        }
-
-        function closeDetail() { document.getElementById('full-detail-modal').style.display = 'none'; document.body.style.overflow = 'auto'; }
-        function setDImg(s, e) { document.getElementById('main-d-img').src = s; document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active')); e.classList.add('active'); }
-        function selS(e) { document.querySelectorAll('.size-box').forEach(b => b.classList.remove('active')); e.classList.add('active'); }
-
-        function openCheckoutForm() {
-            document.getElementById('checkout-section').style.display = 'block';
-            document.getElementById('checkout-section').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        document.getElementById('order-form').onsubmit = (e) => {
-            e.preventDefault();
-            const p = state.activeProduct;
-            const newOrder = {
-                id: 'ORD-' + Math.floor(Math.random()*9000+1000),
-                productName: p.name,
-                price: p.price,
-                status: 'Ordered',
-                date: new Date().toISOString().split('T')[0],
-                img: p.images[0]
-            };
-            state.orders.unshift(newOrder);
-            localStorage.setItem('sd_orders', JSON.stringify(state.orders));
-            showToast('Transmission Successful');
-            closeDetail();
-            navigateTo('orders');
-        };
-
-        function renderBag() {
-            const list = document.getElementById('bag-items');
-            list.innerHTML = state.cart.length ? state.cart.map((i, idx) => `
-                <div class="bag-item">
-                    <img src="${i.images[0]}">
-                    <div style="flex:1">
-                        <h4 style="font-weight:800;">${i.name}</h4>
-                        <p style="font-size:12px; color:var(--gray-400); margin-top:5px;">Size: ${i.selSize || 'M'} | Essential Matrix</p>
-                        <div class="price" style="margin-top:10px;">₹${i.price}</div>
-                        <button class="remove-btn" onclick="remBag(${idx})">PURGE</button>
+            if(wishes.length === 0) {
+                anchor.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+            anchor.innerHTML = wishes.map(p => `
+                <div class="product-card" onclick="openProductDetail(${p.id})">
+                    <div class="card-image-box">
+                        <img src="${p.img}" loading="lazy">
+                        <div class="wish-heart-btn active" onclick="event.stopPropagation(); toggleWishlist(${p.id}, this)">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--accent)" stroke="var(--accent)" stroke-width="2.5"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                        </div>
+                    </div>
+                    <div class="card-info">
+                        <div class="card-brand">${p.brand}</div>
+                        <div class="card-name">${p.name}</div>
+                        <div class="card-pricing">
+                            <span class="price-now">₹${p.price}</span>
+                            <span class="price-was">₹${p.orgPrice}</span>
+                        </div>
+                        <button class="btn-luxe btn-add-bag" style="height:38px; font-size:11px; margin-top:12px;" onclick="event.stopPropagation(); addToBag(${p.id})">MOVE TO BAG</button>
                     </div>
                 </div>
-            `).join('') : '';
-            document.getElementById('bag-empty').classList.toggle('hidden', state.cart.length > 0);
+            `).join('');
         }
-
-        function remBag(i) { state.cart.splice(i, 1); localStorage.setItem('sd_cart', JSON.stringify(state.cart)); renderBag(); updateB(); }
 
         function renderOrders() {
-            const list = document.getElementById('orders-list');
-            list.innerHTML = state.orders.map(o => {
-                const steps = ['Ordered', 'Confirmed', 'Shipped', 'Out for Delivery'];
-                const idx = steps.indexOf(o.status || 'Ordered');
-                const fill = (idx / (steps.length - 1)) * 100;
+            const anchor = document.getElementById('orders-list-anchor');
+            if(transmissions.length === 0) {
+                anchor.innerHTML = `
+                <div style="text-align:center; padding:100px 0; color:var(--gray-text);">
+                    <div style="opacity:0.15; margin-bottom:15px;">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8h-2.1c-1.1 0-2.1.9-2.1 2v4c0 1.1.9 2 2.1 2H21"/><path d="M3 10V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4"/><path d="M3 10h18M3 10v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V10"/><path d="M12 14v4"/></svg>
+                    </div>
+                    <p style="font-weight:800; font-size:15px; text-transform:uppercase; letter-spacing:1px;">No active transmissions detected.</p>
+                </div>`;
+                return;
+            }
+            anchor.innerHTML = transmissions.map(t => {
+                const statusMap = { 'Ordered': 25, 'Confirmed': 50, 'Shipped': 75, 'Delivered': 100 };
+                const fill = statusMap[t.status] || 25;
                 return `
-                    <div class="track-card">
-                        <div class="flex" style="gap:20px; align-items:center;">
-                            <img src="${o.img}" style="width:60px; height:75px; border-radius:14px; object-fit:cover;">
-                            <div>
-                                <p style="font-size:10px; font-weight:800; color:var(--gray-400);">${o.id}</p>
-                                <h4 style="font-weight:800;">${o.productName}</h4>
-                                <div class="price" style="font-size:15px; margin-top:4px;">₹${o.price}</div>
-                            </div>
+                    <div class="order-card-lux">
+                        <div class="order-header-info">
+                            <span class="order-id-tag">ID: ${t.id}</span>
+                            <span class="order-date-tag">${t.date}</span>
                         </div>
-                        <div class="order-tracking-bar">
-                            <div class="tracking-line"></div>
-                            <div class="tracking-fill-bar" style="width: ${fill}%"></div>
-                            ${steps.map((s, i) => `
-                                <div class="flex flex-col items-center gap-2" style="position: relative; z-index: 10;">
-                                    <div class="tracking-point ${i <= idx ? 'active' : ''}"></div>
-                                    <span class="track-step ${i <= idx ? 'active' : ''}">${s}</span>
-                                </div>
-                            `).join('')}
+                        <div style="display:flex; gap:15px; margin-bottom:30px; overflow-x:auto; padding-bottom:5px;">
+                            ${t.items.map(i => `<img src="${i.img}" style="width:60px; height:80px; object-fit:cover; border-radius:6px; box-shadow:0 4px 8px rgba(0,0,0,0.05);">`).join('')}
+                        </div>
+                        <div style="font-weight:900; font-size:14px; color:var(--primary); margin-bottom:10px; letter-spacing:-0.2px;">TOTAL SHIPMENT VALUE: ₹${t.total}</div>
+                        <div class="order-progress-track">
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" style="width: ${fill}%"></div>
+                            </div>
+                            <div class="progress-nodes">
+                                <div class="p-node ${fill >= 25 ? 'completed' : ''}"></div>
+                                <div class="p-node ${fill >= 50 ? 'completed' : ''}"></div>
+                                <div class="p-node ${fill >= 75 ? 'completed' : ''}"></div>
+                                <div class="p-node ${fill >= 100 ? 'completed' : ''}"></div>
+                            </div>
+                            <div class="progress-labels">
+                                <span>Ordered</span>
+                                <span>Confirmed</span>
+                                <span>Shipped</span>
+                                <span>Delivery</span>
+                            </div>
                         </div>
                     </div>
                 `;
             }).join('');
         }
 
-        function updateB() { document.getElementById('bag-count').innerText = state.cart.length; }
-        function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
-
-        // Initial
-        renderProducts();
-        updateB();
+        // INITIALIZE
+        initApp();
     </script>
 </body>
 </html>
