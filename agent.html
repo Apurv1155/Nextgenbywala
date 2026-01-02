@@ -275,6 +275,8 @@
     <!-- LOGIC -->
     <script>
         // --- 1. CONSTANTS & TYPES ---
+        const GAS_DEPLOY_URL = "https://script.google.com/macros/s/AKfycbwSb450dyBcSZQt_8OwWB7YyI-OcgEl3eCXsdWgEuybCsFE_HXYbOGeFXbbIb86N_he/exec"; // PASTE YOUR SCRIPT URL HERE
+
         const LeadStatus = {
             NEW: 'New', CONTACTED: 'Contacted', FOLLOW_UP: 'Follow-Up', 
             INTERESTED: 'Interested', WON: 'Won', LOST: 'Lost'
@@ -943,6 +945,15 @@
                 }
                 count++;
             });
+
+            // CONNECT TO GOOGLE SHEETS
+            if (GAS_DEPLOY_URL && GAS_DEPLOY_URL !== "YOUR_DEPLOY_URL_HERE") {
+                fetch(GAS_DEPLOY_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify(pendingImportData)
+                }).catch(e => console.error("Cloud sync failed", e));
+            }
 
             alert(`Successfully imported ${count} leads!`);
             
