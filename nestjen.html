@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nestjen | Calm Real Estate</title>
+    <title>My Nearby | Calm Real Estate</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -226,10 +227,12 @@
 </head>
 <body>
 
+    <div id="root"></div>
+
     <!-- Global Loader -->
     <div id="global-loader">
         <div class="pulse-loader"></div>
-        <p class="mt-4 text-xs font-medium text-slate-400 uppercase tracking-widest">Nestjen</p>
+        <p class="mt-4 text-xs font-medium text-slate-400 uppercase tracking-widest">My Nearby</p>
     </div>
 
     <!-- Navigation -->
@@ -239,7 +242,7 @@
                 <div class="w-9 h-9 bg-teal-800 rounded-xl flex items-center justify-center overflow-hidden">
                     <img src="https://png.pngtree.com/png-vector/20191018/ourmid/pngtree-social-network-bird-icon-simple-style-png-image_1826820.jpg" class="w-full h-full object-cover grayscale invert brightness-200">
                 </div>
-                <span class="text-xl font-semibold tracking-tight">Nest<span class="text-[#6B9080]">jen</span></span>
+                <span class="text-xl font-semibold tracking-tight">My <span class="text-[#6B9080]">Nearby</span></span>
             </a>
 
             <div class="hidden md:flex items-center gap-8">
@@ -431,7 +434,7 @@
             container.innerHTML = `
                 <section class="max-w-7xl mx-auto px-6 mb-20 text-center">
                     <div class="max-w-3xl mx-auto reveal">
-                        <h1 class="text-4xl lg:text-5xl font-semibold tracking-tight leading-tight mb-6">Experience the calm of Nestjen.</h1>
+                        <h1 class="text-4xl lg:text-5xl font-semibold tracking-tight leading-tight mb-6">Experience the calm of My Nearby.</h1>
                         <p class="text-slate-500 text-lg font-light mb-10">Exclusive verified real estate assets curated for peaceful living. Find your next sanctuary in the heart of the city.</p>
                         
                         <div class="flex flex-col md:flex-row gap-4 justify-center">
@@ -752,7 +755,7 @@
                     </button>
                     
                     <div class="mb-10 text-center">
-                        <h2 class="text-2xl font-semibold mb-2">${isRegister ? 'Join Nestjen' : 'Welcome Home'}</h2>
+                        <h2 class="text-2xl font-semibold mb-2">${isRegister ? 'Join My Nearby' : 'Welcome Home'}</h2>
                         <p class="text-sm text-slate-400">Join our verified calm neighborhood</p>
                     </div>
 
@@ -1011,9 +1014,6 @@
         // Final check to ensure first screen is home
         if (!window.location.hash || window.location.hash === '#' || window.location.hash === '#/') {
             window.location.hash = '#/';
-        } else {
-            // Optional: If you always want home on REFRESH specifically, uncomment below
-            // window.location.hash = '#/';
         }
         router.handleHashChange();
     </script>
