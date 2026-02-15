@@ -1,0 +1,659 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>iFinance Pro | Premium Ledger</title>
+    <!-- External Dependencies (Required for Icons and Charts) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --apple-blue: #007AFF;
+            --apple-bg: #F5F5F7;
+            --apple-card: rgba(255, 255, 255, 0.85);
+            --safe-area-bottom: env(safe-area-inset-bottom);
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--apple-bg);
+            color: #1D1D1F;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .apple-glass {
+            background: var(--apple-card);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .apple-shadow {
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.04);
+        }
+        .view-section {
+            display: none;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .view-section.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .tab-item.active {
+            color: var(--apple-blue);
+        }
+        .tab-bar {
+            position: fixed;
+            bottom: calc(28px + var(--safe-area-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 440px;
+            z-index: 1000;
+        }
+        .fab-btn {
+            background: linear-gradient(135deg, #007AFF, #0056D2);
+            box-shadow: 0 8px 25px rgba(0, 122, 255, 0.35);
+        }
+        .onboarding-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--apple-bg);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+        }
+        .onboarding-hidden {
+            transform: translateY(-100%);
+        }
+        .filter-pill {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .filter-pill.active {
+            background-color: black;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        select::-webkit-scrollbar {
+            width: 6px;
+        }
+        select::-webkit-scrollbar-thumb {
+            background: #D1D1D6;
+            border-radius: 10px;
+        }
+        .modal-content {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+        #detail-view {
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+        }
+        #detail-view.hidden {
+            transform: translateY(100%);
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .animate-in {
+            animation-duration: 0.5s;
+            animation-fill-mode: both;
+        }
+        .fade-in { animation-name: fadeIn; }
+        .slide-in-from-bottom-4 { animation-name: slideInBottom4; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideInBottom4 { from { transform: translateY(1rem); } to { transform: translateY(0); } }
+    </style>
+</head>
+<body class="pb-40">
+    <!-- Login/Identity -->
+    <div id="onboarding" class="onboarding-screen px-10 text-center space-y-10">
+        <div class="relative">
+            <div class="w-24 h-24 bg-blue-600 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl rotate-3">
+                <i data-lucide="pocket" class="w-12 h-12"></i>
+            </div>
+            <div class="absolute -bottom-2 -right-2 w-10 h-10 bg-black rounded-2xl flex items-center justify-center text-white border-4 border-[#F5F5F7]">
+                <i data-lucide="lock" class="w-5 h-5"></i>
+            </div>
+        </div>
+        <div class="space-y-3">
+            <h1 class="text-3xl font-extrabold tracking-tight">Financial Identity</h1>
+            <p class="text-gray-400 text-sm max-w-xs mx-auto font-medium">Professional grade expense tracking. Your data is synced to your private cloud.</p>
+        </div>
+        <div class="w-full max-w-xs space-y-4">
+            <input type="text" id="user-name-input" placeholder="Enter Full Name" class="w-full p-5 rounded-2xl bg-white border border-gray-100 shadow-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold text-center transition-all">
+            <button onclick="app.completeOnboarding()" class="w-full py-5 bg-black text-white rounded-2xl font-bold active:scale-95 transition-all shadow-xl shadow-black/10">Authorize Access</button>
+        </div>
+    </div>
+
+    <!-- Layout Container -->
+    <div id="main-view" class="max-w-xl mx-auto px-6 pt-14">
+        <div id="view-home" class="view-section active"></div>
+        <div id="view-ledger" class="view-section"></div>
+        <div id="view-analytics" class="view-section"></div>
+        <div id="view-profile" class="view-section"></div>
+    </div>
+
+    <!-- Bottom Navbar -->
+    <nav class="tab-bar apple-glass apple-shadow rounded-[2.8rem] px-8 py-3.5 flex items-center justify-between">
+        <button onclick="app.setView('home')" class="tab-item flex flex-col items-center gap-1.5 active" data-view="home">
+            <i data-lucide="layout" class="w-5 h-5"></i>
+            <span class="text-[9px] font-bold uppercase tracking-widest">Dash</span>
+        </button>
+        <button onclick="app.setView('ledger')" class="tab-item flex flex-col items-center gap-1.5 text-gray-400" data-view="ledger">
+            <i data-lucide="database" class="w-5 h-5"></i>
+            <span class="text-[9px] font-bold uppercase tracking-widest">Logs</span>
+        </button>
+        
+        <div class="relative -top-7">
+            <button onclick="app.toggleModal(true)" class="fab-btn w-15 h-15 rounded-full flex items-center justify-center text-white active:scale-90 transition-all border-4 border-[#F5F5F7]">
+                <i data-lucide="plus" class="w-8 h-8"></i>
+            </button>
+        </div>
+
+        <button onclick="app.setView('analytics')" class="tab-item flex flex-col items-center gap-1.5 text-gray-400" data-view="analytics">
+            <i data-lucide="pie-chart" class="w-5 h-5"></i>
+            <span class="text-[9px] font-bold uppercase tracking-widest">Stats</span>
+        </button>
+        <button onclick="app.setView('profile')" class="tab-item flex flex-col items-center gap-1.5 text-gray-400" data-view="profile">
+            <i data-lucide="user" class="w-5 h-5"></i>
+            <span class="text-[9px] font-bold uppercase tracking-widest">Self</span>
+        </button>
+    </nav>
+
+    <!-- Entry Modal -->
+    <div id="entry-modal" class="fixed inset-0 bg-black/40 backdrop-blur-md z-[2000] flex items-end sm:items-center justify-center hidden opacity-0 transition-all duration-300">
+        <div class="modal-content w-full max-w-lg bg-[#F5F5F7] rounded-t-[3.5rem] sm:rounded-[3.5rem] p-10 apple-shadow transform translate-y-full">
+            <div class="flex justify-between items-center mb-10">
+                <h3 class="text-2xl font-bold tracking-tight">Record Activity</h3>
+                <button onclick="app.toggleModal(false)" class="w-11 h-11 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 active:scale-90 transition-all">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <form id="entry-form" class="space-y-8">
+                <div class="bg-gray-200 p-1.5 rounded-[1.5rem] flex">
+                    <label class="flex-1 cursor-pointer">
+                        <input type="radio" name="type" value="expense" checked class="hidden peer">
+                        <div class="py-3 text-center text-[10px] font-bold uppercase tracking-widest rounded-[1rem] peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-md transition-all text-gray-500">Expense</div>
+                    </label>
+                    <label class="flex-1 cursor-pointer">
+                        <input type="radio" name="type" value="credit" class="hidden peer">
+                        <div class="py-3 text-center text-[10px] font-bold uppercase tracking-widest rounded-[1rem] peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-md transition-all text-gray-500">Credit</div>
+                    </label>
+                    <label class="flex-1 cursor-pointer">
+                        <input type="radio" name="type" value="saving" class="hidden peer">
+                        <div class="py-3 text-center text-[10px] font-bold uppercase tracking-widest rounded-[1rem] peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-md transition-all text-gray-500">Saving</div>
+                    </label>
+                </div>
+
+                <div class="text-center px-2">
+                    <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-3">Transaction Amount</p>
+                    <div class="flex items-center justify-center text-6xl font-extrabold tracking-tighter">
+                        <span class="mr-3 text-gray-300">₹</span>
+                        <input type="number" id="entry-amount" placeholder="0" class="bg-transparent w-full text-center outline-none focus:text-blue-600 transition-colors" required>
+                    </div>
+                </div>
+
+                <div class="space-y-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div class="relative group">
+                            <i data-lucide="tag" class="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+                            <select id="entry-category" class="w-full p-5 pl-14 rounded-2xl bg-white border border-gray-100 text-sm font-bold outline-none appearance-none cursor-pointer hover:border-blue-200 transition-all overflow-y-auto max-h-48"></select>
+                            <i data-lucide="chevron-down" class="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 pointer-events-none"></i>
+                        </div>
+                        <div class="relative group">
+                            <i data-lucide="calendar" class="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+                            <input type="date" id="entry-date" class="w-full p-5 pl-14 rounded-2xl bg-white border border-gray-100 text-sm font-bold outline-none cursor-pointer hover:border-blue-200 transition-all">
+                        </div>
+                    </div>
+                    <div class="relative group">
+                        <i data-lucide="file-text" class="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+                        <input type="text" id="entry-desc" placeholder="Add a short description..." class="w-full p-5 pl-14 rounded-2xl bg-white border border-gray-100 text-sm font-bold outline-none hover:border-blue-200 transition-all">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-5 bg-black text-white rounded-[2.2rem] font-bold text-lg shadow-2xl active:scale-[0.98] transition-all">Commit Transaction</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Detail View -->
+    <div id="detail-view" class="fixed inset-0 bg-[#F5F5F7] z-[3000] hidden px-8 pt-20 pb-10 flex flex-col">
+        <header class="flex justify-between items-center mb-12">
+            <button onclick="app.closeDetail()" class="w-12 h-12 rounded-full bg-white apple-shadow flex items-center justify-center active:scale-90 transition-all">
+                <i data-lucide="chevron-down" class="w-6 h-6"></i>
+            </button>
+            <h3 class="text-lg font-bold">Transaction Details</h3>
+            <div class="w-12 h-12"></div>
+        </header>
+        <div id="detail-content" class="flex-1 overflow-y-auto hide-scrollbar space-y-12 pb-20"></div>
+        <div id="detail-actions" class="grid grid-cols-2 gap-4"></div>
+    </div>
+
+    <script>
+        /**
+         * iFinance Pro - Core Engine (Vanilla JS)
+         */
+
+        const THEME_COLORS = ['#007AFF', '#34C759', '#5856D6', '#FF9500', '#FF2D55', '#AF52DE', '#FF3B30', '#5AC8FA', '#FFCC00', '#E5E5EA'];
+        const INITIAL_CATEGORIES = [
+            { id: 'cat_1', name: 'Academics', icon: 'graduation-cap', color: '#007AFF' },
+            { id: 'cat_2', name: 'Books', icon: 'book-open', color: '#5856D6' },
+            { id: 'cat_3', name: 'Family', icon: 'home', color: '#FF9500' },
+            { id: 'cat_4', name: 'Food', icon: 'utensils', color: '#FF2D55' },
+            { id: 'cat_5', name: 'Leisure', icon: 'clapperboard', color: '#AF52DE' }
+        ];
+        const LUCIDE_BANK = ['graduation-cap', 'book-open', 'home', 'utensils', 'bus', 'clapperboard', 'shopping-cart', 'briefcase', 'coffee', 'dumbbell', 'heart', 'smartphone', 'zap', 'camera', 'music', 'package', 'tv', 'wrench', 'gift', 'plane'];
+
+        class FinanceApp {
+            constructor() {
+                const savedUser = localStorage.getItem('ifi_identity');
+                const savedData = localStorage.getItem('ifi_data');
+                const data = savedData ? JSON.parse(savedData) : null;
+
+                this.currentView = 'home';
+                this.state = {
+                    transactions: data?.transactions || [],
+                    categories: data?.categories || [...INITIAL_CATEGORIES],
+                    user: savedUser ? JSON.parse(savedUser) : null,
+                    currentFilter: 'all'
+                };
+                this.init();
+            }
+
+            init() {
+                if (this.state.user) {
+                    document.getElementById('onboarding').classList.add('onboarding-hidden');
+                }
+                document.getElementById('entry-form').addEventListener('submit', (e) => this.handleCommit(e));
+                const dt = document.getElementById('entry-date');
+                if (dt) dt.value = new Date().toISOString().split('T')[0];
+                this.render();
+            }
+
+            save() {
+                localStorage.setItem('ifi_data', JSON.stringify({
+                    transactions: this.state.transactions,
+                    categories: this.state.categories
+                }));
+            }
+
+            completeOnboarding() {
+                const nameInput = document.getElementById('user-name-input');
+                const name = nameInput.value.trim();
+                if (!name) return;
+                this.state.user = { name, joined: new Date().toISOString(), avatar: null };
+                localStorage.setItem('ifi_identity', JSON.stringify(this.state.user));
+                document.getElementById('onboarding').classList.add('onboarding-hidden');
+                this.render();
+            }
+
+            setView(view) {
+                this.currentView = view;
+                document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+                document.getElementById(`view-${view}`).classList.add('active');
+                
+                document.querySelectorAll('.tab-item').forEach(btn => {
+                    const act = btn.dataset.view === view;
+                    btn.classList.toggle('active', act);
+                    btn.classList.toggle('text-gray-400', !act);
+                });
+                this.render();
+            }
+
+            toggleModal(show) {
+                const modal = document.getElementById('entry-modal');
+                const inner = modal.querySelector('.modal-content');
+                if (show) {
+                    modal.classList.remove('hidden');
+                    this.updateDropdown();
+                    setTimeout(() => {
+                        modal.classList.add('opacity-100');
+                        inner.classList.remove('translate-y-full');
+                    }, 10);
+                } else {
+                    modal.classList.remove('opacity-100');
+                    inner.classList.add('translate-y-full');
+                    setTimeout(() => modal.classList.add('hidden'), 300);
+                }
+            }
+
+            updateDropdown() {
+                const sel = document.getElementById('entry-category');
+                sel.innerHTML = this.state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            }
+
+            handleCommit(e) {
+                e.preventDefault();
+                const fd = new FormData(e.target);
+                const amount = parseFloat(document.getElementById('entry-amount').value);
+                const catId = document.getElementById('entry-category').value;
+                const date = document.getElementById('entry-date').value;
+                const desc = document.getElementById('entry-desc').value || 'Activity';
+                const time = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+                const tx = {
+                    id: 'tx_' + Date.now(),
+                    type: fd.get('type'),
+                    amount,
+                    categoryId: catId,
+                    date,
+                    time,
+                    description: desc,
+                    timestamp: new Date().toISOString()
+                };
+
+                this.state.transactions.unshift(tx);
+                this.save();
+                this.render();
+                this.toggleModal(false);
+                e.target.reset();
+                document.getElementById('entry-date').value = new Date().toISOString().split('T')[0];
+            }
+
+            setLedgerFilter(f) {
+                this.state.currentFilter = f;
+                this.render();
+            }
+
+            getMetrics() {
+                let balance = 0;
+                let totalSavings = 0;
+                this.state.transactions.forEach(t => {
+                    if (t.type === 'credit') balance += t.amount;
+                    else if (t.type === 'expense') balance -= t.amount;
+                    else if (t.type === 'saving') {
+                        balance -= t.amount;
+                        totalSavings += t.amount;
+                    }
+                });
+                return { balance, totalSavings };
+            }
+
+            formatINR(v) {
+                return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v);
+            }
+
+            render() {
+                const { balance, totalSavings } = this.getMetrics();
+                switch(this.currentView) {
+                    case 'home': this.renderHome(balance, totalSavings); break;
+                    case 'ledger': this.renderLedger(); break;
+                    case 'analytics': this.renderAnalytics(); break;
+                    case 'profile': this.renderProfile(); break;
+                }
+                lucide.createIcons();
+            }
+
+            renderHome(balance, savings) {
+                const container = document.getElementById('view-home');
+                const recent = this.state.transactions.slice(0, 5);
+                container.innerHTML = `
+                    <div class="space-y-12 pb-10">
+                        <header class="flex justify-between items-start animate-in fade-in slide-in-from-bottom-4">
+                            <div class="space-y-1">
+                                <p class="text-gray-400 text-[11px] font-bold uppercase tracking-[0.2em]">Dash Balance</p>
+                                <h1 class="text-4xl font-extrabold tracking-tight">${this.formatINR(balance)}</h1>
+                            </div>
+                            <div class="w-14 h-14 rounded-3xl bg-white apple-shadow flex items-center justify-center border border-gray-100 overflow-hidden">
+                                ${this.state.user?.avatar ? `<img src="${this.state.user.avatar}" class="w-full h-full object-cover">` : `<i data-lucide="shield-check" class="w-6 h-6 text-blue-600"></i>`}
+                            </div>
+                        </header>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="bg-white p-7 rounded-[2.8rem] apple-shadow border border-white active:scale-95 transition-all">
+                                <div class="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mb-5"><i data-lucide="piggy-bank" class="w-6 h-6 text-blue-600"></i></div>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Savings</p>
+                                <p class="text-2xl font-bold">${this.formatINR(savings)}</p>
+                            </div>
+                            <div class="bg-white p-7 rounded-[2.8rem] apple-shadow border border-white active:scale-95 transition-all">
+                                <div class="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center mb-5"><i data-lucide="trending-up" class="w-6 h-6 text-green-600"></i></div>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Status</p>
+                                <p class="text-2xl font-bold">Safe</p>
+                            </div>
+                        </div>
+                        <section class="space-y-6">
+                            <div class="flex justify-between items-center px-2">
+                                <h2 class="text-xl font-bold tracking-tight">Recent Activity</h2>
+                                <button onclick="app.setView('ledger')" class="text-blue-600 text-[10px] font-bold uppercase tracking-widest">View All</button>
+                            </div>
+                            <div class="space-y-4">
+                                ${recent.length ? recent.map(t => this.txCard(t)).join('') : '<div class="py-20 text-center text-gray-300 italic font-medium">Clear record.</div>'}
+                            </div>
+                        </section>
+                    </div>
+                `;
+            }
+
+            txCard(t) {
+                const cat = this.state.categories.find(c => c.id === t.categoryId);
+                const isCredit = t.type === 'credit';
+                const isSaving = t.type === 'saving';
+                let col = 'text-red-500', sym = '-';
+                if (isCredit) { col = 'text-green-500'; sym = '+'; }
+                if (isSaving) { col = 'text-blue-500'; sym = '-'; }
+
+                return `
+                    <div onclick="app.openDetail('${t.id}')" class="bg-white p-6 rounded-[2.4rem] apple-shadow flex items-center justify-between border border-transparent hover:border-blue-50 transition-all active:scale-[0.98] cursor-pointer">
+                        <div class="flex items-center space-x-5">
+                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center bg-[#F5F5F7]">
+                                <i data-lucide="${cat?.icon || 'layers'}" class="w-6 h-6 text-gray-400"></i>
+                            </div>
+                            <div class="space-y-1">
+                                <p class="font-bold text-[15px] text-[#1D1D1F] line-clamp-1">${t.description}</p>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">${cat?.name || 'Uncategorized'}</p>
+                            </div>
+                        </div>
+                        <div class="text-right space-y-1">
+                            <p class="font-extrabold text-[15px] ${col}">${sym}${this.formatINR(t.amount)}</p>
+                            <p class="text-[10px] text-gray-300 font-bold uppercase">${new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            openDetail(txId) {
+                const tx = this.state.transactions.find(t => t.id === txId);
+                const category = this.state.categories.find(c => c.id === tx.categoryId);
+                const content = document.getElementById('detail-content');
+                const actions = document.getElementById('detail-actions');
+                
+                let col = 'text-red-500', sym = '-';
+                if (tx.type === 'credit') { col = 'text-green-500'; sym = '+'; }
+                else if (tx.type === 'saving') { col = 'text-blue-500'; sym = '-'; }
+
+                content.innerHTML = `
+                    <div class="flex flex-col items-center text-center space-y-8">
+                        <div class="w-24 h-24 rounded-[2.5rem] bg-white apple-shadow flex items-center justify-center text-gray-400 mb-4"><i data-lucide="${category?.icon || 'layers'}" class="w-10 h-10"></i></div>
+                        <div class="space-y-2">
+                            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em]">${category?.name || 'Category'}</p>
+                            <h2 class="text-3xl font-extrabold tracking-tight">${tx.description}</h2>
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-5xl font-black tracking-tighter ${col}">${sym}${this.formatINR(tx.amount)}</p>
+                            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Transaction Amount</p>
+                        </div>
+                        <div class="w-full grid grid-cols-2 gap-4 pt-10 text-left">
+                            <div class="bg-white p-6 rounded-3xl apple-shadow space-y-2">
+                                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Date</p>
+                                <p class="font-bold text-sm">${new Date(tx.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-3xl apple-shadow space-y-2">
+                                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Time</p>
+                                <p class="font-bold text-sm">${tx.time || '--:--'}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                actions.innerHTML = `
+                    <button onclick="app.deleteTransaction('${tx.id}')" class="py-5 bg-red-50 text-red-500 rounded-[2rem] font-bold text-sm uppercase tracking-widest active:scale-95 transition-all">Delete</button>
+                    <button onclick="app.closeDetail()" class="py-5 bg-black text-white rounded-[2rem] font-bold text-sm uppercase tracking-widest active:scale-95 transition-all">Back</button>
+                `;
+                document.getElementById('detail-view').classList.remove('hidden');
+                lucide.createIcons();
+            }
+
+            closeDetail() { document.getElementById('detail-view').classList.add('hidden'); }
+
+            deleteTransaction(id) {
+                if (confirm("Delete this record?")) {
+                    this.state.transactions = this.state.transactions.filter(t => t.id !== id);
+                    this.save();
+                    this.closeDetail();
+                    this.render();
+                }
+            }
+
+            renderLedger() {
+                const container = document.getElementById('view-ledger');
+                const filtered = this.state.transactions.filter(t => this.state.currentFilter === 'all' || t.type === this.state.currentFilter);
+                container.innerHTML = `
+                    <div class="space-y-8 pb-10">
+                        <header class="space-y-1 px-1">
+                            <h2 class="text-3xl font-extrabold tracking-tight">Logs Ledger</h2>
+                            <p class="text-gray-400 text-sm font-medium">History of your financial life.</p>
+                        </header>
+                        <div class="flex gap-3 overflow-x-auto hide-scrollbar py-2">
+                            ${['all', 'expense', 'credit', 'saving'].map(f => `
+                                <button onclick="app.setLedgerFilter('${f}')" class="filter-pill px-7 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest ${this.state.currentFilter === f ? 'active' : 'bg-white text-gray-400 apple-shadow'} active:scale-95 transition-all">
+                                    ${f}
+                                </button>
+                            `).join('')}
+                        </div>
+                        <div class="space-y-4">
+                            ${filtered.length ? filtered.map(t => this.txCard(t)).join('') : '<div class="py-24 text-center text-gray-400 italic">No records.</div>'}
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderAnalytics() {
+                const container = document.getElementById('view-analytics');
+                container.innerHTML = `
+                    <div class="space-y-8 pb-10">
+                        <header class="space-y-1 px-1">
+                            <h2 class="text-3xl font-extrabold tracking-tight">Stats Analytics</h2>
+                            <p class="text-gray-400 text-sm font-medium">Trends and insights.</p>
+                        </header>
+                        <div class="bg-white p-9 rounded-[3rem] apple-shadow space-y-8">
+                            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Share</p>
+                            <div class="h-72 relative"><canvas id="pieChart"></canvas></div>
+                        </div>
+                        <div class="bg-white p-9 rounded-[3rem] apple-shadow space-y-8">
+                            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Daily</p>
+                            <div class="h-64 relative"><canvas id="barChart"></canvas></div>
+                        </div>
+                    </div>
+                `;
+                setTimeout(() => this.initCharts(), 100);
+            }
+
+            initCharts() {
+                const expenses = this.state.transactions.filter(t => t.type !== 'credit');
+                if (!expenses.length) return;
+
+                const catData = {};
+                expenses.forEach(t => catData[t.categoryId] = (catData[t.categoryId] || 0) + t.amount);
+
+                new Chart(document.getElementById('pieChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(catData).map(id => this.state.categories.find(c => c.id === id)?.name),
+                        datasets: [{ data: Object.values(catData), backgroundColor: Object.keys(catData).map(id => this.state.categories.find(c => c.id === id)?.color), borderWidth: 0, spacing: 8 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, cutout: '80%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 8, usePointStyle: true, font: { size: 10, weight: '700' }, padding: 25 } } } }
+                });
+
+                const daily = new Array(7).fill(0);
+                expenses.forEach(t => daily[new Date(t.date).getDay()] += t.amount);
+                new Chart(document.getElementById('barChart'), {
+                    type: 'bar',
+                    data: { labels: ['S', 'M', 'T', 'W', 'T', 'F', 'S'], datasets: [{ data: daily, backgroundColor: '#007AFF', borderRadius: 14, barThickness: 16 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, border: { display: false } }, y: { grid: { display: false }, ticks: { display: false }, border: { display: false } } } }
+                });
+            }
+
+            renderProfile() {
+                const container = document.getElementById('view-profile');
+                container.innerHTML = `
+                    <div class="space-y-12 pb-10">
+                        <header class="text-center space-y-6 pt-4">
+                            <div class="relative w-28 h-28 mx-auto">
+                                <div class="w-28 h-28 rounded-[3rem] bg-white apple-shadow flex items-center justify-center border border-gray-100 overflow-hidden ring-4 ring-white">
+                                    <img src="${this.state.user.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed=' + this.state.user.name}" class="w-full h-full object-cover">
+                                </div>
+                                <label class="absolute -bottom-2 -right-2 w-10 h-10 bg-black rounded-2xl flex items-center justify-center text-white border-4 border-[#F5F5F7] cursor-pointer">
+                                    <i data-lucide="camera" class="w-4 h-4"></i>
+                                    <input type="file" class="hidden" accept="image/*" onchange="app.handleProfileUpload(event)">
+                                </label>
+                            </div>
+                            <h2 class="text-3xl font-extrabold tracking-tight">${this.state.user.name}</h2>
+                        </header>
+                        <section class="space-y-8">
+                            <div class="flex justify-between items-center"><h3 class="text-xl font-bold">Categories</h3><button onclick="app.showCatTool()" class="w-10 h-10 rounded-2xl bg-black text-white flex items-center justify-center"><i data-lucide="plus" class="w-5 h-5"></i></button></div>
+                            <div id="cat-tool" class="hidden bg-white p-8 rounded-[3rem] apple-shadow space-y-6">
+                                <input type="text" id="new-cat-name" placeholder="Name" class="w-full p-5 rounded-2xl bg-gray-50 font-bold outline-none">
+                                <div class="flex flex-wrap gap-3 py-2 max-h-40 overflow-y-auto hide-scrollbar">
+                                    ${LUCIDE_BANK.map(i => `<button onclick="app.pickIcon('${i}')" class="cat-icon-btn w-11 h-11 rounded-2xl bg-gray-50 flex items-center justify-center" data-icon="${i}"><i data-lucide="${i}" class="w-5 h-5"></i></button>`).join('')}
+                                </div>
+                                <button onclick="app.commitCategory()" class="w-full py-5 bg-blue-600 text-white rounded-[2rem] font-bold">Confirm</button>
+                            </div>
+                            <div class="grid grid-cols-2 gap-5">
+                                ${this.state.categories.map(c => `<div class="bg-white p-5 rounded-[2.5rem] apple-shadow flex items-center gap-4"><div class="w-11 h-11 rounded-2xl bg-gray-50 flex items-center justify-center"><i data-lucide="${c.icon}" class="w-5 h-5 text-gray-400"></i></div><span class="text-xs font-bold">${c.name}</span></div>`).join('')}
+                            </div>
+                        </section>
+                        <button onclick="app.reset()" class="w-full py-5 text-red-500 font-bold border-2 border-red-50 rounded-[2.2rem]">Reset</button>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+
+            handleProfileUpload(e) {
+                const f = e.target.files[0];
+                if (!f) return;
+                const r = new FileReader();
+                r.onload = (ev) => {
+                    this.state.user.avatar = ev.target.result;
+                    localStorage.setItem('ifi_identity', JSON.stringify(this.state.user));
+                    this.render();
+                };
+                r.readAsDataURL(f);
+            }
+
+            showCatTool() { document.getElementById('cat-tool').classList.toggle('hidden'); this.pickIcon('package'); }
+            pickIcon(i) {
+                this.selectedIcon = i;
+                document.querySelectorAll('.cat-icon-btn').forEach(b => {
+                    const act = b.dataset.icon === i;
+                    b.classList.toggle('bg-blue-600', act);
+                    b.classList.toggle('text-white', act);
+                });
+            }
+            commitCategory() {
+                const name = document.getElementById('new-cat-name').value.trim();
+                if (!name) return;
+                this.state.categories.push({ id: 'cat_' + Date.now(), name, icon: this.selectedIcon, color: THEME_COLORS[this.state.categories.length % THEME_COLORS.length] });
+                this.save();
+                this.render();
+                document.getElementById('cat-tool').classList.add('hidden');
+            }
+            reset() { if (confirm("Wipe all?")) { localStorage.clear(); location.reload(); } }
+        }
+
+        window.app = new FinanceApp();
+    </script>
+</body>
+</html>
