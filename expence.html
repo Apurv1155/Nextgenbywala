@@ -3,17 +3,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>iFinance Pro | Premium Ledger</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>iFinance Pro | Smart Ledger</title>
+    <!-- External Dependencies -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --apple-blue: #007AFF;
-            --apple-bg: #F5F5F7;
-            --apple-card: rgba(255, 255, 255, 0.85);
+            --apple-bg: #F2F2F7;
+            --apple-card: rgba(255, 255, 255, 0.8);
             --safe-area-bottom: env(safe-area-inset-bottom);
         }
         body {
@@ -25,18 +26,18 @@
         }
         .apple-glass {
             background: var(--apple-card);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
         .apple-shadow {
-            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
         }
         .view-section {
             display: none;
             opacity: 0;
-            transform: translateY(15px);
-            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transform: translateY(10px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .view-section.active {
             display: block;
@@ -48,16 +49,20 @@
         }
         .tab-bar {
             position: fixed;
-            bottom: calc(28px + var(--safe-area-bottom));
+            bottom: calc(20px + var(--safe-area-bottom));
             left: 50%;
             transform: translateX(-50%);
-            width: 90%;
-            max-width: 440px;
+            width: 92%;
+            max-width: 400px;
             z-index: 1000;
         }
         .fab-btn {
             background: linear-gradient(135deg, #007AFF, #0056D2);
-            box-shadow: 0 8px 25px rgba(0, 122, 255, 0.35);
+            box-shadow: 0 10px 25px rgba(0, 122, 255, 0.4);
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .fab-btn:active {
+            transform: scale(0.85);
         }
         .onboarding-screen {
             position: fixed;
@@ -68,7 +73,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: transform 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+            transition: transform 0.6s cubic-bezier(0.8, 0, 0.2, 1);
         }
         .onboarding-hidden {
             transform: translateY(-100%);
@@ -77,23 +82,14 @@
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .filter-pill.active {
-            background-color: black;
+            background-color: #1D1D1F;
             color: white;
             transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        select::-webkit-scrollbar {
-            width: 6px;
-        }
-        select::-webkit-scrollbar-thumb {
-            background: #D1D1D6;
-            border-radius: 10px;
         }
         .modal-content {
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            max-height: 90vh;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 85vh;
             overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
         }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -101,7 +97,6 @@
         input[type="number"]::-webkit-inner-spin-button, 
         input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
-        /* Full screen detail view animation */
         #detail-view {
             transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
         }
@@ -110,150 +105,163 @@
             pointer-events: none;
             opacity: 0;
         }
+
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .sync-spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* Keyboard fix for modal amount */
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
     </style>
 <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@^19.2.4",
+    "recharts": "https://esm.sh/recharts@^3.7.0",
     "react/": "https://esm.sh/react@^19.2.4/",
-    "recharts": "https://esm.sh/recharts@^3.7.0"
+    "react": "https://esm.sh/react@^19.2.4"
   }
 }
 </script>
 </head>
-<body class="pb-40">
-    <!-- Login/Identity -->
-    <div id="onboarding" class="onboarding-screen px-10 text-center space-y-10">
+<body class="pb-32">
+    <!-- Initial Onboarding -->
+    <div id="onboarding" class="onboarding-screen px-10 text-center space-y-12">
         <div class="relative">
-            <div class="w-24 h-24 bg-blue-600 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl rotate-3">
-                <i data-lucide="pocket" class="w-12 h-12"></i>
+            <div class="w-28 h-28 bg-blue-600 rounded-[2.8rem] flex items-center justify-center text-white shadow-2xl rotate-3">
+                <i data-lucide="pocket" class="w-14 h-14"></i>
             </div>
-            <div class="absolute -bottom-2 -right-2 w-10 h-10 bg-black rounded-2xl flex items-center justify-center text-white border-4 border-[#F5F5F7]">
-                <i data-lucide="lock" class="w-5 h-5"></i>
+            <div class="absolute -bottom-2 -right-2 w-11 h-11 bg-green-500 rounded-2xl flex items-center justify-center text-white border-4 border-[#F2F2F7]">
+                <i data-lucide="cloud" class="w-6 h-6"></i>
             </div>
         </div>
-        <div class="space-y-3">
-            <h1 class="text-3xl font-extrabold tracking-tight">Financial Identity</h1>
-            <p class="text-gray-400 text-sm max-w-xs mx-auto font-medium">Professional grade expense tracking. Your data is synced to your private cloud.</p>
+        <div class="space-y-4">
+            <h1 class="text-3xl font-extrabold tracking-tight">Identity & Sync</h1>
+            <p class="text-gray-500 text-sm max-w-xs mx-auto leading-relaxed">Securely link your financial records to the cloud with iFinance Pro.</p>
         </div>
-        <div class="w-full max-w-xs space-y-4">
-            <input type="text" id="user-name-input" placeholder="Enter Full Name" class="w-full p-5 rounded-2xl bg-white border border-gray-100 shadow-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold text-center transition-all">
-            <button onclick="app.completeOnboarding()" class="w-full py-5 bg-black text-white rounded-2xl font-bold active:scale-95 transition-all shadow-xl shadow-black/10">Authorize Access</button>
+        <div class="w-full max-w-xs space-y-5">
+            <input type="text" id="user-name-input" placeholder="What's your name?" class="w-full p-5 rounded-3xl bg-white apple-shadow outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-center transition-all border border-transparent">
+            <button onclick="app.completeOnboarding()" class="w-full py-5 bg-black text-white rounded-3xl font-bold active:scale-95 transition-all shadow-xl shadow-black/10">Authorize Ledger</button>
         </div>
     </div>
 
     <!-- Layout Container -->
-    <div id="main-view" class="max-w-xl mx-auto px-6 pt-14">
+    <div id="main-view" class="max-w-xl mx-auto px-6 pt-16">
         <div id="view-home" class="view-section active"></div>
         <div id="view-ledger" class="view-section"></div>
         <div id="view-analytics" class="view-section"></div>
         <div id="view-profile" class="view-section"></div>
     </div>
 
-    <!-- Bottom Navbar -->
-    <nav class="tab-bar apple-glass apple-shadow rounded-[2.8rem] px-8 py-3.5 flex items-center justify-between">
+    <!-- Bottom Navigation Bar -->
+    <nav class="tab-bar apple-glass apple-shadow rounded-[3rem] px-8 py-4 flex items-center justify-between">
         <button onclick="app.setView('home')" class="tab-item flex flex-col items-center gap-1.5 active" data-view="home">
-            <i data-lucide="layout" class="w-5 h-5"></i>
-            <span class="text-[9px] font-bold uppercase tracking-widest">Dash</span>
+            <i data-lucide="layout-grid" class="w-5 h-5"></i>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Dash</span>
         </button>
         <button onclick="app.setView('ledger')" class="tab-item flex flex-col items-center gap-1.5 text-gray-400" data-view="ledger">
-            <i data-lucide="database" class="w-5 h-5"></i>
-            <span class="text-[9px] font-bold uppercase tracking-widest">Logs</span>
+            <i data-lucide="list" class="w-5 h-5"></i>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Logs</span>
         </button>
         
-        <div class="relative -top-7">
-            <button onclick="app.toggleModal(true)" class="fab-btn w-15 h-15 rounded-full flex items-center justify-center text-white active:scale-90 transition-all border-4 border-[#F5F5F7]">
-                <i data-lucide="plus" class="w-8 h-8"></i>
+        <div class="relative -top-8">
+            <button onclick="app.toggleModal(true)" class="fab-btn w-16 h-16 rounded-full flex items-center justify-center text-white border-4 border-[#F2F2F7]">
+                <i data-lucide="plus" class="w-9 h-9"></i>
             </button>
         </div>
 
         <button onclick="app.setView('analytics')" class="tab-item flex flex-col items-center gap-1.5 text-gray-400" data-view="analytics">
-            <i data-lucide="pie-chart" class="w-5 h-5"></i>
-            <span class="text-[9px] font-bold uppercase tracking-widest">Stats</span>
+            <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Stats</span>
         </button>
         <button onclick="app.setView('profile')" class="tab-item flex flex-col items-center gap-1.5 text-gray-400" data-view="profile">
-            <i data-lucide="user" class="w-5 h-5"></i>
-            <span class="text-[9px] font-bold uppercase tracking-widest">Self</span>
+            <i data-lucide="user-circle" class="w-5 h-5"></i>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Self</span>
         </button>
     </nav>
 
     <!-- Entry Modal -->
-    <div id="entry-modal" class="fixed inset-0 bg-black/40 backdrop-blur-md z-[2000] flex items-end sm:items-center justify-center hidden opacity-0 transition-all duration-300">
-        <div class="modal-content w-full max-w-lg bg-[#F5F5F7] rounded-t-[3.5rem] sm:rounded-[3.5rem] p-10 apple-shadow transform translate-y-full">
-            <div class="flex justify-between items-center mb-10">
-                <h3 class="text-2xl font-bold tracking-tight">Record Activity</h3>
-                <button onclick="app.toggleModal(false)" class="w-11 h-11 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 active:scale-90 transition-all">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
+    <div id="entry-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[2000] flex items-end sm:items-center justify-center hidden opacity-0 transition-all duration-300">
+        <div class="modal-content w-full max-w-lg bg-[#F2F2F7] rounded-t-[3.5rem] sm:rounded-[3.5rem] apple-shadow transform translate-y-full">
+            <div class="p-8 space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-bold tracking-tight">New Entry</h3>
+                    <button onclick="app.toggleModal(false)" class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 active:scale-90 transition-all">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                
+                <form id="entry-form" class="modal-body">
+                    <!-- Amount First - Highest visibility for keyboard -->
+                    <div class="text-center bg-white/50 p-6 rounded-[2.5rem] apple-shadow border border-white">
+                        <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-2">Amount</p>
+                        <div class="flex items-center justify-center text-5xl font-black tracking-tighter">
+                            <span class="mr-2 text-gray-300">₹</span>
+                            <input type="number" id="entry-amount" placeholder="0" class="bg-transparent w-full text-center outline-none focus:text-blue-600 transition-colors" required>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-200 p-1 rounded-3xl flex">
+                        <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="type" value="expense" checked class="hidden peer">
+                            <div class="py-3 text-center text-[10px] font-bold uppercase tracking-widest rounded-2xl peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm transition-all text-gray-500">Expense</div>
+                        </label>
+                        <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="type" value="credit" class="hidden peer">
+                            <div class="py-3 text-center text-[10px] font-bold uppercase tracking-widest rounded-2xl peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm transition-all text-gray-500">Credit</div>
+                        </label>
+                        <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="type" value="saving" class="hidden peer">
+                            <div class="py-3 text-center text-[10px] font-bold uppercase tracking-widest rounded-2xl peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm transition-all text-gray-500">Saving</div>
+                        </label>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="relative bg-white rounded-3xl apple-shadow border border-white">
+                                <i data-lucide="tag" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300"></i>
+                                <select id="entry-category" class="w-full p-4 pl-12 bg-transparent text-sm font-bold outline-none appearance-none cursor-pointer"></select>
+                            </div>
+                            <div class="relative bg-white rounded-3xl apple-shadow border border-white">
+                                <i data-lucide="calendar" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300"></i>
+                                <input type="date" id="entry-date" class="w-full p-4 pl-12 bg-transparent text-sm font-bold outline-none cursor-pointer">
+                            </div>
+                        </div>
+                        <div class="relative bg-white rounded-3xl apple-shadow border border-white">
+                            <i data-lucide="edit-3" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300"></i>
+                            <input type="text" id="entry-desc" placeholder="Notes..." class="w-full p-4 pl-12 bg-transparent text-sm font-bold outline-none">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full py-5 bg-black text-white rounded-[2.2rem] font-bold text-lg shadow-2xl active:scale-95 transition-all">Record Activity</button>
+                </form>
             </div>
-            
-            <form id="entry-form" class="space-y-8 pb-10">
-                <!-- Transaction Type Toggle -->
-                <div class="bg-gray-200 p-1.5 rounded-[1.5rem] flex">
-                    <label class="flex-1 cursor-pointer">
-                        <input type="radio" name="type" value="expense" checked class="hidden peer">
-                        <div class="py-3 text-center text-[10px] font-bold uppercase tracking-widest rounded-[1rem] peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-md transition-all text-gray-500">Expense</div>
-                    </label>
-                    <label class="flex-1 cursor-pointer">
-                        <input type="radio" name="type" value="credit" class="hidden peer">
-                        <div class="py-3 text-center text-[10px] font-bold uppercase tracking-widest rounded-[1rem] peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-md transition-all text-gray-500">Credit</div>
-                    </label>
-                    <label class="flex-1 cursor-pointer">
-                        <input type="radio" name="type" value="saving" class="hidden peer">
-                        <div class="py-3 text-center text-[10px] font-bold uppercase tracking-widest rounded-[1rem] peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-md transition-all text-gray-500">Saving</div>
-                    </label>
-                </div>
-
-                <!-- Large Amount Input -->
-                <div class="text-center px-2">
-                    <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-3">Transaction Amount</p>
-                    <div class="flex items-center justify-center text-6xl font-extrabold tracking-tighter">
-                        <span class="mr-3 text-gray-300">₹</span>
-                        <input type="number" id="entry-amount" placeholder="0" class="bg-transparent w-full text-center outline-none focus:text-blue-600 transition-colors" required>
-                    </div>
-                </div>
-
-                <!-- Form Fields -->
-                <div class="space-y-5">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div class="relative group">
-                            <i data-lucide="tag" class="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
-                            <select id="entry-category" class="w-full p-5 pl-14 rounded-2xl bg-white border border-gray-100 text-sm font-bold outline-none appearance-none cursor-pointer hover:border-blue-200 transition-all overflow-y-auto max-h-48"></select>
-                            <i data-lucide="chevron-down" class="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 pointer-events-none"></i>
-                        </div>
-                        <div class="relative group">
-                            <i data-lucide="calendar" class="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
-                            <input type="date" id="entry-date" class="w-full p-5 pl-14 rounded-2xl bg-white border border-gray-100 text-sm font-bold outline-none cursor-pointer hover:border-blue-200 transition-all">
-                        </div>
-                    </div>
-                    <div class="relative group">
-                        <i data-lucide="file-text" class="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
-                        <input type="text" id="entry-desc" placeholder="Add a short description..." class="w-full p-5 pl-14 rounded-2xl bg-white border border-gray-100 text-sm font-bold outline-none hover:border-blue-200 transition-all">
-                    </div>
-                </div>
-
-                <button type="submit" class="w-full py-5 bg-black text-white rounded-[2.2rem] font-bold text-lg shadow-2xl active:scale-[0.98] transition-all">Commit Transaction</button>
-            </form>
         </div>
     </div>
 
-    <!-- Full Screen Transaction Detail View -->
-    <div id="detail-view" class="fixed inset-0 bg-[#F5F5F7] z-[3000] hidden px-8 pt-20 pb-10 flex flex-col">
+    <!-- Detail View -->
+    <div id="detail-view" class="fixed inset-0 bg-[#F2F2F7] z-[3000] hidden px-8 pt-20 pb-10 flex flex-col">
         <header class="flex justify-between items-center mb-12">
             <button onclick="app.closeDetail()" class="w-12 h-12 rounded-full bg-white apple-shadow flex items-center justify-center active:scale-90 transition-all">
                 <i data-lucide="chevron-down" class="w-6 h-6"></i>
             </button>
             <h3 class="text-lg font-bold">Transaction Details</h3>
-            <div class="w-12 h-12"></div> <!-- Spacer -->
+            <div class="w-12 h-12"></div>
         </header>
-
-        <div id="detail-content" class="flex-1 overflow-y-auto hide-scrollbar space-y-12 pb-20">
-            <!-- Dynamic content injected here -->
-        </div>
-
-        <div id="detail-actions" class="grid grid-cols-2 gap-4">
-            <!-- Action buttons injected here -->
-        </div>
+        <div id="detail-content" class="flex-1 overflow-y-auto hide-scrollbar space-y-10 pb-20"></div>
+        <div id="detail-actions" class="grid grid-cols-2 gap-4"></div>
     </div>
 
     <script>
@@ -266,7 +274,6 @@
             { id: 'cat_5', name: 'Leisure', icon: 'clapperboard', color: '#AF52DE' }
         ];
         const LUCIDE_BANK = ['graduation-cap', 'book-open', 'home', 'utensils', 'bus', 'clapperboard', 'shopping-cart', 'briefcase', 'coffee', 'dumbbell', 'heart', 'smartphone', 'zap', 'camera', 'music', 'package', 'tv', 'wrench', 'gift', 'plane'];
-        // Hardcoded deployment URL
         const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbyG33CK3zJD_lQOViSFBetNc3l_t05spiXGRvreQl5yx7nQY0np6KxPIGuH6vbX_QmKDA/exec";
 
         class FinanceApp {
@@ -303,7 +310,7 @@
                 this.isSyncing = true;
                 this.render();
                 try {
-                    const response = await fetch(this.syncUrl, {
+                    await fetch(this.syncUrl, {
                         method: 'POST',
                         body: JSON.stringify({
                             transactions: this.state.transactions,
@@ -311,9 +318,8 @@
                             user: this.state.user
                         })
                     });
-                    console.log("Cloud sync completed.");
                 } catch (e) {
-                    console.warn("Sync error (likely CORS redirect). Data scheduled for cloud update.");
+                    console.warn("Background sync requested.");
                 } finally {
                     setTimeout(() => {
                         this.isSyncing = false;
@@ -455,36 +461,39 @@
                 const container = document.getElementById('view-home');
                 const recent = this.state.transactions.slice(0, 5);
                 container.innerHTML = `
-                    <div class="space-y-12 pb-10">
-                        <header class="flex justify-between items-start animate-in fade-in slide-in-from-bottom-4">
+                    <div class="space-y-10 pb-10">
+                        <header class="flex justify-between items-center animate-fade-in">
                             <div class="space-y-1">
                                 <div class="flex items-center gap-2">
-                                    <p class="text-gray-400 text-[11px] font-bold uppercase tracking-[0.2em]">Net Assets</p>
+                                    <p class="text-gray-400 text-[11px] font-bold uppercase tracking-[0.1em]">Total Balance</p>
                                     ${this.isSyncing ? '<i data-lucide="refresh-cw" class="w-3 h-3 text-blue-500 sync-spinner"></i>' : ''}
                                 </div>
-                                <h1 class="text-4xl font-extrabold tracking-tight">${this.formatINR(balance)}</h1>
+                                <h1 class="text-4xl font-black tracking-tight">${this.formatINR(balance)}</h1>
                             </div>
-                            <div class="w-14 h-14 rounded-3xl bg-white apple-shadow flex items-center justify-center border border-gray-100 overflow-hidden">
-                                <img src="${this.state.user?.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed=User'}" class="w-full h-full object-cover">
+                            <div class="w-14 h-14 rounded-3xl bg-white apple-shadow flex items-center justify-center border border-white overflow-hidden p-0.5">
+                                <img src="${this.state.user?.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed=User'}" class="w-full h-full object-cover rounded-[1.4rem]">
                             </div>
                         </header>
-                        <div class="grid grid-cols-2 gap-6">
-                            <div class="bg-white p-7 rounded-[2.8rem] apple-shadow border border-white">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-white p-6 rounded-[2.5rem] apple-shadow border border-white">
                                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Savings</p>
-                                <p class="text-2xl font-bold">${this.formatINR(savings)}</p>
+                                <p class="text-xl font-bold">${this.formatINR(savings)}</p>
                             </div>
-                            <div class="bg-white p-7 rounded-[2.8rem] apple-shadow border border-white">
+                            <div class="bg-white p-6 rounded-[2.5rem] apple-shadow border border-white">
                                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Status</p>
-                                <p class="text-lg sm:text-xl font-bold text-green-500 truncate">Synced</p>
+                                <div class="flex items-center gap-1.5 overflow-hidden">
+                                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                    <p class="text-sm font-bold text-green-500 truncate">Synced</p>
+                                </div>
                             </div>
                         </div>
                         <section class="space-y-6">
                             <div class="flex justify-between items-center px-2">
-                                <h2 class="text-xl font-bold tracking-tight">Timeline</h2>
-                                <button onclick="app.setView('ledger')" class="text-blue-600 text-[10px] font-bold uppercase tracking-widest">Full Ledger</button>
+                                <h2 class="text-xl font-bold tracking-tight">Activities</h2>
+                                <button onclick="app.setView('ledger')" class="text-blue-600 text-[10px] font-bold uppercase tracking-widest">See All</button>
                             </div>
                             <div class="space-y-4">
-                                ${recent.length ? recent.map(t => this.txCard(t)).join('') : '<div class="py-20 text-center text-gray-300 italic">No cloud activity detected.</div>'}
+                                ${recent.length ? recent.map(t => this.txCard(t)).join('') : '<div class="py-20 text-center text-gray-300 italic text-sm">No activities logged yet.</div>'}
                             </div>
                         </section>
                     </div>
@@ -496,17 +505,17 @@
                 const col = t.type === 'credit' ? 'text-green-500' : (t.type === 'saving' ? 'text-blue-500' : 'text-red-500');
                 const sym = t.type === 'credit' ? '+' : '-';
                 return `
-                    <div onclick="app.openDetail('${t.id}')" class="bg-white p-6 rounded-[2.4rem] apple-shadow flex items-center justify-between border border-transparent hover:border-blue-50 active:scale-[0.98] transition-all cursor-pointer">
-                        <div class="flex items-center space-x-5">
-                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center bg-[#F5F5F7]"><i data-lucide="${cat?.icon || 'layers'}" class="w-6 h-6 text-gray-400"></i></div>
-                            <div class="space-y-1">
+                    <div onclick="app.openDetail('${t.id}')" class="bg-white p-5 rounded-[2.2rem] apple-shadow flex items-center justify-between border border-transparent hover:border-blue-50 active:scale-[0.98] transition-all cursor-pointer">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center bg-[#F2F2F7]"><i data-lucide="${cat?.icon || 'layers'}" class="w-6 h-6 text-gray-400"></i></div>
+                            <div class="space-y-0.5">
                                 <p class="font-bold text-[15px] text-[#1D1D1F] line-clamp-1">${t.description}</p>
-                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">${cat?.name || 'Misc'}</p>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">${cat?.name || 'General'}</p>
                             </div>
                         </div>
-                        <div class="text-right space-y-1">
-                            <p class="font-extrabold text-[15px] ${col}">${sym}${this.formatINR(t.amount)}</p>
-                            <p class="text-[10px] text-gray-300 font-bold uppercase">${new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</p>
+                        <div class=\"text-right\">
+                            <p class=\"font-extrabold text-[15px] ${col}\">${sym}${this.formatINR(t.amount)}</p>
+                            <p class=\"text-[9px] text-gray-300 font-bold uppercase\">${new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</p>
                         </div>
                     </div>
                 `;
@@ -521,22 +530,22 @@
                 const sym = tx.type === 'credit' ? '+' : '-';
 
                 content.innerHTML = `
-                    <div class="flex flex-col items-center text-center space-y-8 animate-in fade-in">
-                        <div class="w-24 h-24 rounded-[2.5rem] bg-white apple-shadow flex items-center justify-center text-gray-400 mb-4"><i data-lucide="${cat?.icon || 'layers'}" class="w-10 h-10"></i></div>
+                    <div class="flex flex-col items-center text-center space-y-8">
+                        <div class="w-24 h-24 rounded-[2.8rem] bg-white apple-shadow flex items-center justify-center text-gray-400 border border-white"><i data-lucide="${cat?.icon || 'layers'}" class="w-10 h-10"></i></div>
                         <h2 class="text-3xl font-extrabold tracking-tight">${tx.description}</h2>
                         <div class="space-y-1">
                             <p class="text-5xl font-black tracking-tighter ${col}">${sym}${this.formatINR(tx.amount)}</p>
-                            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400">${tx.type} detail</p>
+                            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400">${tx.type}</p>
                         </div>
                         <div class="w-full grid grid-cols-2 gap-4 pt-10 text-left">
-                            <div class="bg-white p-6 rounded-3xl apple-shadow space-y-2"><p class="text-[9px] font-bold text-gray-400 uppercase">Logged On</p><p class="font-bold text-sm">${new Date(tx.date).toLocaleDateString()}</p></div>
-                            <div class="bg-white p-6 rounded-3xl apple-shadow space-y-2"><p class="text-[9px] font-bold text-gray-400 uppercase">Time</p><p class="font-bold text-sm">${tx.time || '--:--'}</p></div>
+                            <div class="bg-white p-6 rounded-3xl apple-shadow border border-white"><p class="text-[9px] font-bold text-gray-400 uppercase mb-1">Logged On</p><p class="font-bold text-sm">${new Date(tx.date).toLocaleDateString()}</p></div>
+                            <div class="bg-white p-6 rounded-3xl apple-shadow border border-white"><p class="text-[9px] font-bold text-gray-400 uppercase mb-1">Time</p><p class="font-bold text-sm">${tx.time || '--:--'}</p></div>
                         </div>
                     </div>
                 `;
                 actions.innerHTML = `
-                    <button onclick="app.deleteTransaction('${tx.id}')" class="py-5 bg-red-50 text-red-500 rounded-[2rem] font-bold text-sm uppercase tracking-widest">Delete Log</button>
-                    <button onclick="app.closeDetail()" class="py-5 bg-black text-white rounded-[2rem] font-bold text-sm uppercase tracking-widest">Return</button>
+                    <button onclick="app.deleteTransaction('${tx.id}')" class="py-5 bg-red-50 text-red-500 rounded-[2rem] font-bold text-xs uppercase tracking-widest active:scale-95 transition-all">Delete</button>
+                    <button onclick="app.closeDetail()" class="py-5 bg-black text-white rounded-[2rem] font-bold text-xs uppercase tracking-widest active:scale-95 transition-all">Close</button>
                 `;
                 document.getElementById('detail-view').classList.remove('hidden');
                 lucide.createIcons();
@@ -545,7 +554,7 @@
             closeDetail() { document.getElementById('detail-view').classList.add('hidden'); }
 
             deleteTransaction(id) {
-                if (confirm("Delete this entry from cloud?")) {
+                if (confirm("Permanently delete this entry?")) {
                     this.state.transactions = this.state.transactions.filter(t => t.id !== id);
                     this.save(); this.syncToCloud(); this.closeDetail(); this.render();
                 }
@@ -556,16 +565,11 @@
                 const filtered = this.state.transactions.filter(t => this.state.currentFilter === 'all' || t.type === this.state.currentFilter);
                 container.innerHTML = `
                     <div class="space-y-8 pb-10">
-                        <header class="space-y-1 px-1">
-                            <h2 class="text-3xl font-extrabold tracking-tight">Audit Logs</h2>
-                            <p class="text-gray-400 text-sm font-medium">Historical data vault.</p>
-                        </header>
+                        <header class="px-1"><h2 class="text-3xl font-extrabold tracking-tight">Cloud Ledger</h2><p class="text-gray-400 text-sm font-medium">History of your financial activities.</p></header>
                         <div class="flex gap-3 overflow-x-auto hide-scrollbar py-2">
-                            ${['all', 'expense', 'credit', 'saving'].map(f => `<button onclick="app.setLedgerFilter('${f}')" class="filter-pill px-7 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest ${this.state.currentFilter === f ? 'active' : 'bg-white text-gray-400 apple-shadow'} active:scale-95 transition-all">${f}</button>`).join('')}
+                            ${['all', 'expense', 'credit', 'saving'].map(f => `<button onclick="app.setLedgerFilter('${f}')" class="filter-pill px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${this.state.currentFilter === f ? 'active' : 'bg-white text-gray-400 apple-shadow'} transition-all">${f}</button>`).join('')}
                         </div>
-                        <div class="space-y-4">
-                            ${filtered.length ? filtered.map(t => this.txCard(t)).join('') : '<div class="py-24 text-center text-gray-400 italic">No matches found.</div>'}
-                        </div>
+                        <div class="space-y-4">${filtered.length ? filtered.map(t => this.txCard(t)).join('') : '<div class="py-24 text-center text-gray-400 italic">No matching records.</div>'}</div>
                     </div>
                 `;
             }
@@ -576,9 +580,9 @@
                 const container = document.getElementById('view-analytics');
                 container.innerHTML = `
                     <div class="space-y-8 pb-10">
-                        <header class="space-y-1 px-1"><h2 class="text-3xl font-extrabold tracking-tight">Intelligence</h2><p class="text-gray-400 text-sm font-medium">Spending breakdown.</p></header>
-                        <div class="bg-white p-9 rounded-[3rem] apple-shadow space-y-8"><p class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Share</p><div class="h-72 relative"><canvas id="pieChart"></canvas></div></div>
-                        <div class="bg-white p-9 rounded-[3rem] apple-shadow space-y-8"><p class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Velocity</p><div class="h-64 relative"><canvas id="barChart"></canvas></div></div>
+                        <header class="px-1"><h2 class="text-3xl font-extrabold tracking-tight">Insights</h2><p class="text-gray-400 text-sm font-medium">Visualizing your flow.</p></header>
+                        <div class="bg-white p-8 rounded-[3rem] apple-shadow border border-white space-y-6"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Distribution</p><div class="h-64 relative"><canvas id="pieChart"></canvas></div></div>
+                        <div class="bg-white p-8 rounded-[3rem] apple-shadow border border-white space-y-6"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Daily Burn</p><div class="h-64 relative"><canvas id="barChart"></canvas></div></div>
                     </div>
                 `;
                 setTimeout(() => this.initCharts(), 100);
@@ -588,54 +592,54 @@
                 const exp = this.state.transactions.filter(t => t.type !== 'credit');
                 if (!exp.length) return;
                 const catData = {}; exp.forEach(t => catData[t.categoryId] = (catData[t.categoryId] || 0) + t.amount);
-                new Chart(document.getElementById('pieChart'), { type: 'doughnut', data: { labels: Object.keys(catData).map(id => this.state.categories.find(c => c.id === id)?.name), datasets: [{ data: Object.values(catData), backgroundColor: Object.keys(catData).map(id => this.state.categories.find(c => c.id === id)?.color), borderWidth: 0, spacing: 8 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '80%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 8, usePointStyle: true, font: { size: 10, weight: '700' }, padding: 25 } } } } });
+                new Chart(document.getElementById('pieChart'), { type: 'doughnut', data: { labels: Object.keys(catData).map(id => this.state.categories.find(c => c.id === id)?.name), datasets: [{ data: Object.values(catData), backgroundColor: Object.keys(catData).map(id => this.state.categories.find(c => c.id === id)?.color), borderWidth: 0, spacing: 8 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '82%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 6, usePointStyle: true, font: { size: 10, weight: '700' }, padding: 20 } } } } });
                 const daily = new Array(7).fill(0); exp.forEach(t => daily[new Date(t.date).getDay()] += t.amount);
-                new Chart(document.getElementById('barChart'), { type: 'bar', data: { labels: ['S', 'M', 'T', 'W', 'T', 'F', 'S'], datasets: [{ data: daily, backgroundColor: '#007AFF', borderRadius: 14, barThickness: 16 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, border: { display: false } }, y: { grid: { display: false }, ticks: { display: false }, border: { display: false } } } } });
+                new Chart(document.getElementById('barChart'), { type: 'bar', data: { labels: ['S', 'M', 'T', 'W', 'T', 'F', 'S'], datasets: [{ data: daily, backgroundColor: '#007AFF', borderRadius: 10, barThickness: 14 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, border: { display: false } }, y: { grid: { display: false }, ticks: { display: false }, border: { display: false } } } } });
             }
 
             renderProfile() {
                 const container = document.getElementById('view-profile');
                 container.innerHTML = `
-                    <div class="space-y-12 pb-10">
-                        <header class="text-center space-y-6 pt-4">
-                            <div class="relative w-28 h-28 mx-auto">
-                                <div class="w-28 h-28 rounded-[3rem] bg-white apple-shadow flex items-center justify-center border border-gray-100 overflow-hidden ring-4 ring-white">
-                                    <img src="${this.state.user.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed=' + this.state.user.name}" class="w-full h-full object-cover">
+                    <div class="space-y-10 pb-10">
+                        <header class="text-center space-y-6">
+                            <div class="relative w-32 h-32 mx-auto">
+                                <div class="w-32 h-32 rounded-[3.2rem] bg-white apple-shadow flex items-center justify-center border-4 border-white overflow-hidden p-1">
+                                    <img src="${this.state.user.avatar}" class="w-full h-full object-cover rounded-[2.8rem]">
                                 </div>
-                                <label class="absolute -bottom-2 -right-2 w-10 h-10 bg-black rounded-2xl flex items-center justify-center text-white border-4 border-[#F5F5F7] cursor-pointer">
+                                <label class="absolute -bottom-2 -right-2 w-10 h-10 bg-black rounded-2xl flex items-center justify-center text-white border-4 border-[#F2F2F7] cursor-pointer">
                                     <i data-lucide="camera" class="w-4 h-4"></i>
                                     <input type="file" class="hidden" accept="image/*" onchange="app.handleProfileUpload(event)">
                                 </label>
                             </div>
-                            <h2 class="text-3xl font-extrabold tracking-tight">${this.state.user.name}</h2>
-                            <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest -mt-4">Cloud Data Controller</p>
+                            <div class="space-y-1">
+                                <h2 class="text-3xl font-extrabold tracking-tight">${this.state.user.name}</h2>
+                                <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Controller ID: ${this.state.user.joined.split('T')[0]}</p>
+                            </div>
                         </header>
 
-                        <section class="space-y-6">
-                            <div class="bg-blue-600 p-8 rounded-[2.5rem] text-white apple-shadow space-y-6 relative overflow-hidden text-center">
-                                <i data-lucide="cloud" class="absolute -right-10 -bottom-10 w-48 h-48 opacity-10"></i>
-                                <h3 class="text-xl font-bold">Cloud Synchronization</h3>
-                                <p class="text-blue-100 text-sm leading-relaxed">Your account is permanently linked to Google Sheets for secure storage.</p>
-                                <button onclick="app.loadFromCloud()" class="w-full py-4 bg-white text-blue-600 rounded-2xl font-bold text-xs uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2">
-                                    ${this.isSyncing ? '<i data-lucide="refresh-cw" class="w-3 h-3 sync-spinner"></i>' : '<i data-lucide="refresh-cw" class="w-3 h-3"></i>'} Refresh Data
-                                </button>
-                            </div>
-                        </section>
+                        <div class="bg-blue-600 p-8 rounded-[3rem] text-white apple-shadow space-y-6 relative overflow-hidden">
+                            <i data-lucide="cloud" class="absolute -right-10 -bottom-10 w-40 h-40 opacity-10"></i>
+                            <h3 class="text-xl font-bold">Cloud Connected</h3>
+                            <p class="text-blue-100 text-sm leading-relaxed">Your account is permanently synchronized with your Google Cloud Sheets instance.</p>
+                            <button onclick="app.loadFromCloud()" class="w-full py-4 bg-white text-blue-600 rounded-[1.8rem] font-bold text-xs uppercase tracking-widest active:scale-95 transition-all">
+                                ${this.isSyncing ? '<i data-lucide="refresh-cw" class="w-3 h-3 sync-spinner inline mr-2"></i>' : ''} Refresh Cloud Data
+                            </button>
+                        </div>
 
-                        <section class="space-y-8">
-                            <div class="flex justify-between items-center"><h3 class="text-xl font-bold">Categories</h3><button onclick="app.showCatTool()" class="w-10 h-10 rounded-2xl bg-black text-white flex items-center justify-center"><i data-lucide="plus" class="w-5 h-5"></i></button></div>
-                            <div id="cat-tool" class="hidden bg-white p-8 rounded-[3rem] apple-shadow space-y-6 animate-in slide-in-from-top-4">
-                                <input type="text" id="new-cat-name" placeholder="Label Name" class="w-full p-5 rounded-2xl bg-gray-50 font-bold outline-none border border-transparent focus:border-blue-500 transition-all">
-                                <div class="flex flex-wrap gap-3 py-2 max-h-40 overflow-y-auto hide-scrollbar">
-                                    ${LUCIDE_BANK.map(i => `<button onclick="app.pickIcon('${i}')" class="cat-icon-btn w-11 h-11 rounded-2xl bg-gray-50 flex items-center justify-center" data-icon="${i}"><i data-lucide="${i}" class="w-5 h-5"></i></button>`).join('')}
+                        <section class="space-y-6">
+                            <div class="flex justify-between items-center px-1"><h3 class="text-xl font-bold">Data Classes</h3><button onclick="app.showCatTool()" class="w-11 h-11 rounded-2xl bg-black text-white flex items-center justify-center active:scale-90 transition-all"><i data-lucide="plus" class="w-6 h-6"></i></button></div>
+                            <div id="cat-tool" class="hidden bg-white p-6 rounded-[2.5rem] apple-shadow space-y-6 animate-fade-in border border-white">
+                                <input type="text" id="new-cat-name" placeholder="Class Name" class="w-full p-4 rounded-2xl bg-gray-50 font-bold outline-none border-2 border-transparent focus:border-blue-500 transition-all">
+                                <div class="flex flex-wrap gap-3 max-h-40 overflow-y-auto hide-scrollbar">
+                                    ${LUCIDE_BANK.map(i => `<button onclick="app.pickIcon('${i}')" class="cat-icon-btn w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center transition-all" data-icon="${i}"><i data-lucide="${i}" class="w-5 h-5"></i></button>`).join('')}
                                 </div>
-                                <button onclick="app.commitCategory()" class="w-full py-5 bg-blue-600 text-white rounded-[2rem] font-bold uppercase tracking-widest text-xs">Append Category</button>
+                                <button onclick="app.commitCategory()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold uppercase tracking-widest text-xs">Append Class</button>
                             </div>
-                            <div class="grid grid-cols-2 gap-5">
-                                ${this.state.categories.map(c => `<div class="bg-white p-5 rounded-[2.5rem] apple-shadow flex items-center gap-4 border border-white"><div class="w-11 h-11 rounded-2xl bg-gray-50 flex items-center justify-center"><i data-lucide="${c.icon}" class="w-5 h-5 text-gray-400"></i></div><span class="text-xs font-bold">${c.name}</span></div>`).join('')}
+                            <div class="grid grid-cols-2 gap-4">
+                                ${this.state.categories.map(c => `<div class="bg-white p-5 rounded-[2.5rem] apple-shadow flex items-center gap-4 border border-white"><div class="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center"><i data-lucide="${c.icon}" class="w-5 h-5 text-gray-400"></i></div><span class="text-xs font-bold truncate">${c.name}</span></div>`).join('')}
                             </div>
                         </section>
-                        <button onclick="app.reset()" class="w-full py-5 text-red-500 font-bold border-2 border-red-50 rounded-[2.2rem] text-xs uppercase tracking-widest">Wipe Local Instance</button>
+                        <button onclick="app.reset()" class="w-full py-5 text-red-500 font-bold border-2 border-red-50 rounded-[2.2rem] text-xs uppercase tracking-widest active:bg-red-50 transition-all">Purge Local Repository</button>
                     </div>
                 `;
                 lucide.createIcons();
@@ -657,7 +661,7 @@
                 this.state.categories.push({ id: 'cat_' + Date.now(), name, icon: this.selectedIcon, color: THEME_COLORS[this.state.categories.length % THEME_COLORS.length] });
                 this.save(); this.syncToCloud(); this.render(); document.getElementById('cat-tool').classList.add('hidden');
             }
-            reset() { if (confirm("Clear local cache? Cloud data will remain safe in Sheets.")) { localStorage.clear(); location.reload(); } }
+            reset() { if (confirm("Clear local cache? This will NOT delete cloud data.")) { localStorage.clear(); location.reload(); } }
         }
 
         window.app = new FinanceApp();
