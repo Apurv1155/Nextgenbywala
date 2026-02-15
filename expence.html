@@ -125,18 +125,34 @@
             flex-direction: column;
             gap: 1.5rem;
         }
+
+        /* Pull to refresh UI */
+        #ptr-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            pointer-events: none;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            opacity: 0;
+            transform: translateY(-60px);
+        }
     </style>
-<script type="importmap">
-{
-  "imports": {
-    "recharts": "https://esm.sh/recharts@^3.7.0",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4"
-  }
-}
-</script>
 </head>
 <body class="pb-32">
+    <!-- Pull to refresh indicator -->
+    <div id="ptr-indicator">
+        <div class="bg-white/80 backdrop-blur-md apple-shadow p-3 rounded-full border border-white/50 flex items-center gap-2">
+            <i data-lucide="refresh-cw" class="w-4 h-4 text-blue-500 sync-spinner"></i>
+            <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Syncing...</span>
+        </div>
+    </div>
+
     <!-- Initial Onboarding -->
     <div id="onboarding" class="onboarding-screen px-10 text-center space-y-12">
         <div class="relative">
@@ -291,6 +307,12 @@
                     user: savedUser ? JSON.parse(savedUser) : null,
                     currentFilter: 'all'
                 };
+                
+                // Pull to refresh tracking
+                this.startY = 0;
+                this.currentY = 0;
+                this.isPulling = false;
+
                 this.init();
             }
 
@@ -302,7 +324,52 @@
                 document.getElementById('entry-form').addEventListener('submit', (e) => this.handleCommit(e));
                 const dt = document.getElementById('entry-date');
                 if (dt) dt.value = new Date().toISOString().split('T')[0];
+                
+                // Setup Pull-to-Refresh events
+                window.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: true });
+                window.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
+                window.addEventListener('touchend', () => this.handleTouchEnd());
+
                 this.render();
+            }
+
+            handleTouchStart(e) {
+                if (window.scrollY === 0) {
+                    this.startY = e.touches[0].pageY;
+                    this.isPulling = true;
+                }
+            }
+
+            handleTouchMove(e) {
+                if (!this.isPulling) return;
+                this.currentY = e.touches[0].pageY;
+                const diff = this.currentY - this.startY;
+
+                if (diff > 0 && window.scrollY === 0) {
+                    if (e.cancelable) e.preventDefault();
+                    const ptr = document.getElementById('ptr-indicator');
+                    const pull = Math.min(diff / 2.5, 80);
+                    ptr.style.opacity = Math.min(pull / 60, 1);
+                    ptr.style.transform = `translateY(${pull - 60}px)`;
+                } else {
+                    this.isPulling = false;
+                }
+            }
+
+            handleTouchEnd() {
+                if (!this.isPulling) return;
+                const diff = this.currentY - this.startY;
+                const ptr = document.getElementById('ptr-indicator');
+
+                if (diff > 150) {
+                    // Trigger sync
+                    this.loadFromCloud();
+                }
+
+                // Reset visual
+                ptr.style.opacity = '0';
+                ptr.style.transform = 'translateY(-60px)';
+                this.isPulling = false;
             }
 
             async syncToCloud() {
@@ -493,7 +560,7 @@
                                 <button onclick="app.setView('ledger')" class="text-blue-600 text-[10px] font-bold uppercase tracking-widest">See All</button>
                             </div>
                             <div class="space-y-4">
-                                ${recent.length ? recent.map(t => this.txCard(t)).join('') : '<div class="py-20 text-center text-gray-300 italic text-sm">No activities logged yet.</div>'}
+                                ${recent.length ? recent.map(t => this.txCard(t)).join('') : '<div class="py-20 text-center text-gray-300 italic text-sm">No activities logged yet. Swipe down to refresh.</div>'}
                             </div>
                         </section>
                     </div>
@@ -513,9 +580,9 @@
                                 <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">${cat?.name || 'General'}</p>
                             </div>
                         </div>
-                        <div class=\"text-right\">
-                            <p class=\"font-extrabold text-[15px] ${col}\">${sym}${this.formatINR(t.amount)}</p>
-                            <p class=\"text-[9px] text-gray-300 font-bold uppercase\">${new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</p>
+                        <div class="text-right">
+                            <p class="font-extrabold text-[15px] ${col}">${sym}${this.formatINR(t.amount)}</p>
+                            <p class="text-[9px] text-gray-300 font-bold uppercase">${new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</p>
                         </div>
                     </div>
                 `;
@@ -569,7 +636,7 @@
                         <div class="flex gap-3 overflow-x-auto hide-scrollbar py-2">
                             ${['all', 'expense', 'credit', 'saving'].map(f => `<button onclick="app.setLedgerFilter('${f}')" class="filter-pill px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${this.state.currentFilter === f ? 'active' : 'bg-white text-gray-400 apple-shadow'} transition-all">${f}</button>`).join('')}
                         </div>
-                        <div class="space-y-4">${filtered.length ? filtered.map(t => this.txCard(t)).join('') : '<div class="py-24 text-center text-gray-400 italic">No matching records.</div>'}</div>
+                        <div class="space-y-4">${filtered.length ? filtered.map(t => this.txCard(t)).join('') : '<div class="py-24 text-center text-gray-400 italic">No matching records. Swipe down to refresh.</div>'}</div>
                     </div>
                 `;
             }
@@ -617,15 +684,6 @@
                             </div>
                         </header>
 
-                        <div class="bg-blue-600 p-8 rounded-[3rem] text-white apple-shadow space-y-6 relative overflow-hidden">
-                            <i data-lucide="cloud" class="absolute -right-10 -bottom-10 w-40 h-40 opacity-10"></i>
-                            <h3 class="text-xl font-bold">Cloud Connected</h3>
-                            <p class="text-blue-100 text-sm leading-relaxed">Your account is permanently synchronized with your Google Cloud Sheets instance.</p>
-                            <button onclick="app.loadFromCloud()" class="w-full py-4 bg-white text-blue-600 rounded-[1.8rem] font-bold text-xs uppercase tracking-widest active:scale-95 transition-all">
-                                ${this.isSyncing ? '<i data-lucide="refresh-cw" class="w-3 h-3 sync-spinner inline mr-2"></i>' : ''} Refresh Cloud Data
-                            </button>
-                        </div>
-
                         <section class="space-y-6">
                             <div class="flex justify-between items-center px-1"><h3 class="text-xl font-bold">Data Classes</h3><button onclick="app.showCatTool()" class="w-11 h-11 rounded-2xl bg-black text-white flex items-center justify-center active:scale-90 transition-all"><i data-lucide="plus" class="w-6 h-6"></i></button></div>
                             <div id="cat-tool" class="hidden bg-white p-6 rounded-[2.5rem] apple-shadow space-y-6 animate-fade-in border border-white">
@@ -640,6 +698,9 @@
                             </div>
                         </section>
                         <button onclick="app.reset()" class="w-full py-5 text-red-500 font-bold border-2 border-red-50 rounded-[2.2rem] text-xs uppercase tracking-widest active:bg-red-50 transition-all">Purge Local Repository</button>
+                        <div class="text-center">
+                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Swipe down to refresh cloud data</p>
+                        </div>
                     </div>
                 `;
                 lucide.createIcons();
