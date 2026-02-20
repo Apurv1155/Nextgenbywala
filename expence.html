@@ -162,6 +162,51 @@
             background: #F2F2F7;
             transform: scale(0.95);
         }
+
+        /* Filter Menus */
+        .filter-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 10px;
+            width: 240px;
+            background: white;
+            border-radius: 24px;
+            padding: 12px;
+            z-index: 100;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.05);
+            display: none;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .filter-menu.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .filter-option {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 14px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: #1D1D1F;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+        }
+        .filter-option:active {
+            background: #F2F2F7;
+            transform: scale(0.98);
+        }
+        .filter-option.selected {
+            background: #F2F2F7;
+            color: var(--apple-blue);
+        }
     </style>
 </head>
 <body class="pb-32">
@@ -340,6 +385,10 @@
                     predictions: data?.predictions || [], // { id, description, amount, categoryId }
                     user: savedUser ? JSON.parse(savedUser) : null,
                     currentFilter: 'all',
+                    categoryFilter: 'all',
+                    dateFilter: 'all',
+                    customStartDate: null,
+                    customEndDate: null,
                     ledgerSort: 'newest', // newest or highest
                     monthlyBudget: data?.monthlyBudget || 50000
                 };
@@ -380,6 +429,13 @@
                 window.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: true });
                 window.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
                 window.addEventListener('touchend', () => this.handleTouchEnd());
+
+                // Close menus on outside click
+                window.addEventListener('click', (e) => {
+                    if (!e.target.closest('.relative')) {
+                        document.querySelectorAll('.filter-menu').forEach(m => m.classList.remove('active'));
+                    }
+                });
 
                 this.render();
             }
@@ -1016,12 +1072,42 @@
                 const container = document.getElementById('view-ledger');
                 let filtered = this.state.transactions.filter(t => this.state.currentFilter === 'all' || t.type === this.state.currentFilter);
                 
+                // Category Filter
+                if (this.state.categoryFilter !== 'all') {
+                    filtered = filtered.filter(t => t.categoryId === this.state.categoryFilter);
+                }
+
+                // Date Filter
+                const now = new Date();
+                if (this.state.dateFilter === 'week') {
+                    const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    filtered = filtered.filter(t => new Date(t.date) >= lastWeek);
+                } else if (this.state.dateFilter === 'month') {
+                    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+                    filtered = filtered.filter(t => new Date(t.date) >= lastMonth);
+                } else if (this.state.dateFilter === 'custom' && this.state.customStartDate && this.state.customEndDate) {
+                    const start = new Date(this.state.customStartDate);
+                    const end = new Date(this.state.customEndDate);
+                    filtered = filtered.filter(t => {
+                        const d = new Date(t.date);
+                        return d >= start && d <= end;
+                    });
+                }
+
                 // Sorting logic
                 if (this.state.ledgerSort === 'highest') {
                     filtered = filtered.sort((a, b) => b.amount - a.amount);
                 } else {
                     filtered = filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
                 }
+
+                // Calculate Category Spent
+                let totalSpentInFilter = 0;
+                if (this.state.categoryFilter !== 'all') {
+                    totalSpentInFilter = filtered.reduce((acc, t) => t.type === 'expense' ? acc + t.amount : acc, 0);
+                }
+
+                const activeCat = this.state.categories.find(c => c.id === this.state.categoryFilter);
 
                 container.innerHTML = `
                     <div class="space-y-8 pb-10">
@@ -1030,7 +1116,55 @@
                                 <h2 class="text-3xl font-extrabold tracking-tight">Cloud Ledger</h2>
                                 <p class="text-gray-400 text-sm font-medium">Historical transaction records.</p>
                             </div>
-                            <div class="flex gap-2">
+                            <div class="flex gap-2 relative">
+                                <button onclick="app.toggleFilterMenu('category')" class="w-12 h-12 bg-white apple-shadow rounded-2xl flex items-center justify-center ${this.state.categoryFilter !== 'all' ? 'text-blue-600' : 'text-gray-400'} active:scale-95 transition-all">
+                                    <i data-lucide="layers" class="w-5 h-5"></i>
+                                </button>
+                                <div id="category-menu" class="filter-menu">
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 px-2">Filter Category</p>
+                                    <button onclick="app.setCategoryFilter('all')" class="filter-option ${this.state.categoryFilter === 'all' ? 'selected' : ''}">
+                                        <i data-lucide="grid" class="w-4 h-4"></i> All Categories
+                                    </button>
+                                    ${this.state.categories.map(c => `
+                                        <button onclick="app.setCategoryFilter('${c.id}')" class="filter-option ${this.state.categoryFilter === c.id ? 'selected' : ''}">
+                                            <i data-lucide="${c.icon}" class="w-4 h-4"></i> ${c.name}
+                                        </button>
+                                    `).join('')}
+                                </div>
+
+                                <button onclick="app.toggleFilterMenu('date')" class="w-12 h-12 bg-white apple-shadow rounded-2xl flex items-center justify-center ${this.state.dateFilter !== 'all' ? 'text-blue-600' : 'text-gray-400'} active:scale-95 transition-all">
+                                    <i data-lucide="calendar" class="w-5 h-5"></i>
+                                </button>
+                                <div id="date-menu" class="filter-menu">
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 px-2">Time Range</p>
+                                    <button onclick="app.setDateFilter('all')" class="filter-option ${this.state.dateFilter === 'all' ? 'selected' : ''}">
+                                        <i data-lucide="history" class="w-4 h-4"></i> All Time
+                                    </button>
+                                    <button onclick="app.setDateFilter('week')" class="filter-option ${this.state.dateFilter === 'week' ? 'selected' : ''}">
+                                        <i data-lucide="calendar-days" class="w-4 h-4"></i> Last Week
+                                    </button>
+                                    <button onclick="app.setDateFilter('month')" class="filter-option ${this.state.dateFilter === 'month' ? 'selected' : ''}">
+                                        <i data-lucide="calendar-range" class="w-4 h-4"></i> Last Month
+                                    </button>
+                                    <button onclick="app.setDateFilter('custom')" class="filter-option ${this.state.dateFilter === 'custom' ? 'selected' : ''}">
+                                        <i data-lucide="settings-2" class="w-4 h-4"></i> Custom Range
+                                    </button>
+                                    
+                                    ${this.state.dateFilter === 'custom' ? `
+                                        <div class="mt-4 p-3 bg-gray-50 rounded-2xl space-y-3 animate-fade-in">
+                                            <div class="space-y-1">
+                                                <p class="text-[8px] font-bold text-gray-400 uppercase ml-1">Start Date</p>
+                                                <input type="date" id="custom-start-date" value="${this.state.customStartDate || ''}" class="w-full p-2.5 rounded-xl border border-gray-200 text-xs font-bold outline-none">
+                                            </div>
+                                            <div class="space-y-1">
+                                                <p class="text-[8px] font-bold text-gray-400 uppercase ml-1">End Date</p>
+                                                <input type="date" id="custom-end-date" value="${this.state.customEndDate || ''}" class="w-full p-2.5 rounded-xl border border-gray-200 text-xs font-bold outline-none">
+                                            </div>
+                                            <button onclick="app.applyCustomDateFilter()" class="w-full py-2.5 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest">Apply Filter</button>
+                                        </div>
+                                    ` : ''}
+                                </div>
+
                                 <button onclick="app.setLedgerSort('${this.state.ledgerSort === 'newest' ? 'highest' : 'newest'}')" class="w-12 h-12 bg-white apple-shadow rounded-2xl flex items-center justify-center text-gray-400 active:text-blue-600 transition-colors">
                                     <i data-lucide="${this.state.ledgerSort === 'newest' ? 'arrow-up-narrow-wide' : 'clock'}" class="w-5 h-5"></i>
                                 </button>
@@ -1039,6 +1173,20 @@
                                 </button>
                             </div>
                         </header>
+
+                        ${this.state.categoryFilter !== 'all' ? `
+                            <div class="bg-blue-600 p-6 rounded-[2.5rem] text-white apple-shadow flex justify-between items-center animate-fade-in">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center"><i data-lucide="${activeCat?.icon || 'layers'}" class="w-6 h-6"></i></div>
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase tracking-widest opacity-70">Total Spent in ${activeCat?.name}</p>
+                                        <p class="text-2xl font-black">${this.formatINR(totalSpentInFilter)}</p>
+                                    </div>
+                                </div>
+                                <button onclick="app.setCategoryFilter('all')" class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center active:scale-90 transition-all"><i data-lucide="x" class="w-5 h-5"></i></button>
+                            </div>
+                        ` : ''}
+
                         <div class="flex gap-3 overflow-x-auto hide-scrollbar py-2">
                             ${['all', 'expense', 'credit', 'saving'].map(f => `<button onclick="app.setLedgerFilter('${f}')" class="filter-pill px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${this.state.currentFilter === f ? 'active' : 'bg-white text-gray-400 apple-shadow'} transition-all">${f}</button>`).join('')}
                         </div>
@@ -1051,6 +1199,47 @@
                 if (navigator.vibrate) navigator.vibrate(5);
                 this.state.currentFilter = f; 
                 this.render(); 
+            }
+
+            toggleFilterMenu(type) {
+                const menus = ['category-menu', 'date-menu'];
+                menus.forEach(m => {
+                    const el = document.getElementById(m);
+                    if (m === type + '-menu') {
+                        el.classList.toggle('active');
+                    } else {
+                        el?.classList.remove('active');
+                    }
+                });
+            }
+
+            setCategoryFilter(catId) {
+                this.state.categoryFilter = catId;
+                this.toggleFilterMenu('category');
+                this.render();
+            }
+
+            setDateFilter(mode) {
+                this.state.dateFilter = mode;
+                if (mode !== 'custom') {
+                    this.state.customStartDate = null;
+                    this.state.customEndDate = null;
+                    this.toggleFilterMenu('date');
+                    this.render();
+                } else {
+                    // Don't close menu if custom, wait for apply
+                    this.render();
+                }
+            }
+
+            applyCustomDateFilter() {
+                const start = document.getElementById('custom-start-date').value;
+                const end = document.getElementById('custom-end-date').value;
+                if (!start || !end) return alert("Please select both dates");
+                this.state.customStartDate = start;
+                this.state.customEndDate = end;
+                this.toggleFilterMenu('date');
+                this.render();
             }
 
             renderAnalytics() {
