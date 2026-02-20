@@ -50,20 +50,31 @@
         }
         .tab-bar {
             position: fixed;
-            bottom: calc(20px + var(--safe-area-bottom));
+            bottom: calc(15px + var(--safe-area-bottom));
             left: 50%;
             transform: translateX(-50%);
-            width: 92%;
-            max-width: 400px;
+            width: 94%;
+            max-width: 420px;
             z-index: 1000;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+        }
+        .tab-bar.keyboard-open {
+            transform: translateX(-50%) translateY(120px);
+            opacity: 0;
+            pointer-events: none;
         }
         .fab-btn {
             background: linear-gradient(135deg, #007AFF, #0056D2);
-            box-shadow: 0 10px 25px rgba(0, 122, 255, 0.4);
+            box-shadow: 0 12px 30px rgba(0, 122, 255, 0.4);
             transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .fab-btn:active {
             transform: scale(0.85);
+        }
+        .fab-container {
+            position: relative;
+            top: -32px;
+            filter: drop-shadow(0 8px 16px rgba(0, 122, 255, 0.2));
         }
         .onboarding-screen {
             position: fixed;
@@ -201,8 +212,8 @@
             <span class="text-[10px] font-bold uppercase tracking-wider">Logs</span>
         </button>
         
-        <div class="relative -top-8">
-            <button onclick="app.toggleModal(true)" class="fab-btn w-16 h-16 rounded-full flex items-center justify-center text-white border-4 border-[#F2F2F7]">
+        <div class="fab-container">
+            <button onclick="app.toggleModal(true)" class="fab-btn w-16 h-16 rounded-full flex items-center justify-center text-white border-4 border-white">
                 <i data-lucide="plus" class="w-9 h-9"></i>
             </button>
         </div>
@@ -229,18 +240,18 @@
                 </div>
                 
                 <form id="entry-form" class="space-y-6">
-                    <div class="text-center bg-white/50 p-6 rounded-[2.5rem] apple-shadow border border-white">
-                        <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-2">Amount</p>
-                        <div class="flex items-center justify-center text-5xl font-black tracking-tighter relative">
-                            <span class="mr-2 text-gray-300">₹</span>
-                            <input type="number" id="entry-amount" placeholder="0" class="bg-transparent w-full text-center outline-none focus:text-blue-600 transition-colors" required>
-                            <button type="button" onclick="document.getElementById('entry-amount').value = ''" class="absolute right-0 text-gray-300 hover:text-red-500 transition-colors">
-                                <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                    <div class="text-center bg-white p-6 rounded-[2.5rem] apple-shadow border border-white">
+                        <p class="text-gray-500 text-[12px] font-bold uppercase tracking-widest mb-2">Amount</p>
+                        <div class="flex items-center justify-center text-6xl font-black tracking-tighter relative">
+                            <span class="mr-2 text-gray-400">₹</span>
+                            <input type="number" id="entry-amount" placeholder="0" class="bg-transparent w-full text-center outline-none focus:text-blue-600 transition-colors text-gray-900" required>
+                            <button type="button" onclick="document.getElementById('entry-amount').value = ''" class="absolute right-0 text-gray-400 hover:text-red-500 transition-colors">
+                                <i data-lucide="rotate-ccw" class="w-6 h-6"></i>
                             </button>
                         </div>
                         <!-- Quick Add Buttons -->
-                        <div class="flex flex-col gap-4 mt-4">
-                            <div id="quick-add-container" class="flex justify-center gap-2">
+                        <div class="flex flex-col gap-4 mt-6">
+                            <div id="quick-add-container" class="flex justify-center gap-2 flex-wrap">
                                 <!-- Price shortcuts go here -->
                             </div>
                             <div id="shortcut-icons-container" class="flex justify-center gap-4">
@@ -249,35 +260,36 @@
                         </div>
                     </div>
 
-                    <div class="bg-gray-200 p-1 rounded-3xl flex">
+                    <div class="bg-gray-200 p-1.5 rounded-[2rem] flex">
                         <label class="flex-1 cursor-pointer">
                             <input type="radio" name="type" value="expense" checked class="hidden peer">
-                            <div class="py-3 text-center text-[10px] font-bold uppercase tracking-widest rounded-2xl peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm transition-all text-gray-500">Expense</div>
+                            <div class="py-3.5 text-center text-[11px] font-bold uppercase tracking-widest rounded-[1.5rem] peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm transition-all text-gray-600">Expense</div>
                         </label>
                         <label class="flex-1 cursor-pointer">
                             <input type="radio" name="type" value="credit" class="hidden peer">
-                            <div class="py-3 text-center text-[10px] font-bold uppercase tracking-widest rounded-2xl peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm transition-all text-gray-500">Credit</div>
+                            <div class="py-3.5 text-center text-[11px] font-bold uppercase tracking-widest rounded-[1.5rem] peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm transition-all text-gray-600">Credit</div>
                         </label>
                         <label class="flex-1 cursor-pointer">
                             <input type="radio" name="type" value="saving" class="hidden peer">
-                            <div class="py-3 text-center text-[10px] font-bold uppercase tracking-widest rounded-2xl peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm transition-all text-gray-500">Saving</div>
+                            <div class="py-3.5 text-center text-[11px] font-bold uppercase tracking-widest rounded-[1.5rem] peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm transition-all text-gray-600">Saving</div>
                         </label>
                     </div>
 
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-4">
-                            <div class="relative bg-white rounded-3xl apple-shadow border border-white">
-                                <i data-lucide="tag" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300"></i>
-                                <select id="entry-category" class="w-full p-4 pl-12 bg-transparent text-sm font-bold outline-none appearance-none cursor-pointer"></select>
+                            <div class="relative bg-white rounded-[2rem] apple-shadow border border-gray-100 focus-within:border-blue-500 transition-all">
+                                <i data-lucide="tag" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                                <select id="entry-category" class="w-full p-5 pl-12 bg-transparent text-[15px] font-bold outline-none appearance-none cursor-pointer text-gray-900"></select>
+                                <i data-lucide="chevron-down" class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"></i>
                             </div>
-                            <div class="relative bg-white rounded-3xl apple-shadow border border-white">
-                                <i data-lucide="calendar" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300"></i>
-                                <input type="date" id="entry-date" class="w-full p-4 pl-12 bg-transparent text-sm font-bold outline-none cursor-pointer">
+                            <div class="relative bg-white rounded-[2rem] apple-shadow border border-gray-100 focus-within:border-blue-500 transition-all">
+                                <i data-lucide="calendar" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                                <input type="date" id="entry-date" class="w-full p-5 pl-12 bg-transparent text-[15px] font-bold outline-none cursor-pointer text-gray-900">
                             </div>
                         </div>
-                        <div class="relative bg-white rounded-3xl apple-shadow border border-white">
-                            <i data-lucide="edit-3" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300"></i>
-                            <input type="text" id="entry-desc" placeholder="Notes..." class="w-full p-4 pl-12 bg-transparent text-sm font-bold outline-none">
+                        <div class="relative bg-white rounded-[2rem] apple-shadow border border-gray-100 focus-within:border-blue-500 transition-all">
+                            <i data-lucide="edit-3" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                            <input type="text" id="entry-desc" placeholder="Notes..." class="w-full p-5 pl-12 bg-transparent text-[15px] font-bold outline-none text-gray-900 placeholder:text-gray-400">
                         </div>
                     </div>
 
@@ -339,7 +351,24 @@
                 this.init();
             }
 
+            setupKeyboardListeners() {
+                const inputs = ['input', 'select', 'textarea'];
+                inputs.forEach(tag => {
+                    document.addEventListener('focusin', (e) => {
+                        if (e.target.tagName.toLowerCase() === tag) {
+                            document.querySelector('.tab-bar')?.classList.add('keyboard-open');
+                        }
+                    });
+                    document.addEventListener('focusout', (e) => {
+                        if (e.target.tagName.toLowerCase() === tag) {
+                            document.querySelector('.tab-bar')?.classList.remove('keyboard-open');
+                        }
+                    });
+                });
+            }
+
             init() {
+                this.setupKeyboardListeners();
                 if (this.state.user) {
                     document.getElementById('onboarding').classList.add('onboarding-hidden');
                     if (this.syncUrl) this.loadFromCloud();
@@ -778,20 +807,23 @@
                             </div>
 
                             <!-- Graphical Prediction Form -->
-                            <div id="prediction-form" class="hidden bg-white p-6 rounded-[2.5rem] apple-shadow border border-white space-y-4 animate-fade-in">
+                            <div id="prediction-form" class="hidden bg-white p-6 rounded-[2.5rem] apple-shadow border border-white space-y-6 animate-fade-in">
                                 <div class="flex justify-between items-center">
-                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">New Prediction</p>
-                                    <button onclick="app.togglePredictionForm(false)" class="text-gray-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+                                    <p class="text-[12px] font-bold text-gray-500 uppercase tracking-widest">New Prediction</p>
+                                    <button onclick="app.togglePredictionForm(false)" class="text-gray-400 hover:text-red-500 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
                                 </div>
-                                <form onsubmit="app.commitPrediction(event)" class="space-y-4">
-                                    <input type="text" id="pred-desc" placeholder="Item Name (e.g. Bus Fare)" class="w-full p-4 rounded-2xl bg-gray-50 font-bold outline-none border-2 border-transparent focus:border-blue-500 transition-all text-sm" required>
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <input type="number" id="pred-amount" placeholder="Amount" class="w-full p-4 rounded-2xl bg-gray-50 font-bold outline-none border-2 border-transparent focus:border-blue-500 transition-all text-sm" required>
-                                        <select id="pred-cat" class="w-full p-4 rounded-2xl bg-gray-50 font-bold outline-none border-2 border-transparent focus:border-blue-500 transition-all text-sm">
-                                            ${this.state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
-                                        </select>
+                                <form onsubmit="app.commitPrediction(event)" class="space-y-5">
+                                    <input type="text" id="pred-desc" placeholder="Item Name (e.g. Bus Fare)" class="w-full p-5 rounded-[1.5rem] bg-gray-100/50 font-bold outline-none border-2 border-gray-100 focus:border-blue-500 transition-all text-[15px] text-gray-900 placeholder:text-gray-400" required>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <input type="number" id="pred-amount" placeholder="Amount" class="w-full p-5 rounded-[1.5rem] bg-gray-100/50 font-bold outline-none border-2 border-gray-100 focus:border-blue-500 transition-all text-[15px] text-gray-900 placeholder:text-gray-400" required>
+                                        <div class="relative">
+                                            <select id="pred-cat" class="w-full p-5 rounded-[1.5rem] bg-gray-100/50 font-bold outline-none border-2 border-gray-100 focus:border-blue-500 transition-all text-[15px] text-gray-900 appearance-none">
+                                                ${this.state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                                            </select>
+                                            <i data-lucide="chevron-down" class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"></i>
+                                        </div>
                                     </div>
-                                    <button type="submit" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold uppercase tracking-widest text-[10px]">Add Prediction</button>
+                                    <button type="submit" class="w-full py-5 bg-blue-600 text-white rounded-[1.5rem] font-bold uppercase tracking-widest text-[12px] shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Add Prediction</button>
                                 </form>
                             </div>
 
@@ -800,23 +832,23 @@
                                     const progress = Math.min((spentThisMonth / p.amount) * 100, 100);
                                     const diff = balance - p.amount;
                                     return `
-                                        <div class="bg-white p-6 rounded-[2.5rem] apple-shadow border border-white space-y-4">
+                                        <div class="bg-white p-6 rounded-[2.5rem] apple-shadow border border-white space-y-5">
                                             <div class="flex justify-between items-start">
-                                                <div onclick="app.openPredictionDetail('${p.id}')" class="cursor-pointer">
-                                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${p.description}</p>
-                                                    <p class="text-xl font-black">${this.formatINR(p.amount)}</p>
+                                                <div onclick="app.openPredictionDetail('${p.id}')" class="cursor-pointer group">
+                                                    <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest group-hover:text-blue-600 transition-colors">${p.description}</p>
+                                                    <p class="text-2xl font-black text-gray-900">${this.formatINR(p.amount)}</p>
                                                 </div>
                                                 <div class="flex gap-2">
-                                                    <button onclick="app.tickPrediction('${p.id}')" class="w-8 h-8 rounded-full bg-green-50 text-green-600 flex items-center justify-center active:scale-90 transition-all"><i data-lucide="check" class="w-4 h-4"></i></button>
-                                                    <button onclick="app.deletePrediction('${p.id}')" class="w-8 h-8 rounded-full bg-red-50 text-red-600 flex items-center justify-center active:scale-90 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                                    <button onclick="app.tickPrediction('${p.id}')" class="w-10 h-10 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center active:scale-90 transition-all border border-green-100"><i data-lucide="check" class="w-5 h-5"></i></button>
+                                                    <button onclick="app.deletePrediction('${p.id}')" class="w-10 h-10 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center active:scale-90 transition-all border border-red-100"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                                                 </div>
                                             </div>
-                                            <div class="space-y-2">
-                                                <div class="flex justify-between text-[9px] font-bold uppercase text-gray-400">
-                                                    <span>Balance - Pred: ${this.formatINR(diff)}</span>
-                                                    <span class="${diff < 0 ? 'text-red-500' : 'text-green-600'}">${diff < 0 ? 'Shortfall' : 'Safe'}</span>
+                                            <div class="space-y-3">
+                                                <div class="flex justify-between text-[10px] font-bold uppercase">
+                                                    <span class="text-gray-500">Balance - Pred: <span class="text-gray-900">${this.formatINR(diff)}</span></span>
+                                                    <span class="${diff < 0 ? 'bg-red-500 text-white' : 'bg-green-500 text-white'} px-4 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-lg ${diff < 0 ? 'shadow-red-500/30' : 'shadow-green-500/30'}">${diff < 0 ? 'Shortfall' : 'Safe'}</span>
                                                 </div>
-                                                <div class="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                                                <div class="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
                                                     <div class="h-full bg-blue-600 transition-all duration-1000" style="width: ${progress}%"></div>
                                                 </div>
                                             </div>
@@ -853,30 +885,30 @@
                                     const progress = Math.min((spent / predicted) * 100, 100);
                                     const isOverCat = spent > predicted;
                                     return `
-                                        <div class="min-w-[160px] bg-white p-5 rounded-[2.2rem] apple-shadow border border-white space-y-3">
+                                        <div class="min-w-[180px] bg-white p-6 rounded-[2.8rem] apple-shadow border border-white space-y-4">
                                             <div class="flex justify-between items-center">
-                                                <div class="flex items-center gap-2">
-                                                    <div class="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center"><i data-lucide="${c.icon}" class="w-4 h-4 text-gray-400"></i></div>
-                                                    <span class="text-[10px] font-bold truncate max-w-[60px]">${c.name}</span>
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center border border-gray-100"><i data-lucide="${c.icon}" class="w-5 h-5 text-gray-500"></i></div>
+                                                    <span class="text-[11px] font-bold truncate max-w-[70px] text-gray-900">${c.name}</span>
                                                 </div>
-                                                ${isOverCat ? '<span class="text-[8px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-bold">Over</span>' : ''}
+                                                ${isOverCat ? '<span class="text-[11px] bg-red-500 text-white px-4 py-1.5 rounded-full font-black uppercase tracking-widest shadow-lg shadow-red-500/30">Over</span>' : '<span class="text-[11px] bg-green-500 text-white px-4 py-1.5 rounded-full font-black uppercase tracking-widest shadow-lg shadow-green-500/30">Safe</span>'}
                                             </div>
-                                            <div class="space-y-1">
-                                                <div class="flex justify-between text-[9px] font-bold uppercase">
-                                                    <span class="text-gray-400">Predicted</span>
-                                                    <span>${this.formatINR(predicted)}</span>
+                                            <div class="space-y-2">
+                                                <div class="flex justify-between text-[10px] font-bold uppercase tracking-tight">
+                                                    <span class="text-gray-500">Predicted</span>
+                                                    <span class="text-gray-900">${this.formatINR(predicted)}</span>
                                                 </div>
-                                                <div class="flex justify-between text-[9px] font-bold uppercase">
-                                                    <span class="text-gray-400">Spent</span>
+                                                <div class="flex justify-between text-[10px] font-bold uppercase tracking-tight">
+                                                    <span class="text-gray-500">Spent</span>
                                                     <span class="text-red-500">${this.formatINR(spent)}</span>
                                                 </div>
                                             </div>
-                                            <div class="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                                                <div class="h-full ${isOverCat ? 'bg-red-500' : 'bg-blue-600'} transition-all" style="width: ${progress}%"></div>
+                                            <div class="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                                <div class="h-full ${isOverCat ? 'bg-red-500' : 'bg-blue-600'} transition-all duration-700" style="width: ${progress}%"></div>
                                             </div>
                                             <div class="flex justify-between items-center pt-1">
-                                                <span class="text-[8px] text-gray-300 font-bold uppercase">Available</span>
-                                                <span class="text-[8px] ${available < 0 ? 'text-red-500' : 'text-blue-600'} font-bold">${this.formatINR(available)}</span>
+                                                <span class="text-[10px] text-gray-500 font-bold uppercase tracking-tight">Available</span>
+                                                <span class="text-[10px] ${available < 0 ? 'text-red-500' : 'text-blue-600'} font-bold">${this.formatINR(available)}</span>
                                             </div>
                                         </div>
                                     `;
