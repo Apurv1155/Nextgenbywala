@@ -17,6 +17,13 @@
             --apple-bg: #F2F2F7;
             --apple-card: rgba(255, 255, 255, 0.8);
             --safe-area-bottom: env(safe-area-inset-bottom);
+            --accent-color: var(--apple-blue);
+        }
+        body.pink-mode {
+            --apple-blue: #FF2D55;
+            --apple-bg: #FFF0F3;
+            --apple-card: rgba(255, 255, 255, 0.9);
+            --accent-color: #FF2D55;
         }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -24,12 +31,22 @@
             color: #1D1D1F;
             overflow-x: hidden;
             -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.5s ease;
+        }
+        .mode-switch-anim {
+            animation: modePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes modePop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2) rotate(5deg); }
+            100% { transform: scale(1); }
         }
         .apple-glass {
             background: var(--apple-card);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: background 0.5s ease;
         }
         .apple-shadow {
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
@@ -46,7 +63,7 @@
             transform: translateY(0);
         }
         .tab-item.active {
-            color: var(--apple-blue);
+            color: var(--accent-color);
         }
         .tab-bar {
             position: fixed;
@@ -64,9 +81,9 @@
             pointer-events: none;
         }
         .fab-btn {
-            background: linear-gradient(135deg, #007AFF, #0056D2);
+            background: linear-gradient(135deg, var(--accent-color), #0056D2);
             box-shadow: 0 12px 30px rgba(0, 122, 255, 0.4);
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.5s ease;
         }
         .fab-btn:active {
             transform: scale(0.85);
@@ -367,37 +384,75 @@
             { id: 'cat_5', name: 'Leisure', icon: 'clapperboard', color: '#AF52DE' }
         ];
         const LUCIDE_BANK = ['graduation-cap', 'book-open', 'home', 'utensils', 'bus', 'clapperboard', 'shopping-cart', 'briefcase', 'coffee', 'dumbbell', 'heart', 'smartphone', 'zap', 'camera', 'music', 'package', 'tv', 'wrench', 'gift', 'plane'];
-        const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbyG33CK3zJD_lQOViSFBetNc3l_t05spiXGRvreQl5yx7nQY0np6KxPIGuH6vbX_QmKDA/exec";
+        const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbxNYze3YEYcVy1i1yoEdqU7czUFeoZZJ_1EE4KbzSbi-m1lAsOA1dZS555lqXPHpgHxsA/exec";
 
         class FinanceApp {
             constructor() {
                 const savedUser = localStorage.getItem('ifi_identity');
-                const savedData = localStorage.getItem('ifi_data');
-                const data = savedData ? JSON.parse(savedData) : null;
-
+                // We only keep identity in local storage as requested
+                
                 this.currentView = 'home';
                 this.isSyncing = false;
                 this.syncUrl = DEPLOY_URL;
+                
+                // Initial empty state, will be populated from cloud
                 this.state = {
-                    transactions: data?.transactions || [],
-                    categories: data?.categories || [...INITIAL_CATEGORIES],
-                    categoryBudgets: data?.categoryBudgets || {}, // { categoryId: amount }
-                    predictions: data?.predictions || [], // { id, description, amount, categoryId }
+                    isOnlineMode: false,
+                    offline: {
+                        transactions: [],
+                        categories: [...INITIAL_CATEGORIES],
+                        categoryBudgets: {},
+                        predictions: [],
+                        monthlyBudget: 50000
+                    },
+                    online: {
+                        transactions: [],
+                        categories: [...INITIAL_CATEGORIES],
+                        categoryBudgets: {},
+                        predictions: [],
+                        monthlyBudget: 50000
+                    },
                     user: savedUser ? JSON.parse(savedUser) : null,
                     currentFilter: 'all',
                     categoryFilter: 'all',
                     dateFilter: 'all',
                     customStartDate: null,
                     customEndDate: null,
-                    ledgerSort: 'newest', // newest or highest
-                    monthlyBudget: data?.monthlyBudget || 50000
+                    ledgerSort: 'newest'
                 };
                 
+                this.data = this.state.offline;
+
                 this.startY = 0;
                 this.currentY = 0;
                 this.isPulling = false;
 
                 this.init();
+            }
+
+            toggleMode() {
+                this.state.isOnlineMode = !this.state.isOnlineMode;
+                this.data = this.state.isOnlineMode ? this.state.online : this.state.offline;
+                
+                // Apply theme
+                document.body.classList.toggle('pink-mode', this.state.isOnlineMode);
+                
+                // Animation
+                const avatar = document.getElementById('user-avatar-btn');
+                if (avatar) {
+                    avatar.classList.add('mode-switch-anim');
+                    setTimeout(() => avatar.classList.remove('mode-switch-anim'), 500);
+                }
+
+                if (navigator.vibrate) navigator.vibrate([30, 10, 30]);
+                
+                this.save();
+                this.render();
+                
+                // Sync on mode switch if online
+                if (this.state.isOnlineMode) {
+                    this.loadFromCloud();
+                }
             }
 
             setupKeyboardListeners() {
@@ -418,9 +473,13 @@
 
             init() {
                 this.setupKeyboardListeners();
+                if (this.state.isOnlineMode) {
+                    document.body.classList.add('pink-mode');
+                }
                 if (this.state.user) {
                     document.getElementById('onboarding').classList.add('onboarding-hidden');
-                    if (this.syncUrl) this.loadFromCloud();
+                    // Pull full state from cloud on startup
+                    this.loadFromCloud();
                 }
                 document.getElementById('entry-form').addEventListener('submit', (e) => this.handleCommit(e));
                 const dt = document.getElementById('entry-date');
@@ -482,17 +541,18 @@
                 this.isSyncing = true;
                 this.render();
                 try {
+                    const payload = {
+                        mode: this.state.isOnlineMode ? 'online' : 'offline',
+                        offline: this.state.offline,
+                        online: this.state.online,
+                        user: this.state.user
+                    };
                     await fetch(this.syncUrl, {
                         method: 'POST',
-                        body: JSON.stringify({
-                            transactions: this.state.transactions,
-                            categories: this.state.categories,
-                            user: this.state.user,
-                            monthlyBudget: this.state.monthlyBudget
-                        })
+                        body: JSON.stringify(payload)
                     });
                 } catch (e) {
-                    console.warn("Background sync requested.");
+                    console.warn("Background sync failed:", e);
                 } finally {
                     setTimeout(() => {
                         this.isSyncing = false;
@@ -508,13 +568,28 @@
                 try {
                     const res = await fetch(this.syncUrl);
                     const cloudData = await res.json();
-                    if (cloudData.transactions) this.state.transactions = cloudData.transactions;
-                    if (cloudData.categories) this.state.categories = cloudData.categories;
-                    if (cloudData.monthlyBudget) this.state.monthlyBudget = cloudData.monthlyBudget;
+                    
+                    if (cloudData.status === 'error') {
+                        console.error("Cloud error:", cloudData.message);
+                        return;
+                    }
+
+                    if (cloudData.offline) this.state.offline = cloudData.offline;
+                    if (cloudData.online) this.state.online = cloudData.online;
+                    
                     if (cloudData.user) {
                         this.state.user = cloudData.user;
                         localStorage.setItem('ifi_identity', JSON.stringify(this.state.user));
                     }
+
+                    if (cloudData.mode) {
+                        this.state.isOnlineMode = cloudData.mode === 'online';
+                        document.body.classList.toggle('pink-mode', this.state.isOnlineMode);
+                    }
+                    
+                    // Update current data reference
+                    this.data = this.state.isOnlineMode ? this.state.online : this.state.offline;
+                    
                     this.save();
                 } catch (e) {
                     console.error("Cloud pull failed", e);
@@ -525,13 +600,8 @@
             }
 
             save() {
-                localStorage.setItem('ifi_data', JSON.stringify({
-                    transactions: this.state.transactions,
-                    categories: this.state.categories,
-                    categoryBudgets: this.state.categoryBudgets,
-                    predictions: this.state.predictions,
-                    monthlyBudget: this.state.monthlyBudget
-                }));
+                // We no longer save financial data to local storage as per request.
+                // Only identity is kept in constructor/onboarding.
             }
 
             completeOnboarding() {
@@ -606,10 +676,10 @@
             }
 
             selectCategoryByName(name) {
-                let cat = this.state.categories.find(c => c.name.toLowerCase().includes(name.toLowerCase()));
+                let cat = this.data.categories.find(c => c.name.toLowerCase().includes(name.toLowerCase()));
                 if (!cat) {
                     cat = { id: 'cat_' + Date.now(), name, icon: name === 'Food' ? 'utensils' : (name === 'Transport' ? 'bus' : 'coffee'), color: '#007AFF' };
-                    this.state.categories.push(cat);
+                    this.data.categories.push(cat);
                     this.updateDropdown();
                 }
                 document.getElementById('entry-category').value = cat.id;
@@ -617,7 +687,7 @@
 
             updateDropdown() {
                 const sel = document.getElementById('entry-category');
-                sel.innerHTML = this.state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                sel.innerHTML = this.data.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
             }
 
             quickAdd(val) {
@@ -633,7 +703,7 @@
                 const amount = parseFloat(document.getElementById('entry-amount').value);
                 const catId = document.getElementById('entry-category').value;
                 const date = document.getElementById('entry-date').value;
-                const cat = this.state.categories.find(c => c.id === catId);
+                const cat = this.data.categories.find(c => c.id === catId);
                 const desc = document.getElementById('entry-desc').value.trim() || (cat?.name || 'New Entry');
                 const time = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
 
@@ -648,7 +718,7 @@
                     timestamp: new Date().toISOString()
                 };
 
-                this.state.transactions.unshift(tx);
+                this.data.transactions.unshift(tx);
                 if (navigator.vibrate) navigator.vibrate(15);
                 this.save();
                 this.syncToCloud();
@@ -659,7 +729,7 @@
             }
 
             duplicateTransaction(txId) {
-                const tx = this.state.transactions.find(t => t.id === txId);
+                const tx = this.data.transactions.find(t => t.id === txId);
                 if (!tx) return;
                 this.closeDetail();
                 this.toggleModal(true);
@@ -674,7 +744,7 @@
             getMetrics() {
                 let balance = 0, savings = 0, spentThisMonth = 0;
                 const now = new Date();
-                this.state.transactions.forEach(t => {
+                this.data.transactions.forEach(t => {
                     const tDate = new Date(t.date);
                     if (t.type === 'credit') balance += t.amount;
                     else if (t.type === 'expense') {
@@ -701,8 +771,8 @@
 
             exportToCSV() {
                 let csv = 'Date,Description,Category,Type,Amount\n';
-                this.state.transactions.forEach(t => {
-                    const cat = this.state.categories.find(c => c.id === t.categoryId)?.name || 'General';
+                this.data.transactions.forEach(t => {
+                    const cat = this.data.categories.find(c => c.id === t.categoryId)?.name || 'General';
                     csv += `${t.date},"${t.description}",${cat},${t.type},${t.amount}\n`;
                 });
                 const blob = new Blob([csv], { type: 'text/csv' });
@@ -710,7 +780,7 @@
                 const a = document.createElement('a');
                 a.setAttribute('hidden', '');
                 a.setAttribute('href', url);
-                a.setAttribute('download', `ledger_${new Date().toLocaleDateString()}.csv`);
+                a.setAttribute('download', `ledger_${this.state.isOnlineMode ? 'online' : 'offline'}_${new Date().toLocaleDateString()}.csv`);
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -735,11 +805,11 @@
                 const amount = parseFloat(prompt("Predicted Amount:"));
                 if (isNaN(amount)) return;
                 
-                this.state.predictions.push({
+                this.data.predictions.push({
                     id: 'pred_' + Date.now(),
                     description: desc,
                     amount: amount,
-                    categoryId: this.state.categories[0].id
+                    categoryId: this.data.categories[0].id
                 });
                 this.save();
                 this.render();
@@ -757,7 +827,7 @@
                 const catId = document.getElementById('pred-cat').value;
                 if (!desc || isNaN(amount)) return;
 
-                this.state.predictions.push({
+                this.data.predictions.push({
                     id: 'pred_' + Date.now(),
                     description: desc,
                     amount: amount,
@@ -768,13 +838,13 @@
             }
 
             deletePrediction(id) {
-                this.state.predictions = this.state.predictions.filter(p => p.id !== id);
+                this.data.predictions = this.data.predictions.filter(p => p.id !== id);
                 this.save();
                 this.render();
             }
 
             tickPrediction(id) {
-                const pred = this.state.predictions.find(p => p.id === id);
+                const pred = this.data.predictions.find(p => p.id === id);
                 if (!pred) return;
                 
                 const tx = {
@@ -787,30 +857,30 @@
                     description: pred.description,
                     timestamp: new Date().toISOString()
                 };
-                this.state.transactions.unshift(tx);
-                this.state.predictions = this.state.predictions.filter(p => p.id !== id);
+                this.data.transactions.unshift(tx);
+                this.data.predictions = this.data.predictions.filter(p => p.id !== id);
                 this.save();
                 this.syncToCloud();
                 this.render();
             }
 
             openPredictionDetail(id) {
-                const p = this.state.predictions.find(x => x.id === id);
+                const p = this.data.predictions.find(x => x.id === id);
                 const { balance } = this.getMetrics();
                 alert(`Prediction: ${p.description}\nAmount: ${this.formatINR(p.amount)}\nComparison with Balance: ${((p.amount / balance) * 100).toFixed(1)}% of your current funds.`);
             }
 
             renderHome(balance, savings, spentThisMonth) {
                 const container = document.getElementById('view-home');
-                const recent = this.state.transactions.slice(0, 5);
-                const totalPredicted = Object.values(this.state.categoryBudgets).reduce((a, b) => a + b, 0);
-                const budgetProgress = Math.min((spentThisMonth / this.state.monthlyBudget) * 100, 100);
-                const isOver = spentThisMonth > this.state.monthlyBudget;
+                const recent = this.data.transactions.slice(0, 5);
+                const totalPredicted = Object.values(this.data.categoryBudgets).reduce((a, b) => a + b, 0);
+                const budgetProgress = Math.min((spentThisMonth / this.data.monthlyBudget) * 100, 100);
+                const isOver = spentThisMonth > this.data.monthlyBudget;
                 const greeting = this.getTimeGreeting();
 
                 // Calculate category spending
                 const catSpending = {};
-                this.state.transactions.forEach(t => {
+                this.data.transactions.forEach(t => {
                     if (t.type === 'expense') {
                         catSpending[t.categoryId] = (catSpending[t.categoryId] || 0) + t.amount;
                     }
@@ -821,14 +891,14 @@
                         <header class="flex justify-between items-center animate-fade-in">
                             <div class="space-y-1">
                                 <div class="flex items-center gap-2">
-                                    <p class="text-gray-400 text-[10px] font-bold uppercase tracking-[0.1em]">${greeting}</p>
+                                    <p class="text-gray-400 text-[10px] font-bold uppercase tracking-[0.1em]">${greeting} • <span class="${this.state.isOnlineMode ? 'text-pink-500' : 'text-blue-500'}">${this.state.isOnlineMode ? 'Online' : 'Offline'}</span></p>
                                     ${this.isSyncing ? '<i data-lucide="refresh-cw" class="w-3 h-3 text-blue-500 sync-spinner"></i>' : ''}
                                 </div>
                                 <h1 class="text-3xl font-black tracking-tight">${this.formatINR(balance)}</h1>
                             </div>
-                            <div class="w-12 h-12 rounded-2xl bg-white apple-shadow flex items-center justify-center border border-white overflow-hidden p-0.5">
+                            <button id="user-avatar-btn" onclick="app.toggleMode()" class="w-12 h-12 rounded-2xl bg-white apple-shadow flex items-center justify-center border-2 ${this.state.isOnlineMode ? 'border-pink-500' : 'border-blue-500'} overflow-hidden p-0.5 transition-all active:scale-90">
                                 <img src="${this.state.user?.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed=User'}" class="w-full h-full object-cover rounded-[1.2rem]">
-                            </div>
+                            </button>
                         </header>
 
                         <!-- Budget Tracker Card -->
@@ -836,7 +906,7 @@
                             <div class="flex justify-between items-end">
                                 <div class="space-y-1">
                                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Monthly Limit Status</p>
-                                    <p class="text-2xl font-black ${isOver ? 'text-red-500' : 'text-gray-900'}">${this.formatINR(spentThisMonth)} <span class="text-gray-300 font-bold text-sm">/ ${this.formatINR(this.state.monthlyBudget)}</span></p>
+                                    <p class="text-2xl font-black ${isOver ? 'text-red-500' : 'text-gray-900'}">${this.formatINR(spentThisMonth)} <span class="text-gray-300 font-bold text-sm">/ ${this.formatINR(this.data.monthlyBudget)}</span></p>
                                 </div>
                                 <p class="text-[10px] font-black text-gray-400 uppercase">${Math.round(budgetProgress)}%</p>
                             </div>
@@ -846,11 +916,11 @@
                             <div class="flex justify-between pt-2 border-t border-gray-50">
                                 <div>
                                     <p class="text-[8px] font-bold text-gray-400 uppercase">Remaining Budget</p>
-                                    <p class="text-xs font-bold">${this.formatINR(Math.max(0, this.state.monthlyBudget - spentThisMonth))}</p>
+                                    <p class="text-xs font-bold">${this.formatINR(Math.max(0, this.data.monthlyBudget - spentThisMonth))}</p>
                                 </div>
                                 <div class="text-right">
                                     <p class="text-[8px] font-bold text-gray-400 uppercase">Budget Coverage</p>
-                                    <p class="text-xs font-bold text-blue-600">${balance > 0 ? ((this.state.monthlyBudget / balance) * 100).toFixed(0) : 0}%</p>
+                                    <p class="text-xs font-bold text-blue-600">${balance > 0 ? ((this.data.monthlyBudget / balance) * 100).toFixed(0) : 0}%</p>
                                 </div>
                             </div>
                         </div>
@@ -874,7 +944,7 @@
                                         <input type="number" id="pred-amount" placeholder="Amount" class="w-full p-5 rounded-[1.5rem] bg-gray-100/50 font-bold outline-none border-2 border-gray-100 focus:border-blue-500 transition-all text-[15px] text-gray-900 placeholder:text-gray-400" required>
                                         <div class="relative">
                                             <select id="pred-cat" class="w-full p-5 rounded-[1.5rem] bg-gray-100/50 font-bold outline-none border-2 border-gray-100 focus:border-blue-500 transition-all text-[15px] text-gray-900 appearance-none">
-                                                ${this.state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                                                ${this.data.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
                                             </select>
                                             <i data-lucide="chevron-down" class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"></i>
                                         </div>
@@ -884,7 +954,7 @@
                             </div>
 
                             <div class="space-y-4">
-                                ${this.state.predictions.map(p => {
+                                ${this.data.predictions.map(p => {
                                     const progress = Math.min((spentThisMonth / p.amount) * 100, 100);
                                     const diff = balance - p.amount;
                                     return `
@@ -911,7 +981,7 @@
                                         </div>
                                     `;
                                 }).join('')}
-                                ${this.state.predictions.length === 0 ? `
+                                ${this.data.predictions.length === 0 ? `
                                     <div class="bg-white p-8 rounded-[2.5rem] apple-shadow border border-white text-center space-y-4">
                                         <div class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto">
                                             <i data-lucide="sparkles" class="w-8 h-8 text-blue-500"></i>
@@ -933,8 +1003,8 @@
                                 <p class="text-[10px] font-bold text-gray-400 uppercase">Total: ${this.formatINR(totalPredicted)}</p>
                             </div>
                             <div class="flex gap-4 overflow-x-auto hide-scrollbar pb-2 px-1">
-                                ${this.state.categories.map(c => {
-                                    const predicted = this.state.categoryBudgets[c.id] || 0;
+                                ${this.data.categories.map(c => {
+                                    const predicted = this.data.categoryBudgets[c.id] || 0;
                                     if (predicted === 0) return '';
                                     const spent = catSpending[c.id] || 0;
                                     const available = predicted - spent;
@@ -1001,7 +1071,7 @@
             }
 
             txCard(t) {
-                const cat = this.state.categories.find(c => c.id === t.categoryId);
+                const cat = this.data.categories.find(c => c.id === t.categoryId);
                 const col = t.type === 'credit' ? 'text-green-500' : (t.type === 'saving' ? 'text-blue-500' : 'text-red-500');
                 const sym = t.type === 'credit' ? '+' : '-';
                 return `
@@ -1022,8 +1092,8 @@
             }
 
             openDetail(txId) {
-                const tx = this.state.transactions.find(t => t.id === txId);
-                const cat = this.state.categories.find(c => c.id === tx.categoryId);
+                const tx = this.data.transactions.find(t => t.id === txId);
+                const cat = this.data.categories.find(c => c.id === tx.categoryId);
                 const content = document.getElementById('detail-content');
                 const actions = document.getElementById('detail-actions');
                 const col = tx.type === 'credit' ? 'text-green-500' : (tx.type === 'saving' ? 'text-blue-500' : 'text-red-500');
@@ -1056,7 +1126,7 @@
 
             deleteTransaction(id) {
                 if (confirm("Permanently delete this entry?")) {
-                    this.state.transactions = this.state.transactions.filter(t => t.id !== id);
+                    this.data.transactions = this.data.transactions.filter(t => t.id !== id);
                     if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
                     this.save(); this.syncToCloud(); this.closeDetail(); this.render();
                 }
@@ -1070,7 +1140,7 @@
 
             renderLedger() {
                 const container = document.getElementById('view-ledger');
-                let filtered = this.state.transactions.filter(t => this.state.currentFilter === 'all' || t.type === this.state.currentFilter);
+                let filtered = this.data.transactions.filter(t => this.state.currentFilter === 'all' || t.type === this.state.currentFilter);
                 
                 // Category Filter
                 if (this.state.categoryFilter !== 'all') {
@@ -1107,13 +1177,13 @@
                     totalSpentInFilter = filtered.reduce((acc, t) => t.type === 'expense' ? acc + t.amount : acc, 0);
                 }
 
-                const activeCat = this.state.categories.find(c => c.id === this.state.categoryFilter);
+                const activeCat = this.data.categories.find(c => c.id === this.state.categoryFilter);
 
                 container.innerHTML = `
                     <div class="space-y-8 pb-10">
                         <header class="flex justify-between items-start px-1">
                             <div>
-                                <h2 class="text-3xl font-extrabold tracking-tight">Cloud Ledger</h2>
+                                <h2 class="text-3xl font-extrabold tracking-tight">${this.state.isOnlineMode ? 'Online' : 'Cloud'} Ledger</h2>
                                 <p class="text-gray-400 text-sm font-medium">Historical transaction records.</p>
                             </div>
                             <div class="flex gap-2 relative">
@@ -1125,7 +1195,7 @@
                                     <button onclick="app.setCategoryFilter('all')" class="filter-option ${this.state.categoryFilter === 'all' ? 'selected' : ''}">
                                         <i data-lucide="grid" class="w-4 h-4"></i> All Categories
                                     </button>
-                                    ${this.state.categories.map(c => `
+                                    ${this.data.categories.map(c => `
                                         <button onclick="app.setCategoryFilter('${c.id}')" class="filter-option ${this.state.categoryFilter === c.id ? 'selected' : ''}">
                                             <i data-lucide="${c.icon}" class="w-4 h-4"></i> ${c.name}
                                         </button>
@@ -1246,7 +1316,7 @@
                 const container = document.getElementById('view-analytics');
                 container.innerHTML = `
                     <div class="space-y-8 pb-10">
-                        <header class="px-1"><h2 class="text-3xl font-extrabold tracking-tight">Flow Stats</h2><p class="text-gray-400 text-sm font-medium">Visual distribution of wealth.</p></header>
+                        <header class="px-1"><h2 class="text-3xl font-extrabold tracking-tight">${this.state.isOnlineMode ? 'Online' : 'Flow'} Stats</h2><p class="text-gray-400 text-sm font-medium">Visual distribution of wealth.</p></header>
                         <div class="bg-white p-8 rounded-[3rem] apple-shadow border border-white space-y-6"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Expense Distribution</p><div class="h-64 relative"><canvas id="pieChart"></canvas></div></div>
                         <div class="bg-white p-8 rounded-[3rem] apple-shadow border border-white space-y-6"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Recent Activity Trend</p><div class="h-64 relative"><canvas id="barChart"></canvas></div></div>
                     </div>
@@ -1255,23 +1325,23 @@
             }
 
             initCharts() {
-                const exp = this.state.transactions.filter(t => t.type !== 'credit');
+                const exp = this.data.transactions.filter(t => t.type !== 'credit');
                 if (!exp.length) return;
                 const catData = {}; exp.forEach(t => catData[t.categoryId] = (catData[t.categoryId] || 0) + t.amount);
-                new Chart(document.getElementById('pieChart'), { type: 'doughnut', data: { labels: Object.keys(catData).map(id => this.state.categories.find(c => c.id === id)?.name), datasets: [{ data: Object.values(catData), backgroundColor: Object.keys(catData).map(id => this.state.categories.find(c => c.id === id)?.color), borderWidth: 0, spacing: 8 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '82%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 6, usePointStyle: true, font: { size: 10, weight: '700' }, padding: 20 } } } } });
+                new Chart(document.getElementById('pieChart'), { type: 'doughnut', data: { labels: Object.keys(catData).map(id => this.data.categories.find(c => c.id === id)?.name), datasets: [{ data: Object.values(catData), backgroundColor: Object.keys(catData).map(id => this.data.categories.find(c => c.id === id)?.color), borderWidth: 0, spacing: 8 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '82%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 6, usePointStyle: true, font: { size: 10, weight: '700' }, padding: 20 } } } } });
                 const daily = new Array(7).fill(0); exp.forEach(t => daily[new Date(t.date).getDay()] += t.amount);
-                new Chart(document.getElementById('barChart'), { type: 'bar', data: { labels: ['S', 'M', 'T', 'W', 'T', 'F', 'S'], datasets: [{ data: daily, backgroundColor: '#007AFF', borderRadius: 10, barThickness: 14 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, border: { display: false } }, y: { grid: { display: false }, ticks: { display: false }, border: { display: false } } } } });
+                new Chart(document.getElementById('barChart'), { type: 'bar', data: { labels: ['S', 'M', 'T', 'W', 'T', 'F', 'S'], datasets: [{ data: daily, backgroundColor: this.state.isOnlineMode ? '#FF2D55' : '#007AFF', borderRadius: 10, barThickness: 14 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, border: { display: false } }, y: { grid: { display: false }, ticks: { display: false }, border: { display: false } } } } });
             }
 
             setBudget(val) {
-                this.state.monthlyBudget = parseFloat(val) || 0;
+                this.data.monthlyBudget = parseFloat(val) || 0;
                 this.save();
                 this.syncToCloud();
                 this.render();
             }
 
             setCategoryBudget(catId, val) {
-                this.state.categoryBudgets[catId] = parseFloat(val) || 0;
+                this.data.categoryBudgets[catId] = parseFloat(val) || 0;
                 this.save();
                 this.syncToCloud();
                 this.render();
@@ -1283,7 +1353,7 @@
                     <div class="space-y-10 pb-10">
                         <header class="text-center space-y-6">
                             <div class="relative w-32 h-32 mx-auto">
-                                <div class="w-32 h-32 rounded-[3.2rem] bg-white apple-shadow flex items-center justify-center border-4 border-white overflow-hidden p-1">
+                                <div class="w-32 h-32 rounded-[3.2rem] bg-white apple-shadow flex items-center justify-center border-4 ${this.state.isOnlineMode ? 'border-pink-500' : 'border-blue-500'} overflow-hidden p-1">
                                     <img src="${this.state.user.avatar}" class="w-full h-full object-cover rounded-[2.8rem]">
                                 </div>
                                 <label class="absolute -bottom-2 -right-2 w-10 h-10 bg-black rounded-2xl flex items-center justify-center text-white border-4 border-[#F2F2F7] cursor-pointer">
@@ -1294,6 +1364,7 @@
                             <div class="space-y-1">
                                 <h2 class="text-3xl font-extrabold tracking-tight">${this.state.user.name}</h2>
                                 <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Account ID: ${this.state.user.joined.split('T')[0]}</p>
+                                <div class="mt-2 px-4 py-1.5 rounded-full ${this.state.isOnlineMode ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'} text-[9px] font-black uppercase tracking-widest inline-block">${this.state.isOnlineMode ? 'Online Mode Active' : 'Offline Mode Active'}</div>
                             </div>
                         </header>
 
@@ -1302,7 +1373,7 @@
                             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Monthly Spending Limit</p>
                             <div class="flex items-center bg-gray-50 rounded-2xl px-5">
                                 <span class="font-bold text-gray-300 mr-2">₹</span>
-                                <input type="number" onchange="app.setBudget(this.value)" value="${this.state.monthlyBudget}" class="w-full bg-transparent py-4 font-black text-lg outline-none" placeholder="Limit Amount">
+                                <input type="number" onchange="app.setBudget(this.value)" value="${this.data.monthlyBudget}" class="w-full bg-transparent py-4 font-black text-lg outline-none" placeholder="Limit Amount">
                             </div>
                         </div>
 
@@ -1310,7 +1381,7 @@
                         <section class="space-y-6">
                             <div class="px-1"><h3 class="text-xl font-bold">Predicted Spending</h3><p class="text-gray-400 text-[10px] font-bold uppercase">Set limits per category</p></div>
                             <div class="space-y-3">
-                                ${this.state.categories.map(c => `
+                                ${this.data.categories.map(c => `
                                     <div class="bg-white p-5 rounded-[2.2rem] apple-shadow flex items-center justify-between border border-white">
                                         <div class="flex items-center gap-3">
                                             <div class="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center"><i data-lucide="${c.icon}" class="w-5 h-5 text-gray-400"></i></div>
@@ -1318,7 +1389,7 @@
                                         </div>
                                         <div class="flex items-center bg-gray-50 rounded-xl px-3">
                                             <span class="text-[10px] font-bold text-gray-300 mr-1">₹</span>
-                                            <input type="number" onchange="app.setCategoryBudget('${c.id}', this.value)" value="${this.state.categoryBudgets[c.id] || ''}" class="w-20 bg-transparent py-2 text-right font-bold text-sm outline-none" placeholder="0">
+                                            <input type="number" onchange="app.setCategoryBudget('${c.id}', this.value)" value="${this.data.categoryBudgets[c.id] || ''}" class="w-20 bg-transparent py-2 text-right font-bold text-sm outline-none" placeholder="0">
                                         </div>
                                     </div>
                                 `).join('')}
@@ -1354,7 +1425,7 @@
             pickIcon(i) { this.selectedIcon = i; document.querySelectorAll('.cat-icon-btn').forEach(b => { const act = b.dataset.icon === i; b.classList.toggle('bg-blue-600', act); b.classList.toggle('text-white', act); }); }
             commitCategory() {
                 const name = document.getElementById('new-cat-name').value.trim(); if (!name) return;
-                this.state.categories.push({ id: 'cat_' + Date.now(), name, icon: this.selectedIcon, color: THEME_COLORS[this.state.categories.length % THEME_COLORS.length] });
+                this.data.categories.push({ id: 'cat_' + Date.now(), name, icon: this.selectedIcon, color: THEME_COLORS[this.data.categories.length % THEME_COLORS.length] });
                 this.save(); this.syncToCloud(); this.render(); document.getElementById('cat-tool').classList.add('hidden');
             }
             reset() { if (confirm("Clear all local settings? This does not affect cloud storage.")) { localStorage.clear(); location.reload(); } }
