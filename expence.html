@@ -20,10 +20,10 @@
             --accent-color: var(--apple-blue);
         }
         body.pink-mode {
-            --apple-blue: #FF2D55;
-            --apple-bg: #FFF0F3;
-            --apple-card: rgba(255, 255, 255, 0.9);
-            --accent-color: #FF2D55;
+            --apple-blue: #FF69B4; /* Soft Pink */
+            --apple-bg: #FDF2F8; /* Very light pink background */
+            --apple-card: rgba(255, 255, 255, 0.95); /* Slightly more opaque card */
+            --accent-color: #FF69B4; /* Soft Pink */
         }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -148,6 +148,21 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* Skeleton Loading */
+        .skeleton {
+            animation: pulse 1.5s infinite ease-in-out;
+            background-color: #E0E0E0; /* Light gray for skeleton */
+            border-radius: 8px;
+        }
+        .pink-mode .skeleton {
+            background-color: #F0D9E7; /* Softer pink for skeleton in pink mode */
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
 
         /* Pull to refresh UI */
         #ptr-indicator {
@@ -541,7 +556,7 @@
             async syncToCloud() {
                 if (!this.syncUrl) return;
                 this.isSyncing = true;
-                this.render();
+                this.render(); // Render skeleton immediately
                 try {
                     const payload = {
                         mode: this.state.isOnlineMode ? 'online' : 'offline',
@@ -566,7 +581,7 @@
             async loadFromCloud() {
                 if (!this.syncUrl) return;
                 this.isSyncing = true;
-                this.render();
+                this.render(); // Render skeleton immediately
                 try {
                     const res = await fetch(this.syncUrl);
                     const cloudData = await res.json();
@@ -790,14 +805,196 @@
             }
 
             render() {
-                const { balance, savings, spentThisMonth } = this.getMetrics();
-                switch(this.currentView) {
-                    case 'home': this.renderHome(balance, savings, spentThisMonth); break;
-                    case 'ledger': this.renderLedger(); break;
-                    case 'analytics': this.renderAnalytics(); break;
-                    case 'profile': this.renderProfile(); break;
+                if (this.isSyncing) {
+                    switch(this.currentView) {
+                        case 'home': document.getElementById('view-home').innerHTML = this.renderHomeSkeleton(); break;
+                        case 'ledger': document.getElementById('view-ledger').innerHTML = this.renderLedgerSkeleton(); break;
+                        case 'analytics': document.getElementById('view-analytics').innerHTML = ''; break; // No skeleton for analytics yet
+                        case 'profile': document.getElementById('view-profile').innerHTML = ''; break; // No skeleton for profile yet
+                    }
+                } else {
+                    const { balance, savings, spentThisMonth } = this.getMetrics();
+                    switch(this.currentView) {
+                        case 'home': this.renderHome(balance, savings, spentThisMonth); break;
+                        case 'ledger': this.renderLedger(); break;
+                        case 'analytics': this.renderAnalytics(); break;
+                        case 'profile': this.renderProfile(); break;
+                    }
                 }
                 if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+
+            renderHomeSkeleton() {
+                return `
+                    <div class="space-y-10 pb-10">
+                        <header class="flex justify-between items-center">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <div class="skeleton h-3 w-24"></div>
+                                </div>
+                                <div class="skeleton h-8 w-48"></div>
+                            </div>
+                            <div class="skeleton w-12 h-12 rounded-2xl"></div>
+                        </header>
+
+                        <div class="bg-white p-7 rounded-[2.8rem] apple-shadow border border-white space-y-4">
+                            <div class="flex justify-between items-end">
+                                <div class="space-y-1">
+                                    <div class="skeleton h-3 w-32"></div>
+                                    <div class="skeleton h-8 w-40"></div>
+                                </div>
+                                <div class="skeleton h-3 w-12"></div>
+                            </div>
+                            <div class="skeleton h-2 w-full"></div>
+                            <div class="flex justify-between pt-2 border-t border-gray-50">
+                                <div class="skeleton h-3 w-24"></div>
+                                <div class="skeleton h-3 w-24"></div>
+                            </div>
+                        </div>
+
+                        <section class="space-y-6">
+                            <div class="flex justify-between items-center px-2">
+                                <div class="skeleton h-6 w-40"></div>
+                                <div class="skeleton w-8 h-8 rounded-full"></div>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="bg-white p-5 rounded-[2.2rem] apple-shadow border border-white space-y-4">
+                                    <div class="flex justify-between items-start">
+                                        <div class="space-y-1 flex-1 min-w-0">
+                                            <div class="skeleton h-3 w-32"></div>
+                                            <div class="skeleton h-6 w-48"></div>
+                                        </div>
+                                        <div class="flex gap-1.5 ml-2">
+                                            <div class="skeleton w-9 h-9 rounded-xl"></div>
+                                            <div class="skeleton w-9 h-9 rounded-xl"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-5 rounded-[2.2rem] apple-shadow border border-white space-y-4">
+                                    <div class="flex justify-between items-start">
+                                        <div class="space-y-1 flex-1 min-w-0">
+                                            <div class="skeleton h-3 w-32"></div>
+                                            <div class="skeleton h-6 w-48"></div>
+                                        </div>
+                                        <div class="flex gap-1.5 ml-2">
+                                            <div class="skeleton w-9 h-9 rounded-xl"></div>
+                                            <div class="skeleton w-9 h-9 rounded-xl"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="space-y-6">
+                            <div class="flex justify-between items-center px-2">
+                                <div class="skeleton h-6 w-40"></div>
+                                <div class="skeleton h-3 w-24"></div>
+                            </div>
+                            <div class="flex gap-4 overflow-x-auto hide-scrollbar pb-2 px-1">
+                                <div class="min-w-[135px] bg-white p-3.5 rounded-[1.8rem] apple-shadow border border-white space-y-2">
+                                    <div class="skeleton h-4 w-full"></div>
+                                    <div class="skeleton h-3 w-full"></div>
+                                    <div class="skeleton h-1.5 w-full"></div>
+                                    <div class="skeleton h-3 w-full"></div>
+                                </div>
+                                <div class="min-w-[135px] bg-white p-3.5 rounded-[1.8rem] apple-shadow border border-white space-y-2">
+                                    <div class="skeleton h-4 w-full"></div>
+                                    <div class="skeleton h-3 w-full"></div>
+                                    <div class="skeleton h-1.5 w-full"></div>
+                                    <div class="skeleton h-3 w-full"></div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-white p-4 rounded-[2rem] apple-shadow border border-white">
+                                <div class="skeleton h-3 w-24 mb-1"></div>
+                                <div class="skeleton h-6 w-20"></div>
+                            </div>
+                            <div class="bg-white p-4 rounded-[2rem] apple-shadow border border-white">
+                                <div class="skeleton h-3 w-24 mb-1"></div>
+                                <div class="skeleton h-6 w-20"></div>
+                            </div>
+                        </div>
+
+                        <section class="space-y-6">
+                            <div class="flex justify-between items-center px-2">
+                                <div class="skeleton h-6 w-40"></div>
+                                <div class="skeleton h-3 w-16"></div>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="skeleton h-20 rounded-[2rem]"></div>
+                                <div class="skeleton h-20 rounded-[2rem]"></div>
+                            </div>
+                        </section>
+                    </div>
+                `;
+            }
+
+            renderLedgerSkeleton() {
+                return `
+                    <div class="space-y-8 pb-10">
+                        <header class="flex justify-between items-start px-1">
+                            <div class="space-y-1">
+                                <div class="skeleton h-8 w-48"></div>
+                                <div class="skeleton h-3 w-32"></div>
+                            </div>
+                            <div class="flex gap-2">
+                                <div class="skeleton w-12 h-12 rounded-2xl"></div>
+                                <div class="skeleton w-12 h-12 rounded-2xl"></div>
+                                <div class="skeleton w-12 h-12 rounded-2xl"></div>
+                                <div class="skeleton w-12 h-12 rounded-2xl"></div>
+                            </div>
+                        </header>
+                        <div class="flex gap-3 overflow-x-auto hide-scrollbar py-2 px-1">
+                            <div class="skeleton h-8 w-24 rounded-full"></div>
+                            <div class="skeleton h-8 w-24 rounded-full"></div>
+                            <div class="skeleton h-8 w-24 rounded-full"></div>
+                            <div class="skeleton h-8 w-24 rounded-full"></div>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="bg-white p-4 rounded-[2rem] apple-shadow flex items-center justify-between border border-transparent">
+                                <div class="flex items-center space-x-3 min-w-0">
+                                    <div class="skeleton w-10 h-10 rounded-xl flex-shrink-0"></div>
+                                    <div class="space-y-0.5 flex-1 min-w-0">
+                                        <div class="skeleton h-4 w-32"></div>
+                                        <div class="skeleton h-3 w-24"></div>
+                                    </div>
+                                </div>
+                                <div class="text-right flex-shrink-0">
+                                    <div class="skeleton h-4 w-20"></div>
+                                    <div class="skeleton h-3 w-16 mt-1"></div>
+                                </div>
+                            </div>
+                            <div class="bg-white p-4 rounded-[2rem] apple-shadow flex items-center justify-between border border-transparent">
+                                <div class="flex items-center space-x-3 min-w-0">
+                                    <div class="skeleton w-10 h-10 rounded-xl flex-shrink-0"></div>
+                                    <div class="space-y-0.5 flex-1 min-w-0">
+                                        <div class="skeleton h-4 w-32"></div>
+                                        <div class="skeleton h-3 w-24"></div>
+                                    </div>
+                                </div>
+                                <div class="text-right flex-shrink-0">
+                                    <div class="skeleton h-4 w-20"></div>
+                                    <div class="skeleton h-3 w-16 mt-1"></div>
+                                </div>
+                            </div>
+                            <div class="bg-white p-4 rounded-[2rem] apple-shadow flex items-center justify-between border border-transparent">
+                                <div class="flex items-center space-x-3 min-w-0">
+                                    <div class="skeleton w-10 h-10 rounded-xl flex-shrink-0"></div>
+                                    <div class="space-y-0.5 flex-1 min-w-0">
+                                        <div class="skeleton h-4 w-32"></div>
+                                        <div class="skeleton h-3 w-24"></div>
+                                    </div>
+                                </div>
+                                <div class="text-right flex-shrink-0">
+                                    <div class="skeleton h-4 w-20"></div>
+                                    <div class="skeleton h-3 w-16 mt-1"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
             }
 
             // Prediction Logic
@@ -1181,14 +1378,14 @@
 
                 const activeCat = this.data.categories.find(c => c.id === this.state.categoryFilter);
 
-                container.innerHTML = `
+                container.innerHTML = this.isSyncing ? this.renderLedgerSkeleton() : `
                     <div class="space-y-8 pb-10">
                         <header class="flex justify-between items-start px-1">
                             <div>
                                 <h2 class="text-3xl font-extrabold tracking-tight sm:text-4xl">${this.state.isOnlineMode ? 'Online' : 'Cloud'} Ledger</h2>
                                 <p class="text-gray-400 text-sm font-medium">Historical transaction records.</p>
                             </div>
-                            <div class="flex gap-2 relative">
+                            <div class="flex gap-2 relative z-10">
                                 <button onclick="app.toggleFilterMenu('category')" class="w-12 h-12 bg-white apple-shadow rounded-2xl flex items-center justify-center ${this.state.categoryFilter !== 'all' ? 'text-blue-600' : 'text-gray-400'} active:scale-95 transition-all flex-shrink-0">
                                     <i data-lucide="layers" class="w-5 h-5"></i>
                                 </button>
