@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -119,13 +120,6 @@
         }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        /* Keyboard fix for modal amount */
-        .modal-body {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
         /* Pull to refresh UI */
         #ptr-indicator {
             position: fixed;
@@ -141,6 +135,21 @@
             transition: transform 0.2s ease, opacity 0.2s ease;
             opacity: 0;
             transform: translateY(-60px);
+        }
+
+        .quick-btn {
+            background: white;
+            border: 1px solid #E5E5EA;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #8E8E93;
+            transition: all 0.2s;
+        }
+        .quick-btn:active {
+            background: #F2F2F7;
+            transform: scale(0.95);
         }
     </style>
 </head>
@@ -219,13 +228,24 @@
                     </button>
                 </div>
                 
-                <form id="entry-form" class="modal-body">
-                    <!-- Amount First - Highest visibility for keyboard -->
+                <form id="entry-form" class="space-y-6">
                     <div class="text-center bg-white/50 p-6 rounded-[2.5rem] apple-shadow border border-white">
                         <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-2">Amount</p>
-                        <div class="flex items-center justify-center text-5xl font-black tracking-tighter">
+                        <div class="flex items-center justify-center text-5xl font-black tracking-tighter relative">
                             <span class="mr-2 text-gray-300">₹</span>
                             <input type="number" id="entry-amount" placeholder="0" class="bg-transparent w-full text-center outline-none focus:text-blue-600 transition-colors" required>
+                            <button type="button" onclick="document.getElementById('entry-amount').value = ''" class="absolute right-0 text-gray-300 hover:text-red-500 transition-colors">
+                                <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <!-- Quick Add Buttons -->
+                        <div class="flex flex-col gap-4 mt-4">
+                            <div id="quick-add-container" class="flex justify-center gap-2">
+                                <!-- Price shortcuts go here -->
+                            </div>
+                            <div id="shortcut-icons-container" class="flex justify-center gap-4">
+                                <!-- Category icons go here -->
+                            </div>
                         </div>
                     </div>
 
@@ -304,11 +324,14 @@
                 this.state = {
                     transactions: data?.transactions || [],
                     categories: data?.categories || [...INITIAL_CATEGORIES],
+                    categoryBudgets: data?.categoryBudgets || {}, // { categoryId: amount }
+                    predictions: data?.predictions || [], // { id, description, amount, categoryId }
                     user: savedUser ? JSON.parse(savedUser) : null,
-                    currentFilter: 'all'
+                    currentFilter: 'all',
+                    ledgerSort: 'newest', // newest or highest
+                    monthlyBudget: data?.monthlyBudget || 50000
                 };
                 
-                // Pull to refresh tracking
                 this.startY = 0;
                 this.currentY = 0;
                 this.isPulling = false;
@@ -325,7 +348,6 @@
                 const dt = document.getElementById('entry-date');
                 if (dt) dt.value = new Date().toISOString().split('T')[0];
                 
-                // Setup Pull-to-Refresh events
                 window.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: true });
                 window.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
                 window.addEventListener('touchend', () => this.handleTouchEnd());
@@ -362,11 +384,9 @@
                 const ptr = document.getElementById('ptr-indicator');
 
                 if (diff > 150) {
-                    // Trigger sync
                     this.loadFromCloud();
                 }
 
-                // Reset visual
                 ptr.style.opacity = '0';
                 ptr.style.transform = 'translateY(-60px)';
                 this.isPulling = false;
@@ -382,7 +402,8 @@
                         body: JSON.stringify({
                             transactions: this.state.transactions,
                             categories: this.state.categories,
-                            user: this.state.user
+                            user: this.state.user,
+                            monthlyBudget: this.state.monthlyBudget
                         })
                     });
                 } catch (e) {
@@ -404,6 +425,7 @@
                     const cloudData = await res.json();
                     if (cloudData.transactions) this.state.transactions = cloudData.transactions;
                     if (cloudData.categories) this.state.categories = cloudData.categories;
+                    if (cloudData.monthlyBudget) this.state.monthlyBudget = cloudData.monthlyBudget;
                     if (cloudData.user) {
                         this.state.user = cloudData.user;
                         localStorage.setItem('ifi_identity', JSON.stringify(this.state.user));
@@ -420,7 +442,10 @@
             save() {
                 localStorage.setItem('ifi_data', JSON.stringify({
                     transactions: this.state.transactions,
-                    categories: this.state.categories
+                    categories: this.state.categories,
+                    categoryBudgets: this.state.categoryBudgets,
+                    predictions: this.state.predictions,
+                    monthlyBudget: this.state.monthlyBudget
                 }));
             }
 
@@ -439,6 +464,7 @@
             }
 
             setView(view) {
+                if (navigator.vibrate) navigator.vibrate(5);
                 this.currentView = view;
                 document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
                 const el = document.getElementById(`view-${view}`);
@@ -458,6 +484,7 @@
                 if (show) {
                     modal.classList.remove('hidden');
                     this.updateDropdown();
+                    this.setShortcutMode('default');
                     setTimeout(() => { modal.classList.add('opacity-100'); inner.classList.remove('translate-y-full'); }, 10);
                 } else {
                     modal.classList.remove('opacity-100'); inner.classList.add('translate-y-full');
@@ -465,9 +492,54 @@
                 }
             }
 
+            setShortcutMode(mode) {
+                this.shortcutMode = mode;
+                const container = document.getElementById('quick-add-container');
+                const iconContainer = document.getElementById('shortcut-icons-container');
+                
+                let prices = [100, 200, 500];
+                if (mode === 'food') prices = [20, 25, 30, 200];
+                if (mode === 'bus') prices = [10, 20, 25, 30, 45];
+                if (mode === 'milk') prices = [10, 20, 35, 45];
+
+                container.innerHTML = prices.map(p => `<button type="button" onclick="app.quickAdd(${p})" class="quick-btn">${p}</button>`).join('') + 
+                    `<button type="button" onclick="document.getElementById('entry-amount').value = ''" class="quick-btn bg-red-50 text-red-500 border-red-100"><i data-lucide="trash-2" class="w-3 h-3"></i></button>`;
+                
+                if (mode !== 'default') {
+                    const descInp = document.getElementById('entry-desc');
+                    if (mode === 'food') { descInp.value = 'vadapav with homees'; this.selectCategoryByName('Foodiee me'); }
+                    if (mode === 'bus') { descInp.value = 'Up down'; this.selectCategoryByName('Up-down'); }
+                    if (mode === 'milk') { descInp.value = 'Milk'; this.selectCategoryByName('Milk and Coffee'); }
+                }
+
+                iconContainer.innerHTML = `
+                    <button type="button" onclick="app.setShortcutMode('food')" class="w-10 h-10 rounded-xl ${mode === 'food' ? 'bg-blue-600 text-white' : 'bg-white text-gray-400'} apple-shadow flex items-center justify-center transition-all"><i data-lucide="utensils" class="w-5 h-5"></i></button>
+                    <button type="button" onclick="app.setShortcutMode('bus')" class="w-10 h-10 rounded-xl ${mode === 'bus' ? 'bg-blue-600 text-white' : 'bg-white text-gray-400'} apple-shadow flex items-center justify-center transition-all"><i data-lucide="bus" class="w-5 h-5"></i></button>
+                    <button type="button" onclick="app.setShortcutMode('milk')" class="w-10 h-10 rounded-xl ${mode === 'milk' ? 'bg-blue-600 text-white' : 'bg-white text-gray-400'} apple-shadow flex items-center justify-center transition-all"><i data-lucide="coffee" class="w-5 h-5"></i></button>
+                `;
+                lucide.createIcons();
+            }
+
+            selectCategoryByName(name) {
+                let cat = this.state.categories.find(c => c.name.toLowerCase().includes(name.toLowerCase()));
+                if (!cat) {
+                    cat = { id: 'cat_' + Date.now(), name, icon: name === 'Food' ? 'utensils' : (name === 'Transport' ? 'bus' : 'coffee'), color: '#007AFF' };
+                    this.state.categories.push(cat);
+                    this.updateDropdown();
+                }
+                document.getElementById('entry-category').value = cat.id;
+            }
+
             updateDropdown() {
                 const sel = document.getElementById('entry-category');
                 sel.innerHTML = this.state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            }
+
+            quickAdd(val) {
+                const inp = document.getElementById('entry-amount');
+                const cur = parseFloat(inp.value) || 0;
+                inp.value = cur + val;
+                if (navigator.vibrate) navigator.vibrate(5);
             }
 
             handleCommit(e) {
@@ -476,7 +548,8 @@
                 const amount = parseFloat(document.getElementById('entry-amount').value);
                 const catId = document.getElementById('entry-category').value;
                 const date = document.getElementById('entry-date').value;
-                const desc = document.getElementById('entry-desc').value || 'New Entry';
+                const cat = this.state.categories.find(c => c.id === catId);
+                const desc = document.getElementById('entry-desc').value.trim() || (cat?.name || 'New Entry');
                 const time = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
 
                 const tx = {
@@ -491,6 +564,7 @@
                 };
 
                 this.state.transactions.unshift(tx);
+                if (navigator.vibrate) navigator.vibrate(15);
                 this.save();
                 this.syncToCloud();
                 this.render();
@@ -499,24 +573,69 @@
                 document.getElementById('entry-date').value = new Date().toISOString().split('T')[0];
             }
 
+            duplicateTransaction(txId) {
+                const tx = this.state.transactions.find(t => t.id === txId);
+                if (!tx) return;
+                this.closeDetail();
+                this.toggleModal(true);
+                document.getElementById('entry-amount').value = tx.amount;
+                document.getElementById('entry-desc').value = tx.description;
+                document.getElementById('entry-category').value = tx.categoryId;
+                const radios = document.getElementsByName('type');
+                radios.forEach(r => { if(r.value === tx.type) r.checked = true; });
+                if (navigator.vibrate) navigator.vibrate(5);
+            }
+
             getMetrics() {
-                let balance = 0, savings = 0;
+                let balance = 0, savings = 0, spentThisMonth = 0;
+                const now = new Date();
                 this.state.transactions.forEach(t => {
+                    const tDate = new Date(t.date);
                     if (t.type === 'credit') balance += t.amount;
-                    else if (t.type === 'expense') balance -= t.amount;
+                    else if (t.type === 'expense') {
+                        balance -= t.amount;
+                        if (tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear()) {
+                            spentThisMonth += t.amount;
+                        }
+                    }
                     else if (t.type === 'saving') { balance -= t.amount; savings += t.amount; }
                 });
-                return { balance, savings };
+                return { balance, savings, spentThisMonth };
+            }
+
+            getTimeGreeting() {
+                const hour = new Date().getHours();
+                if (hour < 12) return "Good Morning";
+                if (hour < 17) return "Good Afternoon";
+                return "Good Evening";
             }
 
             formatINR(v) {
                 return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v);
             }
 
+            exportToCSV() {
+                let csv = 'Date,Description,Category,Type,Amount\n';
+                this.state.transactions.forEach(t => {
+                    const cat = this.state.categories.find(c => c.id === t.categoryId)?.name || 'General';
+                    csv += `${t.date},"${t.description}",${cat},${t.type},${t.amount}\n`;
+                });
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.setAttribute('hidden', '');
+                a.setAttribute('href', url);
+                a.setAttribute('download', `ledger_${new Date().toLocaleDateString()}.csv`);
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                if (navigator.vibrate) navigator.vibrate(20);
+            }
+
             render() {
-                const { balance, savings } = this.getMetrics();
+                const { balance, savings, spentThisMonth } = this.getMetrics();
                 switch(this.currentView) {
-                    case 'home': this.renderHome(balance, savings); break;
+                    case 'home': this.renderHome(balance, savings, spentThisMonth); break;
                     case 'ledger': this.renderLedger(); break;
                     case 'analytics': this.renderAnalytics(); break;
                     case 'profile': this.renderProfile(); break;
@@ -524,15 +643,100 @@
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             }
 
-            renderHome(balance, savings) {
+            // Prediction Logic
+            addPrediction() {
+                const desc = prompt("Predicted Item Name (e.g. Monthly Bus):");
+                if (!desc) return;
+                const amount = parseFloat(prompt("Predicted Amount:"));
+                if (isNaN(amount)) return;
+                
+                this.state.predictions.push({
+                    id: 'pred_' + Date.now(),
+                    description: desc,
+                    amount: amount,
+                    categoryId: this.state.categories[0].id
+                });
+                this.save();
+                this.render();
+            }
+
+            togglePredictionForm(show) {
+                const form = document.getElementById('prediction-form');
+                if (form) form.classList.toggle('hidden', !show);
+            }
+
+            commitPrediction(e) {
+                e.preventDefault();
+                const desc = document.getElementById('pred-desc').value.trim();
+                const amount = parseFloat(document.getElementById('pred-amount').value);
+                const catId = document.getElementById('pred-cat').value;
+                if (!desc || isNaN(amount)) return;
+
+                this.state.predictions.push({
+                    id: 'pred_' + Date.now(),
+                    description: desc,
+                    amount: amount,
+                    categoryId: catId
+                });
+                this.save();
+                this.render();
+            }
+
+            deletePrediction(id) {
+                this.state.predictions = this.state.predictions.filter(p => p.id !== id);
+                this.save();
+                this.render();
+            }
+
+            tickPrediction(id) {
+                const pred = this.state.predictions.find(p => p.id === id);
+                if (!pred) return;
+                
+                const tx = {
+                    id: 'tx_' + Date.now(),
+                    type: 'expense',
+                    amount: pred.amount,
+                    categoryId: pred.categoryId,
+                    date: new Date().toISOString().split('T')[0],
+                    time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
+                    description: pred.description,
+                    timestamp: new Date().toISOString()
+                };
+                this.state.transactions.unshift(tx);
+                this.state.predictions = this.state.predictions.filter(p => p.id !== id);
+                this.save();
+                this.syncToCloud();
+                this.render();
+            }
+
+            openPredictionDetail(id) {
+                const p = this.state.predictions.find(x => x.id === id);
+                const { balance } = this.getMetrics();
+                alert(`Prediction: ${p.description}\nAmount: ${this.formatINR(p.amount)}\nComparison with Balance: ${((p.amount / balance) * 100).toFixed(1)}% of your current funds.`);
+            }
+
+            renderHome(balance, savings, spentThisMonth) {
                 const container = document.getElementById('view-home');
                 const recent = this.state.transactions.slice(0, 5);
+                const totalPredicted = Object.values(this.state.categoryBudgets).reduce((a, b) => a + b, 0);
+                const budgetProgress = Math.min((spentThisMonth / this.state.monthlyBudget) * 100, 100);
+                const isOver = spentThisMonth > this.state.monthlyBudget;
+                const greeting = this.getTimeGreeting();
+
+                // Calculate category spending
+                const catSpending = {};
+                this.state.transactions.forEach(t => {
+                    if (t.type === 'expense') {
+                        catSpending[t.categoryId] = (catSpending[t.categoryId] || 0) + t.amount;
+                    }
+                });
+
                 container.innerHTML = `
                     <div class="space-y-10 pb-10">
                         <header class="flex justify-between items-center animate-fade-in">
                             <div class="space-y-1">
                                 <div class="flex items-center gap-2">
-                                    <p class="text-gray-400 text-[11px] font-bold uppercase tracking-[0.1em]">Total Balance</p>
+                                    <p class="text-gray-400 text-[11px] font-bold uppercase tracking-[0.1em]">${greeting}</p>
                                     ${this.isSyncing ? '<i data-lucide="refresh-cw" class="w-3 h-3 text-blue-500 sync-spinner"></i>' : ''}
                                 </div>
                                 <h1 class="text-4xl font-black tracking-tight">${this.formatINR(balance)}</h1>
@@ -541,26 +745,167 @@
                                 <img src="${this.state.user?.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed=User'}" class="w-full h-full object-cover rounded-[1.4rem]">
                             </div>
                         </header>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-white p-6 rounded-[2.5rem] apple-shadow border border-white">
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Savings</p>
-                                <p class="text-xl font-bold">${this.formatINR(savings)}</p>
+
+                        <!-- Budget Tracker Card -->
+                        <div class="bg-white p-7 rounded-[2.8rem] apple-shadow border border-white space-y-4">
+                            <div class="flex justify-between items-end">
+                                <div class="space-y-1">
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Monthly Limit Status</p>
+                                    <p class="text-2xl font-black ${isOver ? 'text-red-500' : 'text-gray-900'}">${this.formatINR(spentThisMonth)} <span class="text-gray-300 font-bold text-sm">/ ${this.formatINR(this.state.monthlyBudget)}</span></p>
+                                </div>
+                                <p class="text-[10px] font-black text-gray-400 uppercase">${Math.round(budgetProgress)}%</p>
                             </div>
-                            <div class="bg-white p-6 rounded-[2.5rem] apple-shadow border border-white">
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Status</p>
-                                <div class="flex items-center gap-1.5 overflow-hidden">
-                                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
-                                    <p class="text-sm font-bold text-green-500 truncate">Synced</p>
+                            <div class="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                <div class="h-full ${isOver ? 'bg-red-500' : 'bg-blue-600'} transition-all duration-1000" style="width: ${budgetProgress}%"></div>
+                            </div>
+                            <div class="flex justify-between pt-2 border-t border-gray-50">
+                                <div>
+                                    <p class="text-[8px] font-bold text-gray-400 uppercase">Remaining Budget</p>
+                                    <p class="text-xs font-bold">${this.formatINR(Math.max(0, this.state.monthlyBudget - spentThisMonth))}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[8px] font-bold text-gray-400 uppercase">Budget Coverage</p>
+                                    <p class="text-xs font-bold text-blue-600">${balance > 0 ? ((this.state.monthlyBudget / balance) * 100).toFixed(0) : 0}%</p>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Predicted Spending Section -->
                         <section class="space-y-6">
                             <div class="flex justify-between items-center px-2">
-                                <h2 class="text-xl font-bold tracking-tight">Activities</h2>
+                                <h2 class="text-xl font-bold tracking-tight">Predicted Spending</h2>
+                                <button onclick="app.togglePredictionForm(true)" class="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center active:scale-90 transition-all"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                            </div>
+
+                            <!-- Graphical Prediction Form -->
+                            <div id="prediction-form" class="hidden bg-white p-6 rounded-[2.5rem] apple-shadow border border-white space-y-4 animate-fade-in">
+                                <div class="flex justify-between items-center">
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">New Prediction</p>
+                                    <button onclick="app.togglePredictionForm(false)" class="text-gray-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+                                </div>
+                                <form onsubmit="app.commitPrediction(event)" class="space-y-4">
+                                    <input type="text" id="pred-desc" placeholder="Item Name (e.g. Bus Fare)" class="w-full p-4 rounded-2xl bg-gray-50 font-bold outline-none border-2 border-transparent focus:border-blue-500 transition-all text-sm" required>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <input type="number" id="pred-amount" placeholder="Amount" class="w-full p-4 rounded-2xl bg-gray-50 font-bold outline-none border-2 border-transparent focus:border-blue-500 transition-all text-sm" required>
+                                        <select id="pred-cat" class="w-full p-4 rounded-2xl bg-gray-50 font-bold outline-none border-2 border-transparent focus:border-blue-500 transition-all text-sm">
+                                            ${this.state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold uppercase tracking-widest text-[10px]">Add Prediction</button>
+                                </form>
+                            </div>
+
+                            <div class="space-y-4">
+                                ${this.state.predictions.map(p => {
+                                    const progress = Math.min((spentThisMonth / p.amount) * 100, 100);
+                                    const diff = balance - p.amount;
+                                    return `
+                                        <div class="bg-white p-6 rounded-[2.5rem] apple-shadow border border-white space-y-4">
+                                            <div class="flex justify-between items-start">
+                                                <div onclick="app.openPredictionDetail('${p.id}')" class="cursor-pointer">
+                                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${p.description}</p>
+                                                    <p class="text-xl font-black">${this.formatINR(p.amount)}</p>
+                                                </div>
+                                                <div class="flex gap-2">
+                                                    <button onclick="app.tickPrediction('${p.id}')" class="w-8 h-8 rounded-full bg-green-50 text-green-600 flex items-center justify-center active:scale-90 transition-all"><i data-lucide="check" class="w-4 h-4"></i></button>
+                                                    <button onclick="app.deletePrediction('${p.id}')" class="w-8 h-8 rounded-full bg-red-50 text-red-600 flex items-center justify-center active:scale-90 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                                </div>
+                                            </div>
+                                            <div class="space-y-2">
+                                                <div class="flex justify-between text-[9px] font-bold uppercase text-gray-400">
+                                                    <span>Balance - Pred: ${this.formatINR(diff)}</span>
+                                                    <span class="${diff < 0 ? 'text-red-500' : 'text-green-600'}">${diff < 0 ? 'Shortfall' : 'Safe'}</span>
+                                                </div>
+                                                <div class="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                                                    <div class="h-full bg-blue-600 transition-all duration-1000" style="width: ${progress}%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                                ${this.state.predictions.length === 0 ? `
+                                    <div class="bg-white p-8 rounded-[2.5rem] apple-shadow border border-white text-center space-y-4">
+                                        <div class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto">
+                                            <i data-lucide="sparkles" class="w-8 h-8 text-blue-500"></i>
+                                        </div>
+                                        <div class="space-y-1">
+                                            <p class="font-bold text-sm">No predictions yet</p>
+                                            <p class="text-[10px] text-gray-400 uppercase font-bold">Plan your future expenses here</p>
+                                        </div>
+                                        <button onclick="app.togglePredictionForm(true)" class="px-6 py-3 bg-black text-white rounded-2xl text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all">Add First Prediction</button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </section>
+
+                        <!-- Category Predicted Spending -->
+                        <section class="space-y-6">
+                            <div class="flex justify-between items-center px-2">
+                                <h2 class="text-xl font-bold tracking-tight">Category Limits</h2>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase">Total: ${this.formatINR(totalPredicted)}</p>
+                            </div>
+                            <div class="flex gap-4 overflow-x-auto hide-scrollbar pb-2 px-1">
+                                ${this.state.categories.map(c => {
+                                    const predicted = this.state.categoryBudgets[c.id] || 0;
+                                    if (predicted === 0) return '';
+                                    const spent = catSpending[c.id] || 0;
+                                    const available = predicted - spent;
+                                    const progress = Math.min((spent / predicted) * 100, 100);
+                                    const isOverCat = spent > predicted;
+                                    return `
+                                        <div class="min-w-[160px] bg-white p-5 rounded-[2.2rem] apple-shadow border border-white space-y-3">
+                                            <div class="flex justify-between items-center">
+                                                <div class="flex items-center gap-2">
+                                                    <div class="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center"><i data-lucide="${c.icon}" class="w-4 h-4 text-gray-400"></i></div>
+                                                    <span class="text-[10px] font-bold truncate max-w-[60px]">${c.name}</span>
+                                                </div>
+                                                ${isOverCat ? '<span class="text-[8px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-bold">Over</span>' : ''}
+                                            </div>
+                                            <div class="space-y-1">
+                                                <div class="flex justify-between text-[9px] font-bold uppercase">
+                                                    <span class="text-gray-400">Predicted</span>
+                                                    <span>${this.formatINR(predicted)}</span>
+                                                </div>
+                                                <div class="flex justify-between text-[9px] font-bold uppercase">
+                                                    <span class="text-gray-400">Spent</span>
+                                                    <span class="text-red-500">${this.formatINR(spent)}</span>
+                                                </div>
+                                            </div>
+                                            <div class="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                                                <div class="h-full ${isOverCat ? 'bg-red-500' : 'bg-blue-600'} transition-all" style="width: ${progress}%"></div>
+                                            </div>
+                                            <div class="flex justify-between items-center pt-1">
+                                                <span class="text-[8px] text-gray-300 font-bold uppercase">Available</span>
+                                                <span class="text-[8px] ${available < 0 ? 'text-red-500' : 'text-blue-600'} font-bold">${this.formatINR(available)}</span>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                                ${totalPredicted === 0 ? '<div class="w-full py-4 text-center text-gray-400 text-xs italic">Set category budgets in profile to track progress.</div>' : ''}
+                            </div>
+                        </section>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-white p-6 rounded-[2.5rem] apple-shadow border border-white">
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Savings</p>
+                                <p class="text-xl font-bold">${this.formatINR(savings)}</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-[2.5rem] apple-shadow border border-white">
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Cloud Sync</p>
+                                <div class="flex items-center gap-1.5 overflow-hidden">
+                                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                    <p class="text-sm font-bold text-green-500 truncate">Active</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <section class="space-y-6">
+                            <div class="flex justify-between items-center px-2">
+                                <h2 class="text-xl font-bold tracking-tight">Recent Activity</h2>
                                 <button onclick="app.setView('ledger')" class="text-blue-600 text-[10px] font-bold uppercase tracking-widest">See All</button>
                             </div>
                             <div class="space-y-4">
-                                ${recent.length ? recent.map(t => this.txCard(t)).join('') : '<div class="py-20 text-center text-gray-300 italic text-sm">No activities logged yet. Swipe down to refresh.</div>'}
+                                ${recent.length ? recent.map(t => this.txCard(t)).join('') : '<div class="py-20 text-center text-gray-300 italic text-sm">No activity yet. Logs will appear here.</div>'}
                             </div>
                         </section>
                     </div>
@@ -612,7 +957,8 @@
                 `;
                 actions.innerHTML = `
                     <button onclick="app.deleteTransaction('${tx.id}')" class="py-5 bg-red-50 text-red-500 rounded-[2rem] font-bold text-xs uppercase tracking-widest active:scale-95 transition-all">Delete</button>
-                    <button onclick="app.closeDetail()" class="py-5 bg-black text-white rounded-[2rem] font-bold text-xs uppercase tracking-widest active:scale-95 transition-all">Close</button>
+                    <button onclick="app.duplicateTransaction('${tx.id}')" class="py-5 bg-blue-50 text-blue-600 rounded-[2rem] font-bold text-xs uppercase tracking-widest active:scale-95 transition-all">Duplicate</button>
+                    <button onclick="app.closeDetail()" class="col-span-2 py-5 bg-black text-white rounded-[2rem] font-bold text-xs uppercase tracking-widest active:scale-95 transition-all">Close</button>
                 `;
                 document.getElementById('detail-view').classList.remove('hidden');
                 lucide.createIcons();
@@ -623,33 +969,65 @@
             deleteTransaction(id) {
                 if (confirm("Permanently delete this entry?")) {
                     this.state.transactions = this.state.transactions.filter(t => t.id !== id);
+                    if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
                     this.save(); this.syncToCloud(); this.closeDetail(); this.render();
                 }
             }
 
+            setLedgerSort(mode) {
+                this.state.ledgerSort = mode;
+                if (navigator.vibrate) navigator.vibrate(5);
+                this.render();
+            }
+
             renderLedger() {
                 const container = document.getElementById('view-ledger');
-                const filtered = this.state.transactions.filter(t => this.state.currentFilter === 'all' || t.type === this.state.currentFilter);
+                let filtered = this.state.transactions.filter(t => this.state.currentFilter === 'all' || t.type === this.state.currentFilter);
+                
+                // Sorting logic
+                if (this.state.ledgerSort === 'highest') {
+                    filtered = filtered.sort((a, b) => b.amount - a.amount);
+                } else {
+                    filtered = filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+                }
+
                 container.innerHTML = `
                     <div class="space-y-8 pb-10">
-                        <header class="px-1"><h2 class="text-3xl font-extrabold tracking-tight">Cloud Ledger</h2><p class="text-gray-400 text-sm font-medium">History of your financial activities.</p></header>
+                        <header class="flex justify-between items-start px-1">
+                            <div>
+                                <h2 class="text-3xl font-extrabold tracking-tight">Cloud Ledger</h2>
+                                <p class="text-gray-400 text-sm font-medium">Historical transaction records.</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="app.setLedgerSort('${this.state.ledgerSort === 'newest' ? 'highest' : 'newest'}')" class="w-12 h-12 bg-white apple-shadow rounded-2xl flex items-center justify-center text-gray-400 active:text-blue-600 transition-colors">
+                                    <i data-lucide="${this.state.ledgerSort === 'newest' ? 'arrow-up-narrow-wide' : 'clock'}" class="w-5 h-5"></i>
+                                </button>
+                                <button onclick="app.exportToCSV()" class="w-12 h-12 bg-white apple-shadow rounded-2xl flex items-center justify-center text-gray-400 active:text-blue-600 transition-colors">
+                                    <i data-lucide="download" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </header>
                         <div class="flex gap-3 overflow-x-auto hide-scrollbar py-2">
                             ${['all', 'expense', 'credit', 'saving'].map(f => `<button onclick="app.setLedgerFilter('${f}')" class="filter-pill px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${this.state.currentFilter === f ? 'active' : 'bg-white text-gray-400 apple-shadow'} transition-all">${f}</button>`).join('')}
                         </div>
-                        <div class="space-y-4">${filtered.length ? filtered.map(t => this.txCard(t)).join('') : '<div class="py-24 text-center text-gray-400 italic">No matching records. Swipe down to refresh.</div>'}</div>
+                        <div class="space-y-4">${filtered.length ? filtered.map(t => this.txCard(t)).join('') : '<div class="py-24 text-center text-gray-400 italic">No records matching your filters.</div>'}</div>
                     </div>
                 `;
             }
 
-            setLedgerFilter(f) { this.state.currentFilter = f; this.render(); }
+            setLedgerFilter(f) { 
+                if (navigator.vibrate) navigator.vibrate(5);
+                this.state.currentFilter = f; 
+                this.render(); 
+            }
 
             renderAnalytics() {
                 const container = document.getElementById('view-analytics');
                 container.innerHTML = `
                     <div class="space-y-8 pb-10">
-                        <header class="px-1"><h2 class="text-3xl font-extrabold tracking-tight">Insights</h2><p class="text-gray-400 text-sm font-medium">Visualizing your flow.</p></header>
-                        <div class="bg-white p-8 rounded-[3rem] apple-shadow border border-white space-y-6"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Distribution</p><div class="h-64 relative"><canvas id="pieChart"></canvas></div></div>
-                        <div class="bg-white p-8 rounded-[3rem] apple-shadow border border-white space-y-6"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Daily Burn</p><div class="h-64 relative"><canvas id="barChart"></canvas></div></div>
+                        <header class="px-1"><h2 class="text-3xl font-extrabold tracking-tight">Flow Stats</h2><p class="text-gray-400 text-sm font-medium">Visual distribution of wealth.</p></header>
+                        <div class="bg-white p-8 rounded-[3rem] apple-shadow border border-white space-y-6"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Expense Distribution</p><div class="h-64 relative"><canvas id="pieChart"></canvas></div></div>
+                        <div class="bg-white p-8 rounded-[3rem] apple-shadow border border-white space-y-6"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Recent Activity Trend</p><div class="h-64 relative"><canvas id="barChart"></canvas></div></div>
                     </div>
                 `;
                 setTimeout(() => this.initCharts(), 100);
@@ -662,6 +1040,20 @@
                 new Chart(document.getElementById('pieChart'), { type: 'doughnut', data: { labels: Object.keys(catData).map(id => this.state.categories.find(c => c.id === id)?.name), datasets: [{ data: Object.values(catData), backgroundColor: Object.keys(catData).map(id => this.state.categories.find(c => c.id === id)?.color), borderWidth: 0, spacing: 8 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '82%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 6, usePointStyle: true, font: { size: 10, weight: '700' }, padding: 20 } } } } });
                 const daily = new Array(7).fill(0); exp.forEach(t => daily[new Date(t.date).getDay()] += t.amount);
                 new Chart(document.getElementById('barChart'), { type: 'bar', data: { labels: ['S', 'M', 'T', 'W', 'T', 'F', 'S'], datasets: [{ data: daily, backgroundColor: '#007AFF', borderRadius: 10, barThickness: 14 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, border: { display: false } }, y: { grid: { display: false }, ticks: { display: false }, border: { display: false } } } } });
+            }
+
+            setBudget(val) {
+                this.state.monthlyBudget = parseFloat(val) || 0;
+                this.save();
+                this.syncToCloud();
+                this.render();
+            }
+
+            setCategoryBudget(catId, val) {
+                this.state.categoryBudgets[catId] = parseFloat(val) || 0;
+                this.save();
+                this.syncToCloud();
+                this.render();
             }
 
             renderProfile() {
@@ -680,27 +1072,49 @@
                             </div>
                             <div class="space-y-1">
                                 <h2 class="text-3xl font-extrabold tracking-tight">${this.state.user.name}</h2>
-                                <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Controller ID: ${this.state.user.joined.split('T')[0]}</p>
+                                <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Account ID: ${this.state.user.joined.split('T')[0]}</p>
                             </div>
                         </header>
 
+                        <!-- Budget Setting -->
+                        <div class="bg-white p-7 rounded-[2.5rem] apple-shadow border border-white space-y-4">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Monthly Spending Limit</p>
+                            <div class="flex items-center bg-gray-50 rounded-2xl px-5">
+                                <span class="font-bold text-gray-300 mr-2">₹</span>
+                                <input type="number" onchange="app.setBudget(this.value)" value="${this.state.monthlyBudget}" class="w-full bg-transparent py-4 font-black text-lg outline-none" placeholder="Limit Amount">
+                            </div>
+                        </div>
+
+                        <!-- Category Budgets -->
                         <section class="space-y-6">
-                            <div class="flex justify-between items-center px-1"><h3 class="text-xl font-bold">Data Classes</h3><button onclick="app.showCatTool()" class="w-11 h-11 rounded-2xl bg-black text-white flex items-center justify-center active:scale-90 transition-all"><i data-lucide="plus" class="w-6 h-6"></i></button></div>
+                            <div class="px-1"><h3 class="text-xl font-bold">Predicted Spending</h3><p class="text-gray-400 text-[10px] font-bold uppercase">Set limits per category</p></div>
+                            <div class="space-y-3">
+                                ${this.state.categories.map(c => `
+                                    <div class="bg-white p-5 rounded-[2.2rem] apple-shadow flex items-center justify-between border border-white">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center"><i data-lucide="${c.icon}" class="w-5 h-5 text-gray-400"></i></div>
+                                            <span class="text-sm font-bold">${c.name}</span>
+                                        </div>
+                                        <div class="flex items-center bg-gray-50 rounded-xl px-3">
+                                            <span class="text-[10px] font-bold text-gray-300 mr-1">₹</span>
+                                            <input type="number" onchange="app.setCategoryBudget('${c.id}', this.value)" value="${this.state.categoryBudgets[c.id] || ''}" class="w-20 bg-transparent py-2 text-right font-bold text-sm outline-none" placeholder="0">
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </section>
+
+                        <section class="space-y-6">
+                            <div class="flex justify-between items-center px-1"><h3 class="text-xl font-bold">Category Map</h3><button onclick="app.showCatTool()" class="w-11 h-11 rounded-2xl bg-black text-white flex items-center justify-center active:scale-90 transition-all"><i data-lucide="plus" class="w-6 h-6"></i></button></div>
                             <div id="cat-tool" class="hidden bg-white p-6 rounded-[2.5rem] apple-shadow space-y-6 animate-fade-in border border-white">
                                 <input type="text" id="new-cat-name" placeholder="Class Name" class="w-full p-4 rounded-2xl bg-gray-50 font-bold outline-none border-2 border-transparent focus:border-blue-500 transition-all">
                                 <div class="flex flex-wrap gap-3 max-h-40 overflow-y-auto hide-scrollbar">
                                     ${LUCIDE_BANK.map(i => `<button onclick="app.pickIcon('${i}')" class="cat-icon-btn w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center transition-all" data-icon="${i}"><i data-lucide="${i}" class="w-5 h-5"></i></button>`).join('')}
                                 </div>
-                                <button onclick="app.commitCategory()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold uppercase tracking-widest text-xs">Append Class</button>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                ${this.state.categories.map(c => `<div class="bg-white p-5 rounded-[2.5rem] apple-shadow flex items-center gap-4 border border-white"><div class="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center"><i data-lucide="${c.icon}" class="w-5 h-5 text-gray-400"></i></div><span class="text-xs font-bold truncate">${c.name}</span></div>`).join('')}
+                                <button onclick="app.commitCategory()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold uppercase tracking-widest text-xs">Register Category</button>
                             </div>
                         </section>
-                        <button onclick="app.reset()" class="w-full py-5 text-red-500 font-bold border-2 border-red-50 rounded-[2.2rem] text-xs uppercase tracking-widest active:bg-red-50 transition-all">Purge Local Repository</button>
-                        <div class="text-center">
-                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Swipe down to refresh cloud data</p>
-                        </div>
+                        <button onclick="app.reset()" class="w-full py-5 text-red-500 font-bold border-2 border-red-50 rounded-2xl text-xs uppercase tracking-widest active:bg-red-50 transition-all">Reset Application Cache</button>
                     </div>
                 `;
                 lucide.createIcons();
@@ -722,7 +1136,7 @@
                 this.state.categories.push({ id: 'cat_' + Date.now(), name, icon: this.selectedIcon, color: THEME_COLORS[this.state.categories.length % THEME_COLORS.length] });
                 this.save(); this.syncToCloud(); this.render(); document.getElementById('cat-tool').classList.add('hidden');
             }
-            reset() { if (confirm("Clear local cache? This will NOT delete cloud data.")) { localStorage.clear(); location.reload(); } }
+            reset() { if (confirm("Clear all local settings? This does not affect cloud storage.")) { localStorage.clear(); location.reload(); } }
         }
 
         window.app = new FinanceApp();
