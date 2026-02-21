@@ -303,8 +303,8 @@
     <!-- Bottom Navigation Bar -->
     <nav class="tab-bar apple-glass apple-shadow rounded-[3rem] px-8 py-4 flex items-center justify-between">
         <button onclick="app.setView('home')" class="tab-item flex flex-col items-center gap-1.5 active" data-view="home">
-            <i data-lucide="layout-grid" class="w-5 h-5"></i>
-            <span class="text-[10px] font-bold uppercase tracking-wider">Dash</span>
+            <i data-lucide="home" class="w-5 h-5"></i>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Home</span>
         </button>
         <button onclick="app.setView('ledger')" class="tab-item flex flex-col items-center gap-1.5 text-gray-400" data-view="ledger">
             <i data-lucide="list" class="w-5 h-5"></i>
@@ -319,11 +319,11 @@
 
         <button onclick="app.setView('analytics')" class="tab-item flex flex-col items-center gap-1.5 text-gray-400" data-view="analytics">
             <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
-            <span class="text-[10px] font-bold uppercase tracking-wider">Stats</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Analytics</span>
         </button>
         <button onclick="app.setView('profile')" class="tab-item flex flex-col items-center gap-1.5 text-gray-400" data-view="profile">
             <i data-lucide="user-circle" class="w-5 h-5"></i>
-            <span class="text-[10px] font-bold uppercase tracking-wider">Self</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Aira Panel</span>
         </button>
     </nav>
 
@@ -659,8 +659,8 @@
                 };
                 localStorage.setItem('ifi_identity', JSON.stringify(this.state.user)); // Re-introduce local storage for auto-login
                 document.getElementById('onboarding').classList.add('onboarding-hidden');
-                this.syncToCloud(); // Sync user data to cloud
-                this.render();
+                this.render(); // Optimistically render the new user state
+                this.syncToCloud(); // Sync user data to cloud in the background
             }
 
             setView(view) {
@@ -765,10 +765,10 @@
 
                 this.data.transactions.unshift(tx);
                 if (navigator.vibrate) navigator.vibrate(15);
-                this.save();
-                this.syncToCloud();
-                this.render();
+                this.render(); // Optimistically render the new transaction
                 this.toggleModal(false);
+                this.save();
+                this.syncToCloud(); // Sync in the background
                 e.target.reset();
                 document.getElementById('entry-date').value = new Date().toISOString().split('T')[0];
             }
@@ -1062,14 +1062,14 @@
                     amount: amount,
                     categoryId: catId
                 });
-                this.syncToCloud();
-                this.render();
+                this.render(); // Optimistically render the new prediction
+                this.syncToCloud(); // Sync in the background
             }
 
             deletePrediction(id) {
                 this.data.predictions = this.data.predictions.filter(p => p.id !== id);
-                this.syncToCloud();
-                this.render();
+                this.render(); // Optimistically render the change
+                this.syncToCloud(); // Sync in the background
             }
 
             tickPrediction(id) {
@@ -1088,9 +1088,9 @@
                 };
                 this.data.transactions.unshift(tx);
                 this.data.predictions = this.data.predictions.filter(p => p.id !== id);
+                this.render(); // Optimistically render the changes
                 this.save();
-                this.syncToCloud();
-                this.render();
+                this.syncToCloud(); // Sync in the background
             }
 
             openPredictionDetail(id) {
@@ -1412,8 +1412,8 @@
                     <div class="space-y-8 pb-10">
                         <header class="flex justify-between items-start px-1">
                             <div>
-                                <h2 class="text-3xl font-extrabold tracking-tight sm:text-4xl">${this.state.isOnlineMode ? 'Online' : 'Cloud'} Ledger</h2>
-                                <p class="text-gray-400 text-sm font-medium">Historical transaction records.</p>
+                                <h2 class="text-3xl font-extrabold tracking-tight sm:text-4xl">Activity Log</h2>
+                                <p class="text-gray-400 text-sm font-medium">Organized view of all income, expenses, and credits.</p>
                             </div>
                             <div class="flex gap-2 relative z-10">
                                 <button onclick="app.toggleFilterMenu('category')" class="w-12 h-12 bg-white apple-shadow rounded-2xl flex items-center justify-center ${this.state.categoryFilter !== 'all' ? 'text-blue-600' : 'text-gray-400'} active:scale-95 transition-all flex-shrink-0">
