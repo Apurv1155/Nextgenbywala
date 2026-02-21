@@ -463,6 +463,47 @@
                         predictions: [],
                         monthlyBudget: 50000
                     },
+                    user: { 
+                        name: 'Aira',
+                        joined: new Date().toISOString(), 
+                        avatar: `https://api.dicebear.com/7.x/notionists/svg?seed=Aira` 
+                    },
+                    currentFilter: 'all',
+                    categoryFilter: 'all',
+                    dateFilter: 'all',
+                    customStartDate: null,
+                    customEndDate: null,
+                    ledgerSort: 'newest',
+                    activeMenu: null
+                };
+            }
+
+            save() {
+                localStorage.setItem('ifi_state', JSON.stringify(this.state));
+            }
+
+            load() {
+                const savedState = localStorage.getItem('ifi_state');
+                if (savedState) {
+                    return JSON.parse(savedState);
+                }
+                // Default initial state if nothing is saved
+                return {
+                    isOnlineMode: false,
+                    offline: {
+                        transactions: [],
+                        categories: [...INITIAL_CATEGORIES],
+                        categoryBudgets: {},
+                        predictions: [],
+                        monthlyBudget: 50000
+                    },
+                    online: {
+                        transactions: [],
+                        categories: [...INITIAL_CATEGORIES],
+                        categoryBudgets: {},
+                        predictions: [],
+                        monthlyBudget: 50000
+                    },
                     user: null,
                     currentFilter: 'all',
                     categoryFilter: 'all',
@@ -531,9 +572,10 @@
                 if (this.state.isOnlineMode) {
                     document.body.classList.add('pink-mode');
                 }
-                if (this.state.user) {
+                if (!this.state.user) {
+                    this.completeOnboarding('Aira');
+                } else {
                     document.getElementById('onboarding').classList.add('onboarding-hidden');
-                    // Pull full state from cloud on startup
                     this.loadFromCloud();
                 }
                 document.getElementById('entry-form').addEventListener('submit', (e) => this.handleCommit(e));
