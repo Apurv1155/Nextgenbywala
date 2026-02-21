@@ -302,13 +302,13 @@
 
     <!-- Bottom Navigation Bar -->
     <nav class="tab-bar apple-glass apple-shadow rounded-[3rem] px-8 py-4 flex items-center justify-between">
-        <button onclick="app.setView('home')" class="tab-item flex flex-col items-center gap-1.5 active" data-view="home">
+        <button onclick="app.setView('home')" class="tab-item flex flex-col items-center gap-1 active" data-view="home">
             <i data-lucide="home" class="w-5 h-5"></i>
-            <span class="text-[10px] font-bold uppercase tracking-wider">Home</span>
+            <span class="text-[8px] font-bold uppercase tracking-wider">Home</span>
         </button>
-        <button onclick="app.setView('ledger')" class="tab-item flex flex-col items-center gap-1.5 text-gray-400" data-view="ledger">
+        <button onclick="app.setView('ledger')" class="tab-item flex flex-col items-center gap-1 text-gray-400" data-view="ledger">
             <i data-lucide="list" class="w-5 h-5"></i>
-            <span class="text-[10px] font-bold uppercase tracking-wider">Logs</span>
+            <span class="text-[8px] font-bold uppercase tracking-wider">Logs</span>
         </button>
         
         <div class="fab-container">
@@ -317,13 +317,13 @@
             </button>
         </div>
 
-        <button onclick="app.setView('analytics')" class="tab-item flex flex-col items-center gap-1.5 text-gray-400" data-view="analytics">
+        <button onclick="app.setView('analytics')" class="tab-item flex flex-col items-center gap-1 text-gray-400" data-view="analytics">
             <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
-            <span class="text-[10px] font-bold uppercase tracking-wider">Analytics</span>
+            <span class="text-[8px] font-bold uppercase tracking-wider">Analytics</span>
         </button>
-        <button onclick="app.setView('profile')" class="tab-item flex flex-col items-center gap-1.5 text-gray-400" data-view="profile">
+        <button onclick="app.setView('profile')" class="tab-item flex flex-col items-center gap-1 text-gray-400" data-view="profile">
             <i data-lucide="user-circle" class="w-5 h-5"></i>
-            <span class="text-[10px] font-bold uppercase tracking-wider">Aira Panel</span>
+            <span class="text-[8px] font-bold uppercase tracking-wider">Aira Panel</span>
         </button>
     </nav>
 
@@ -1413,7 +1413,7 @@
                         <header class="flex justify-between items-start px-1">
                             <div>
                                 <h2 class="text-3xl font-extrabold tracking-tight sm:text-4xl">Activity Log</h2>
-                                <p class="text-gray-400 text-sm font-medium">Organized view of all income, expenses, and credits.</p>
+                                <p class="text-gray-400 text-xs font-medium">Organized view of all income, expenses, and credits.</p>
                             </div>
                             <div class="flex gap-2 relative z-10">
                                 <button onclick="app.toggleFilterMenu('category')" class="w-12 h-12 bg-white apple-shadow rounded-2xl flex items-center justify-center ${this.state.categoryFilter !== 'all' ? 'text-blue-600' : 'text-gray-400'} active:scale-95 transition-all flex-shrink-0">
