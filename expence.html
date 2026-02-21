@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -421,15 +422,32 @@
 
         class FinanceApp {
             constructor() {
-                const savedUser = localStorage.getItem('ifi_identity');
-                
                 this.currentView = 'home';
                 this.isSyncing = false;
                 this.syncUrl = DEPLOY_URL;
                 this.isLedgerMenuOpen = false;
                 
-                // Initial empty state, will be populated from cloud
-                this.state = {
+                this.state = this.load();
+                this.data = this.state.isOnlineMode ? this.state.online : this.state.offline;
+
+                this.startY = 0;
+                this.currentY = 0;
+                this.isPulling = false;
+
+                this.init();
+            }
+
+            save() {
+                localStorage.setItem('ifi_state', JSON.stringify(this.state));
+            }
+
+            load() {
+                const savedState = localStorage.getItem('ifi_state');
+                if (savedState) {
+                    return JSON.parse(savedState);
+                }
+                // Default initial state if nothing is saved
+                return {
                     isOnlineMode: false,
                     offline: {
                         transactions: [],
@@ -445,7 +463,7 @@
                         predictions: [],
                         monthlyBudget: 50000
                     },
-                    user: savedUser ? JSON.parse(savedUser) : null, // User will be loaded from cloud, or from local storage for auto-login
+                    user: null,
                     currentFilter: 'all',
                     categoryFilter: 'all',
                     dateFilter: 'all',
@@ -454,14 +472,6 @@
                     ledgerSort: 'newest',
                     activeMenu: null
                 };
-                
-                this.data = this.state.offline;
-
-                this.startY = 0;
-                this.currentY = 0;
-                this.isPulling = false;
-
-                this.init();
             }
 
             toggleMode() {
