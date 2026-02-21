@@ -430,6 +430,7 @@
                 this.currentView = 'home';
                 this.isSyncing = false;
                 this.syncUrl = DEPLOY_URL;
+                this.isLedgerMenuOpen = false;
                 
                 // Initial empty state, will be populated from cloud
                 this.state = {
@@ -1466,9 +1467,7 @@
                                 <button onclick="app.setLedgerSort('${this.state.ledgerSort === 'newest' ? 'highest' : 'newest'}')" class="w-12 h-12 bg-white apple-shadow rounded-2xl flex items-center justify-center text-gray-400 active:text-blue-600 transition-colors flex-shrink-0">
                                     <i data-lucide="${this.state.ledgerSort === 'newest' ? 'arrow-up-narrow-wide' : 'clock'}" class="w-5 h-5"></i>
                                 </button>
-                                <button onclick="app.exportToCSV()" class="w-12 h-12 bg-white apple-shadow rounded-2xl flex items-center justify-center text-gray-400 active:text-blue-600 transition-colors flex-shrink-0">
-                                    <i data-lucide="download" class="w-5 h-5"></i>
-                                </button>
+
                             </div>
                         </header>
 
@@ -1485,8 +1484,13 @@
                             </div>
                         ` : ''}
 
-                        <div class="flex gap-3 overflow-x-auto hide-scrollbar py-2 px-1">
-                            ${['all', 'expense', 'credit', 'saving'].map(f => `<button onclick="app.setLedgerFilter('${f}')" class="filter-pill px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${this.state.currentFilter === f ? 'active' : 'bg-white text-gray-400 apple-shadow'} transition-all">${f}</button>`).join('')}
+                        <div class="flex justify-between items-center px-1">
+                            <button onclick="app.toggleLedgerMenu()" class="w-12 h-12 bg-white apple-shadow rounded-2xl flex items-center justify-center text-gray-400 active:text-blue-600 transition-colors flex-shrink-0">
+                                <i data-lucide="menu" class="w-5 h-5"></i>
+                            </button>
+                            <div id="ledger-filter-panel" class="flex gap-3 overflow-x-auto hide-scrollbar py-2 transition-all ${this.state.isLedgerMenuOpen ? 'max-w-full' : 'max-w-0'}">
+                                ${['all', 'expense', 'credit', 'saving'].map(f => `<button onclick="app.setLedgerFilter('${f}')" class="filter-pill px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${this.state.currentFilter === f ? 'active' : 'bg-white text-gray-400 apple-shadow'} transition-all">${f}</button>`).join('')}
+                            </div>
                         </div>
                         <div class="space-y-4">${filtered.length ? filtered.map(t => this.txCard(t)).join('') : '<div class="py-24 text-center text-gray-400 italic">No records matching your filters.</div>'}</div>
                     </div>
@@ -1497,6 +1501,11 @@
                 if (navigator.vibrate) navigator.vibrate(5);
                 this.state.currentFilter = f; 
                 this.render(); 
+            }
+
+            toggleLedgerMenu() {
+                this.state.isLedgerMenuOpen = !this.state.isLedgerMenuOpen;
+                this.render();
             }
 
             toggleFilterMenu(type) {
