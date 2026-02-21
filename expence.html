@@ -24,6 +24,8 @@
             --apple-bg: #FDF2F8; /* Very light pink background */
             --apple-card: rgba(255, 255, 255, 0.95); /* Slightly more opaque card */
             --accent-color: #FF69B4; /* Soft Pink */
+            --apple-icon-bg-pink: #FFEBF5; /* Very light pink for icons */
+            --apple-fab-pink: #FDB1B3; /* FAB button color for pink mode */
         }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -36,6 +38,13 @@
         }
         .mode-switch-anim {
             animation: modePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        body.mode-switch-anim {
+            filter: brightness(0.9) saturate(1.1);
+        }
+        .tab-bar.mode-switch-anim {
+            transform: translateX(-50%) scale(0.98);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
         }
         @keyframes modePop {
             0% { transform: scale(1); }
@@ -82,9 +91,13 @@
             pointer-events: none;
         }
         .fab-btn {
-            background: linear-gradient(135deg, var(--accent-color), #0056D2);
+            background: linear-gradient(135deg, var(--accent-color), var(--accent-color)); /* Use accent color for uniform background */
             box-shadow: 0 12px 30px rgba(0, 122, 255, 0.4);
             transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.5s ease;
+        }
+        body.pink-mode .fab-btn {
+            background: var(--apple-fab-pink);
+            box-shadow: 0 12px 30px rgba(253, 177, 179, 0.4);
         }
         .fab-btn:active {
             transform: scale(0.85);
@@ -194,6 +207,14 @@
         .quick-btn:active {
             background: #F2F2F7;
             transform: scale(0.95);
+        }
+        .cat-icon-btn {
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .cat-icon-btn.selected-icon {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 2px solid var(--accent-color);
         }
 
         /* Filter Menus */
@@ -405,7 +426,6 @@
         class FinanceApp {
             constructor() {
                 const savedUser = localStorage.getItem('ifi_identity');
-                // We only keep identity in local storage as requested
                 
                 this.currentView = 'home';
                 this.isSyncing = false;
@@ -428,7 +448,7 @@
                         predictions: [],
                         monthlyBudget: 50000
                     },
-                    user: savedUser ? JSON.parse(savedUser) : null,
+                    user: savedUser ? JSON.parse(savedUser) : null, // User will be loaded from cloud, or from local storage for auto-login
                     currentFilter: 'all',
                     categoryFilter: 'all',
                     dateFilter: 'all',
@@ -456,14 +476,25 @@
                 
                 // Animation
                 const avatar = document.getElementById('user-avatar-btn');
+                const tabBar = document.querySelector('.tab-bar');
+
+                document.body.classList.add('mode-switch-anim');
                 if (avatar) {
                     avatar.classList.add('mode-switch-anim');
-                    setTimeout(() => avatar.classList.remove('mode-switch-anim'), 500);
                 }
+                if (tabBar) {
+                    tabBar.classList.add('mode-switch-anim');
+                }
+
+                setTimeout(() => {
+                    document.body.classList.remove('mode-switch-anim');
+                    if (avatar) avatar.classList.remove('mode-switch-anim');
+                    if (tabBar) tabBar.classList.remove('mode-switch-anim');
+                }, 500); // Match existing avatar animation duration
 
                 if (navigator.vibrate) navigator.vibrate([30, 10, 30]);
                 
-                this.save();
+                this.syncToCloud(); // Sync mode change to cloud
                 this.render();
                 
                 // Sync on mode switch if online
@@ -574,7 +605,7 @@
                     setTimeout(() => {
                         this.isSyncing = false;
                         this.render();
-                    }, 1200);
+                    }, 300); // Reduced delay for faster UI update
                 }
             }
 
@@ -596,7 +627,7 @@
                     
                     if (cloudData.user) {
                         this.state.user = cloudData.user;
-                        localStorage.setItem('ifi_identity', JSON.stringify(this.state.user));
+                        localStorage.setItem('ifi_identity', JSON.stringify(this.state.user)); // Re-introduce local storage for auto-login
                     }
 
                     if (cloudData.mode) {
@@ -616,10 +647,6 @@
                 }
             }
 
-            save() {
-                // We no longer save financial data to local storage as per request.
-                // Only identity is kept in constructor/onboarding.
-            }
 
             completeOnboarding() {
                 const name = document.getElementById('user-name-input').value.trim();
@@ -629,9 +656,9 @@
                     joined: new Date().toISOString(), 
                     avatar: `https://api.dicebear.com/7.x/notionists/svg?seed=${name}` 
                 };
-                localStorage.setItem('ifi_identity', JSON.stringify(this.state.user));
+                localStorage.setItem('ifi_identity', JSON.stringify(this.state.user)); // Re-introduce local storage for auto-login
                 document.getElementById('onboarding').classList.add('onboarding-hidden');
-                this.syncToCloud();
+                this.syncToCloud(); // Sync user data to cloud
                 this.render();
             }
 
@@ -827,14 +854,16 @@
             renderHomeSkeleton() {
                 return `
                     <div class="space-y-10 pb-10">
-                        <header class="flex justify-between items-center">
+                        <header class="flex justify-between items-center animate-fade-in">
                             <div class="space-y-1">
                                 <div class="flex items-center gap-2">
-                                    <div class="skeleton h-3 w-24"></div>
+                                    <p class="text-gray-400 text-[10px] font-bold uppercase tracking-[0.1em]">Loading your data...</p>
                                 </div>
-                                <div class="skeleton h-8 w-48"></div>
+                                <h1 class="text-3xl font-black tracking-tight sm:text-4xl"><div class="skeleton h-8 w-48"></div></h1>
                             </div>
-                            <div class="skeleton w-12 h-12 rounded-2xl"></div>
+                            <button id="user-avatar-btn" class="w-12 h-12 rounded-2xl bg-white apple-shadow flex items-center justify-center border-2 ${this.state.isOnlineMode ? 'border-pink-500' : 'border-blue-500'} overflow-hidden p-0.5 transition-all active:scale-90">
+                                <img src="${this.state.user?.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed=User'}" class="w-full h-full object-cover rounded-[1.2rem]">
+                            </button>
                         </header>
 
                         <div class="bg-white p-7 rounded-[2.8rem] apple-shadow border border-white space-y-4">
@@ -934,10 +963,10 @@
             renderLedgerSkeleton() {
                 return `
                     <div class="space-y-8 pb-10">
-                        <header class="flex justify-between items-start px-1">
+                        <header class="flex justify-between items-start px-1 animate-fade-in">
                             <div class="space-y-1">
-                                <div class="skeleton h-8 w-48"></div>
-                                <div class="skeleton h-3 w-32"></div>
+                                <h1 class="text-3xl font-black tracking-tight sm:text-4xl"><div class="skeleton h-8 w-48"></div></h1>
+                                <p class="text-gray-400 text-[10px] font-bold uppercase tracking-[0.1em]">Loading your data...</p>
                             </div>
                             <div class="flex gap-2">
                                 <div class="skeleton w-12 h-12 rounded-2xl"></div>
@@ -1010,7 +1039,7 @@
                     amount: amount,
                     categoryId: this.data.categories[0].id
                 });
-                this.save();
+                this.syncToCloud();
                 this.render();
             }
 
@@ -1032,13 +1061,13 @@
                     amount: amount,
                     categoryId: catId
                 });
-                this.save();
+                this.syncToCloud();
                 this.render();
             }
 
             deletePrediction(id) {
                 this.data.predictions = this.data.predictions.filter(p => p.id !== id);
-                this.save();
+                this.syncToCloud();
                 this.render();
             }
 
@@ -1213,7 +1242,7 @@
                                         <div class="min-w-[135px] bg-white p-3.5 rounded-[1.8rem] apple-shadow border border-white space-y-2">
                                             <div class="flex justify-between items-center">
                                                 <div class="flex items-center gap-1.5 min-w-0">
-                                                    <div class="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center border border-gray-100 flex-shrink-0"><i data-lucide="${c.icon}" class="w-3.5 h-3.5 text-gray-500"></i></div>
+                                                    <div class="w-7 h-7 rounded-lg ${this.state.isOnlineMode ? 'bg-[var(--apple-icon-bg-pink)]' : 'bg-gray-50'} flex items-center justify-center border border-gray-100 flex-shrink-0"><i data-lucide="${c.icon}" class="w-3.5 h-3.5 text-gray-500"></i></div>
                                                     <span class="text-[8.5px] font-bold truncate text-gray-900">${c.name}</span>
                                                 </div>
                                                 ${isOverCat ? '<span class="text-[6.5px] bg-red-500 text-white px-1.5 py-0.5 rounded-full font-black uppercase tracking-widest shadow-sm">Over</span>' : '<span class="text-[6.5px] bg-green-500 text-white px-1.5 py-0.5 rounded-full font-black uppercase tracking-widest shadow-sm">Safe</span>'}
@@ -1276,7 +1305,7 @@
                 return `
                     <div onclick="app.openDetail('${t.id}')" class="bg-white p-4 rounded-[2rem] apple-shadow flex items-center justify-between border border-transparent hover:border-blue-50 active:scale-[0.98] transition-all cursor-pointer">
                         <div class="flex items-center space-x-3 min-w-0">
-                            <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-[#F2F2F7] flex-shrink-0"><i data-lucide="${cat?.icon || 'layers'}" class="w-5 h-5 text-gray-400"></i></div>
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center ${this.state.isOnlineMode ? 'bg-[var(--apple-icon-bg-pink)]' : 'bg-[#F2F2F7]'} flex-shrink-0"><i data-lucide="${cat?.icon || 'layers'}" class="w-5 h-5 text-gray-400"></i></div>
                             <div class="space-y-0.5 flex-1 min-w-0">
                                 <p class="font-bold text-[14px] text-[#1D1D1F] line-clamp-1">${t.description}</p>
                                 <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest truncate">${cat?.name || 'General'}</p>
@@ -1527,14 +1556,12 @@
 
             setBudget(val) {
                 this.data.monthlyBudget = parseFloat(val) || 0;
-                this.save();
                 this.syncToCloud();
                 this.render();
             }
 
             setCategoryBudget(catId, val) {
                 this.data.categoryBudgets[catId] = parseFloat(val) || 0;
-                this.save();
                 this.syncToCloud();
                 this.render();
             }
@@ -1576,7 +1603,7 @@
                                 ${this.data.categories.map(c => `
                                     <div class="bg-white p-5 rounded-[2.2rem] apple-shadow flex items-center justify-between border border-white">
                                         <div class="flex items-center gap-3">
-                                            <div class="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center"><i data-lucide="${c.icon}" class="w-5 h-5 text-gray-400"></i></div>
+                                            <div class="w-10 h-10 rounded-2xl ${this.state.isOnlineMode ? 'bg-[var(--apple-icon-bg-pink)]' : 'bg-gray-50'} flex items-center justify-center"><i data-lucide="${c.icon}" class="w-5 h-5 text-gray-400"></i></div>
                                             <span class="text-sm font-bold">${c.name}</span>
                                         </div>
                                         <div class="flex items-center bg-gray-50 rounded-xl px-3">
@@ -1593,7 +1620,7 @@
                             <div id="cat-tool" class="hidden bg-white p-6 rounded-[2.5rem] apple-shadow space-y-6 animate-fade-in border border-white max-w-sm mx-auto">
                                 <input type="text" id="new-cat-name" placeholder="Class Name" class="w-full p-4 rounded-2xl bg-gray-50 font-bold outline-none border-2 border-transparent focus:border-blue-500 transition-all">
                                 <div class="flex flex-wrap gap-3 max-h-40 overflow-y-auto hide-scrollbar">
-                                    ${LUCIDE_BANK.map(i => `<button onclick="app.pickIcon('${i}')" class="cat-icon-btn w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center transition-all" data-icon="${i}"><i data-lucide="${i}" class="w-5 h-5"></i></button>`).join('')}
+                                    ${LUCIDE_BANK.map(i => `<button onclick="app.pickIcon('${i}')" class="cat-icon-btn w-12 h-12 rounded-2xl ${this.state.isOnlineMode ? 'bg-[var(--apple-icon-bg-pink)]' : 'bg-gray-50'} flex items-center justify-center transition-all" data-icon="${i}"><i data-lucide="${i}" class="w-5 h-5"></i></button>`).join('')}
                                 </div>
                                 <button onclick="app.commitCategory()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold uppercase tracking-widest text-xs">Register Category</button>
                             </div>
@@ -1614,13 +1641,32 @@
             }
 
             showCatTool() { document.getElementById('cat-tool').classList.toggle('hidden'); this.pickIcon('package'); }
-            pickIcon(i) { this.selectedIcon = i; document.querySelectorAll('.cat-icon-btn').forEach(b => { const act = b.dataset.icon === i; b.classList.toggle('bg-blue-600', act); b.classList.toggle('text-white', act); }); }
+            pickIcon(i) { 
+                this.selectedIcon = i; 
+                document.querySelectorAll('.cat-icon-btn').forEach(b => { 
+                    const act = b.dataset.icon === i; 
+                    b.classList.toggle('bg-blue-600', act); 
+                    b.classList.toggle('text-white', act);
+                    b.classList.toggle('selected-icon', act); // Add/remove selected-icon class
+                }); 
+            }
             commitCategory() {
                 const name = document.getElementById('new-cat-name').value.trim(); if (!name) return;
                 this.data.categories.push({ id: 'cat_' + Date.now(), name, icon: this.selectedIcon, color: THEME_COLORS[this.data.categories.length % THEME_COLORS.length] });
-                this.save(); this.syncToCloud(); this.render(); document.getElementById('cat-tool').classList.add('hidden');
+                this.syncToCloud(); this.render(); document.getElementById('cat-tool').classList.add('hidden');
             }
-            reset() { if (confirm("Clear all local settings? This does not affect cloud storage.")) { localStorage.clear(); location.reload(); } }
+            async reset() {
+                if (confirm("Clear all data? This will delete all your financial records from the cloud.")) {
+                    try {
+                        await fetch(this.syncUrl + '?action=resetCloudData'); // Call the new Apps Script function
+                        localStorage.clear(); // Clear any remaining local storage (e.g., identity if it was stored there previously)
+                        location.reload();
+                    } catch (e) {
+                        alert("Failed to reset cloud data. Please try again.");
+                        console.error("Reset failed:", e);
+                    }
+                }
+            }
         }
 
         window.app = new FinanceApp();
