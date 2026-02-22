@@ -273,25 +273,7 @@
         </div>
     </div>
 
-    <!-- Initial Onboarding -->
-    <div id="onboarding" class="onboarding-screen px-10 text-center space-y-12">
-        <div class="relative">
-            <div class="w-28 h-28 bg-blue-600 rounded-[2.8rem] flex items-center justify-center text-white shadow-2xl rotate-3">
-                <i data-lucide="pocket" class="w-14 h-14"></i>
-            </div>
-            <div class="absolute -bottom-2 -right-2 w-11 h-11 bg-green-500 rounded-2xl flex items-center justify-center text-white border-4 border-[#F2F2F7]">
-                <i data-lucide="cloud" class="w-6 h-6"></i>
-            </div>
-        </div>
-        <div class="space-y-4">
-            <h1 class="text-3xl font-extrabold tracking-tight">Identity & Sync</h1>
-            <p class="text-gray-500 text-sm max-w-xs mx-auto leading-relaxed">Securely link your financial records to the cloud with iFinance Pro.</p>
-        </div>
-        <div class="w-full max-w-xs space-y-5">
-            <input type="text" id="user-name-input" placeholder="What's your name?" class="w-full p-5 rounded-3xl bg-white apple-shadow outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-center transition-all border border-transparent">
-            <button onclick="app.completeOnboarding()" class="w-full py-5 bg-black text-white rounded-3xl font-bold active:scale-95 transition-all shadow-xl shadow-black/10">Authorize Ledger</button>
-        </div>
-    </div>
+
 
     <!-- Layout Container -->
     <div id="main-view" class="max-w-xl mx-auto px-4 pt-16 sm:px-6">
@@ -478,46 +460,10 @@
                 };
             }
 
-            save() {
-                localStorage.setItem('ifi_state', JSON.stringify(this.state));
-            }
-
-            load() {
-                const savedState = localStorage.getItem('ifi_state');
-                if (savedState) {
-                    return JSON.parse(savedState);
-                }
-                // Default initial state if nothing is saved
-                return {
-                    isOnlineMode: false,
-                    offline: {
-                        transactions: [],
-                        categories: [...INITIAL_CATEGORIES],
-                        categoryBudgets: {},
-                        predictions: [],
-                        monthlyBudget: 50000
-                    },
-                    online: {
-                        transactions: [],
-                        categories: [...INITIAL_CATEGORIES],
-                        categoryBudgets: {},
-                        predictions: [],
-                        monthlyBudget: 50000
-                    },
-                    user: null,
-                    currentFilter: 'all',
-                    categoryFilter: 'all',
-                    dateFilter: 'all',
-                    customStartDate: null,
-                    customEndDate: null,
-                    ledgerSort: 'newest',
-                    activeMenu: null
-                };
-            }
-
             toggleMode() {
                 this.state.isOnlineMode = !this.state.isOnlineMode;
                 this.data = this.state.isOnlineMode ? this.state.online : this.state.offline;
+                this.save();
                 
                 // Apply theme
                 document.body.classList.toggle('pink-mode', this.state.isOnlineMode);
@@ -572,12 +518,7 @@
                 if (this.state.isOnlineMode) {
                     document.body.classList.add('pink-mode');
                 }
-                if (!this.state.user) {
-                    this.completeOnboarding('Aira');
-                } else {
-                    document.getElementById('onboarding').classList.add('onboarding-hidden');
-                    this.loadFromCloud();
-                }
+                this.loadFromCloud();
                 document.getElementById('entry-form').addEventListener('submit', (e) => this.handleCommit(e));
                 const dt = document.getElementById('entry-date');
                 if (dt) dt.value = new Date().toISOString().split('T')[0];
@@ -676,7 +617,7 @@
                     
                     if (cloudData.user) {
                         this.state.user = cloudData.user;
-                        localStorage.setItem('ifi_identity', JSON.stringify(this.state.user)); // Re-introduce local storage for auto-login
+                        this.save(); // Save user data
                     }
 
                     if (cloudData.mode) {
@@ -694,21 +635,6 @@
                     this.isSyncing = false;
                     this.render();
                 }
-            }
-
-
-            completeOnboarding() {
-                const name = document.getElementById('user-name-input').value.trim();
-                if (!name) return;
-                this.state.user = { 
-                    name, 
-                    joined: new Date().toISOString(), 
-                    avatar: `https://api.dicebear.com/7.x/notionists/svg?seed=${name}` 
-                };
-                localStorage.setItem('ifi_identity', JSON.stringify(this.state.user)); // Re-introduce local storage for auto-login
-                document.getElementById('onboarding').classList.add('onboarding-hidden');
-                this.render(); // Optimistically render the new user state
-                this.syncToCloud(); // Sync user data to cloud in the background
             }
 
             setView(view) {
@@ -817,6 +743,7 @@
                 this.toggleModal(false);
                 this.save();
                 this.syncToCloud(); // Sync in the background
+                this.save();
                 e.target.reset();
                 document.getElementById('entry-date').value = new Date().toISOString().split('T')[0];
             }
@@ -1088,6 +1015,7 @@
                     amount: amount,
                     categoryId: this.data.categories[0].id
                 });
+                this.save();
                 this.syncToCloud();
                 this.render();
             }
@@ -1110,12 +1038,14 @@
                     amount: amount,
                     categoryId: catId
                 });
+                this.save();
                 this.render(); // Optimistically render the new prediction
                 this.syncToCloud(); // Sync in the background
             }
 
             deletePrediction(id) {
                 this.data.predictions = this.data.predictions.filter(p => p.id !== id);
+                this.save();
                 this.render(); // Optimistically render the change
                 this.syncToCloud(); // Sync in the background
             }
@@ -1139,6 +1069,7 @@
                 this.render(); // Optimistically render the changes
                 this.save();
                 this.syncToCloud(); // Sync in the background
+                this.save();
             }
 
             openPredictionDetail(id) {
@@ -1406,6 +1337,7 @@
                     this.data.transactions = this.data.transactions.filter(t => t.id !== id);
                     if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
                     this.save(); this.syncToCloud(); this.closeDetail(); this.render();
+                    this.save();
                 }
             }
 
@@ -1613,12 +1545,14 @@
 
             setBudget(val) {
                 this.data.monthlyBudget = parseFloat(val) || 0;
+                this.save();
                 this.syncToCloud();
                 this.render();
             }
 
             setCategoryBudget(catId, val) {
                 this.data.categoryBudgets[catId] = parseFloat(val) || 0;
+                this.save();
                 this.syncToCloud();
                 this.render();
             }
@@ -1710,6 +1644,7 @@
             commitCategory() {
                 const name = document.getElementById('new-cat-name').value.trim(); if (!name) return;
                 this.data.categories.push({ id: 'cat_' + Date.now(), name, icon: this.selectedIcon, color: THEME_COLORS[this.data.categories.length % THEME_COLORS.length] });
+                this.save();
                 this.syncToCloud(); this.render(); document.getElementById('cat-tool').classList.add('hidden');
             }
             async reset() {
