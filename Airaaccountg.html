@@ -1,0 +1,1667 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>iFinance Pro | Smart Ledger</title>
+    <!-- External Dependencies -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --apple-blue: #007AFF;
+            --apple-bg: #F2F2F7;
+            --apple-card: rgba(255, 255, 255, 0.8);
+            --safe-area-bottom: env(safe-area-inset-bottom);
+            --accent-color: var(--apple-blue);
+        }
+        body.pink-mode {
+            --apple-blue: #FF69B4; /* Soft Pink */
+            --apple-bg: #FDF2F8; /* Very light pink background */
+            --apple-card: rgba(255, 255, 255, 0.95); /* Slightly more opaque card */
+            --accent-color: #FF69B4; /* Soft Pink */
+            --apple-icon-bg-pink: #FFEBF5; /* Very light pink for icons */
+            --apple-fab-pink: #FDB1B3; /* FAB button color for pink mode */
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--apple-bg);
+            color: #1D1D1F;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.5s ease;
+            font-size: 15px; /* Base font size for better readability on mobile */
+        }
+        .mode-switch-anim {
+            animation: modePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        body.mode-switch-anim {
+            filter: brightness(0.9) saturate(1.1);
+        }
+        .tab-bar.mode-switch-anim {
+            transform: translateX(-50%) scale(0.98);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+        @keyframes modePop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2) rotate(5deg); }
+            100% { transform: scale(1); }
+        }
+        .apple-glass {
+            background: var(--apple-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: background 0.5s ease;
+        }
+        .apple-shadow {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+        }
+        .view-section {
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .view-section.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .tab-item.active {
+            color: var(--accent-color);
+        }
+        .tab-bar {
+            position: fixed;
+            bottom: calc(10px + var(--safe-area-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 32px); /* Slightly more padding on smaller screens */
+            max-width: 440px;
+            z-index: 1000;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+        }
+        .tab-bar.keyboard-open {
+            transform: translateX(-50%) translateY(150px);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .fab-btn {
+            background: linear-gradient(135deg, var(--accent-color), var(--accent-color)); /* Use accent color for uniform background */
+            box-shadow: 0 12px 30px rgba(0, 122, 255, 0.4);
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.5s ease;
+        }
+        body.pink-mode .fab-btn {
+            background: var(--apple-fab-pink);
+            box-shadow: 0 12px 30px rgba(253, 177, 179, 0.4);
+        }
+        .fab-btn:active {
+            transform: scale(0.85);
+        }
+        .fab-container {
+            position: relative;
+            top: -32px;
+            filter: drop-shadow(0 8px 16px rgba(0, 122, 255, 0.2));
+        }
+        .onboarding-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--apple-bg);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.6s cubic-bezier(0.8, 0, 0.2, 1);
+        }
+        .onboarding-hidden {
+            transform: translateY(-100%);
+        }
+        .filter-pill {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .filter-pill.active {
+            background-color: #1D1D1F;
+            color: white;
+            transform: scale(1.05);
+        }
+        .modal-content {
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+        #detail-view {
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+        }
+        #detail-view.hidden {
+            transform: translateY(100%);
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .sync-spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* Skeleton Loading */
+        .skeleton {
+            animation: pulse 1.5s infinite ease-in-out;
+            background-color: #E0E0E0; /* Light gray for skeleton */
+            border-radius: 8px;
+        }
+        .pink-mode .skeleton {
+            background-color: #F0D9E7; /* Softer pink for skeleton in pink mode */
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        /* Pull to refresh UI */
+        #ptr-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            pointer-events: none;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            opacity: 0;
+            transform: translateY(-60px);
+        }
+
+        .quick-btn {
+            background: white;
+            border: 1px solid #E5E5EA;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #8E8E93;
+            transition: all 0.2s;
+        }
+        .quick-btn:active {
+            background: #F2F2F7;
+            transform: scale(0.95);
+        }
+        .cat-icon-btn {
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .cat-icon-btn.selected-icon {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 2px solid var(--accent-color);
+        }
+
+        /* Filter Menus */
+        .filter-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 10px;
+            width: 260px; /* Slightly wider for better touch targets */
+            background: white;
+            border-radius: 24px;
+            padding: 12px;
+            z-index: 100;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.05);
+            display: none;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .filter-menu.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .filter-option {
+            width: 100%;
+            padding: 14px 16px; /* Increased padding for better touch targets */
+            border-radius: 14px;
+            text-align: left;
+            font-size: 14px; /* Slightly larger font */
+            font-weight: 600;
+            color: #1D1D1F;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+        }
+        .filter-option:active {
+            background: #F2F2F7;
+            transform: scale(0.98);
+        }
+        .filter-option.selected {
+            background: #F2F2F7;
+            color: var(--apple-blue);
+        }
+    </style>
+</head>
+<body class="pb-32">
+    <!-- Pull to refresh indicator -->
+    <div id="ptr-indicator">
+        <div class="bg-white/80 backdrop-blur-md apple-shadow p-3 rounded-full border border-white/50 flex items-center gap-2">
+            <i data-lucide="refresh-cw" class="w-4 h-4 text-blue-500 sync-spinner"></i>
+            <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Syncing...</span>
+        </div>
+    </div>
+
+
+
+    <!-- Layout Container -->
+    <div id="main-view" class="max-w-xl mx-auto px-4 pt-16 sm:px-6">
+        <div id="view-home" class="view-section active"></div>
+        <div id="view-ledger" class="view-section"></div>
+        <div id="view-analytics" class="view-section"></div>
+        <div id="view-profile" class="view-section"></div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="tab-bar apple-glass apple-shadow rounded-[3rem] px-4 py-4 flex items-center justify-around">
+        <button onclick="app.setView('home')" class="tab-item flex-1 flex justify-center items-center" data-view="home">
+            <i data-lucide="home" class="w-6 h-6"></i>
+        </button>
+        <button onclick="app.setView('ledger')" class="tab-item flex-1 flex justify-center items-center text-gray-400" data-view="ledger">
+            <i data-lucide="list" class="w-6 h-6"></i>
+        </button>
+        
+        <div class="fab-container mx-2">
+            <button onclick="app.toggleModal(true)" class="fab-btn w-16 h-16 rounded-full flex items-center justify-center text-white border-4 border-white">
+                <i data-lucide="plus" class="w-9 h-9"></i>
+            </button>
+        </div>
+
+        <button onclick="app.setView('analytics')" class="tab-item flex-1 flex justify-center items-center text-gray-400" data-view="analytics">
+            <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
+        </button>
+        <button onclick="app.setView('profile')" class="tab-item flex-1 flex justify-center items-center text-gray-400" data-view="profile">
+            <i data-lucide="user-circle" class="w-6 h-6"></i>
+        </button>
+    </nav>
+
+    <!-- Entry Modal -->
+    <div id="entry-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[2000] flex items-end sm:items-center justify-center hidden opacity-0 transition-all duration-300">
+        <div class="modal-content w-full max-w-lg bg-[#F2F2F7] rounded-t-[3.5rem] sm:rounded-[3.5rem] apple-shadow transform translate-y-full">
+            <div class="p-8 space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-bold tracking-tight">New Entry</h3>
+                    <button onclick="app.toggleModal(false)" class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 active:scale-90 transition-all">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                
+                <form id="entry-form" class="space-y-3">
+                    <div class="text-center bg-white p-4 rounded-[2rem] apple-shadow border border-white">
+                        <p class="text-gray-500 text-[9px] font-bold uppercase tracking-widest mb-1">Amount</p>
+                        <div class="flex items-center justify-center text-3xl font-black tracking-tighter relative">
+                            <span class="mr-1 text-gray-400 text-xl">₹</span>
+                            <input type="number" id="entry-amount" placeholder="0" class="bg-transparent w-full text-center outline-none focus:text-blue-600 transition-colors text-gray-900" required>
+                            <button type="button" onclick="document.getElementById('entry-amount').value = ''" class="absolute right-0 text-gray-400 hover:text-red-500 transition-colors">
+                                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <!-- Quick Add Buttons -->
+                        <div class="flex flex-col gap-2 mt-3">
+                            <div id="quick-add-container" class="flex justify-center gap-1 flex-wrap">
+                                <!-- Price shortcuts go here -->
+                            </div>
+                            <div id="shortcut-icons-container" class="flex justify-center gap-2.5">
+                                <!-- Category icons go here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-200 p-1 rounded-[1.2rem] flex">
+                        <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="type" value="expense" checked class="hidden peer">
+                            <div class="py-1.5 text-center text-[9px] font-bold uppercase tracking-widest rounded-[1rem] peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm transition-all text-gray-600">Expense</div>
+                        </label>
+                        <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="type" value="credit" class="hidden peer">
+                            <div class="py-1.5 text-center text-[9px] font-bold uppercase tracking-widest rounded-[1rem] peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm transition-all text-gray-600">Credit</div>
+                        </label>
+                        <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="type" value="saving" class="hidden peer">
+                            <div class="py-1.5 text-center text-[9px] font-bold uppercase tracking-widest rounded-[1rem] peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm transition-all text-gray-600">Saving</div>
+                        </label>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="relative bg-white rounded-[1.2rem] apple-shadow border border-gray-100 focus-within:border-blue-500 transition-all overflow-hidden">
+                                <i data-lucide="tag" class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400"></i>
+                                <select id="entry-category" class="w-full p-3 pl-7 pr-6 bg-transparent text-[11px] font-bold outline-none appearance-none cursor-pointer text-gray-900 truncate"></select>
+                                <i data-lucide="chevron-down" class="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none"></i>
+                            </div>
+                            <div class="relative bg-white rounded-[1.2rem] apple-shadow border border-gray-100 focus-within:border-blue-500 transition-all overflow-hidden">
+                                <i data-lucide="calendar" class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400"></i>
+                                <input type="date" id="entry-date" class="w-full p-3 pl-7 bg-transparent text-[11px] font-bold outline-none cursor-pointer text-gray-900">
+                            </div>
+                        </div>
+                        <div class="relative bg-white rounded-[1.2rem] apple-shadow border border-gray-100 focus-within:border-blue-500 transition-all">
+                            <i data-lucide="edit-3" class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400"></i>
+                            <input type="text" id="entry-desc" placeholder="Notes..." class="w-full p-3 pl-7 bg-transparent text-[11px] font-bold outline-none text-gray-900 placeholder:text-gray-400">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full py-3 bg-black text-white rounded-[1.5rem] font-bold text-sm shadow-2xl active:scale-95 transition-all">Record Activity</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail View -->
+    <div id="detail-view" class="fixed inset-0 bg-[#F2F2F7] z-[3000] hidden px-8 pt-20 pb-10 flex flex-col">
+        <header class="flex justify-between items-center mb-12">
+            <button onclick="app.closeDetail()" class="w-12 h-12 rounded-full bg-white apple-shadow flex items-center justify-center active:scale-90 transition-all">
+                <i data-lucide="chevron-down" class="w-6 h-6"></i>
+            </button>
+            <h3 class="text-lg font-bold">Transaction Details</h3>
+            <div class="w-12 h-12"></div>
+        </header>
+        <div id="detail-content" class="flex-1 overflow-y-auto hide-scrollbar space-y-10 pb-20"></div>
+        <div id="detail-actions" class="grid grid-cols-2 gap-4"></div>
+    </div>
+
+    <script>
+        const THEME_COLORS = ['#007AFF', '#34C759', '#5856D6', '#FF9500', '#FF2D55', '#AF52DE', '#FF3B30', '#5AC8FA', '#FFCC00', '#E5E5EA'];
+        const INITIAL_CATEGORIES = [
+            { id: 'cat_1', name: 'Academics', icon: 'graduation-cap', color: '#007AFF' },
+            { id: 'cat_2', name: 'Books', icon: 'book-open', color: '#5856D6' },
+            { id: 'cat_3', name: 'Family', icon: 'home', color: '#FF9500' },
+            { id: 'cat_4', name: 'Food', icon: 'utensils', color: '#FF2D55' },
+            { id: 'cat_5', name: 'Leisure', icon: 'clapperboard', color: '#AF52DE' }
+        ];
+        const LUCIDE_BANK = ['graduation-cap', 'book-open', 'home', 'utensils', 'bus', 'clapperboard', 'shopping-cart', 'briefcase', 'coffee', 'dumbbell', 'heart', 'smartphone', 'zap', 'camera', 'music', 'package', 'tv', 'wrench', 'gift', 'plane'];
+        const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbzSpg4mX51OnGzZlIWza1KGZa70D6OQkDv_BnO074JDPdVNol6oDLXfWyV92Z6p86KT/exec";
+
+        class FinanceApp {
+            constructor() {
+                this.currentView = 'home';
+                this.isSyncing = false;
+                this.syncUrl = DEPLOY_URL;
+                this.isLedgerMenuOpen = false;
+                
+                this.state = this.load();
+                this.data = this.state.isOnlineMode ? this.state.online : this.state.offline;
+
+                this.startY = 0;
+                this.currentY = 0;
+                this.isPulling = false;
+
+                this.init();
+            }
+
+            save() {
+                localStorage.setItem('ifi_state', JSON.stringify(this.state));
+            }
+
+            load() {
+                const savedState = localStorage.getItem('ifi_state');
+                if (savedState) {
+                    return JSON.parse(savedState);
+                }
+                // Default initial state if nothing is saved
+                return {
+                    isOnlineMode: false,
+                    offline: {
+                        transactions: [],
+                        categories: [...INITIAL_CATEGORIES],
+                        categoryBudgets: {},
+                        predictions: [],
+                        monthlyBudget: 50000
+                    },
+                    online: {
+                        transactions: [],
+                        categories: [...INITIAL_CATEGORIES],
+                        categoryBudgets: {},
+                        predictions: [],
+                        monthlyBudget: 50000
+                    },
+                    user: { 
+                        name: 'Aira',
+                        joined: new Date().toISOString(), 
+                        avatar: `https://api.dicebear.com/7.x/notionists/svg?seed=Aira` 
+                    },
+                    currentFilter: 'all',
+                    categoryFilter: 'all',
+                    dateFilter: 'all',
+                    customStartDate: null,
+                    customEndDate: null,
+                    ledgerSort: 'newest',
+                    activeMenu: null
+                };
+            }
+
+            toggleMode() {
+                this.state.isOnlineMode = !this.state.isOnlineMode;
+                this.data = this.state.isOnlineMode ? this.state.online : this.state.offline;
+                this.save();
+                
+                // Apply theme
+                document.body.classList.toggle('pink-mode', this.state.isOnlineMode);
+                
+                // Animation
+                const avatar = document.getElementById('user-avatar-btn');
+                const tabBar = document.querySelector('.tab-bar');
+
+                document.body.classList.add('mode-switch-anim');
+                if (avatar) {
+                    avatar.classList.add('mode-switch-anim');
+                }
+                if (tabBar) {
+                    tabBar.classList.add('mode-switch-anim');
+                }
+
+                setTimeout(() => {
+                    document.body.classList.remove('mode-switch-anim');
+                    if (avatar) avatar.classList.remove('mode-switch-anim');
+                    if (tabBar) tabBar.classList.remove('mode-switch-anim');
+                }, 500); // Match existing avatar animation duration
+
+                if (navigator.vibrate) navigator.vibrate([30, 10, 30]);
+                
+                this.syncToCloud(); // Sync mode change to cloud
+                this.render();
+                
+                // Sync on mode switch if online
+                if (this.state.isOnlineMode) {
+                    this.loadFromCloud();
+                }
+            }
+
+            setupKeyboardListeners() {
+                const inputs = ['input', 'select', 'textarea'];
+                inputs.forEach(tag => {
+                    document.addEventListener('focusin', (e) => {
+                        if (e.target.tagName.toLowerCase() === tag) {
+                            document.querySelector('.tab-bar')?.classList.add('keyboard-open');
+                        }
+                    });
+                    document.addEventListener('focusout', (e) => {
+                        if (e.target.tagName.toLowerCase() === tag) {
+                            document.querySelector('.tab-bar')?.classList.remove('keyboard-open');
+                        }
+                    });
+                });
+            }
+
+            init() {
+                this.setupKeyboardListeners();
+                if (this.state.isOnlineMode) {
+                    document.body.classList.add('pink-mode');
+                }
+                this.loadFromCloud();
+                document.getElementById('entry-form').addEventListener('submit', (e) => this.handleCommit(e));
+                const dt = document.getElementById('entry-date');
+                if (dt) dt.value = new Date().toISOString().split('T')[0];
+                
+                window.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: true });
+                window.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
+                window.addEventListener('touchend', () => this.handleTouchEnd());
+
+                // Close menus on outside click
+                window.addEventListener('click', (e) => {
+                    if (!e.target.closest('.relative')) {
+                        document.querySelectorAll('.filter-menu').forEach(m => m.classList.remove('active'));
+                    }
+                });
+
+                this.render();
+            }
+
+            handleTouchStart(e) {
+                if (window.scrollY === 0) {
+                    this.startY = e.touches[0].pageY;
+                    this.isPulling = true;
+                }
+            }
+
+            handleTouchMove(e) {
+                if (!this.isPulling) return;
+                this.currentY = e.touches[0].pageY;
+                const diff = this.currentY - this.startY;
+
+                if (diff > 0 && window.scrollY === 0) {
+                    if (e.cancelable) e.preventDefault();
+                    const ptr = document.getElementById('ptr-indicator');
+                    const pull = Math.min(diff / 2.5, 80);
+                    ptr.style.opacity = Math.min(pull / 60, 1);
+                    ptr.style.transform = `translateY(${pull - 60}px)`;
+                } else {
+                    this.isPulling = false;
+                }
+            }
+
+            handleTouchEnd() {
+                if (!this.isPulling) return;
+                const diff = this.currentY - this.startY;
+                const ptr = document.getElementById('ptr-indicator');
+
+                if (diff > 150) {
+                    this.loadFromCloud();
+                }
+
+                ptr.style.opacity = '0';
+                ptr.style.transform = 'translateY(-60px)';
+                this.isPulling = false;
+            }
+
+            async syncToCloud() {
+                if (!this.syncUrl) return;
+                this.isSyncing = true;
+                this.render(); // Render skeleton immediately
+                try {
+                    const payload = {
+                        mode: this.state.isOnlineMode ? 'online' : 'offline',
+                        offline: this.state.offline,
+                        online: this.state.online,
+                        user: this.state.user
+                    };
+                    await fetch(this.syncUrl, {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+                } catch (e) {
+                    console.warn("Background sync failed:", e);
+                } finally {
+                    setTimeout(() => {
+                        this.isSyncing = false;
+                        this.render();
+                    }, 300); // Reduced delay for faster UI update
+                }
+            }
+
+            async loadFromCloud() {
+                if (!this.syncUrl) return;
+                this.isSyncing = true;
+                this.render(); // Render skeleton immediately
+                try {
+                    const res = await fetch(this.syncUrl);
+                    const cloudData = await res.json();
+                    
+                    if (cloudData.status === 'error') {
+                        console.error("Cloud error:", cloudData.message);
+                        return;
+                    }
+
+                    if (cloudData.offline) this.state.offline = cloudData.offline;
+                    if (cloudData.online) this.state.online = cloudData.online;
+                    
+                    if (cloudData.user) {
+                        this.state.user = cloudData.user;
+                        this.save(); // Save user data
+                    }
+
+                    if (cloudData.mode) {
+                        this.state.isOnlineMode = cloudData.mode === 'online';
+                        document.body.classList.toggle('pink-mode', this.state.isOnlineMode);
+                    }
+                    
+                    // Update current data reference
+                    this.data = this.state.isOnlineMode ? this.state.online : this.state.offline;
+                    
+                    this.save();
+                } catch (e) {
+                    console.error("Cloud pull failed", e);
+                } finally {
+                    this.isSyncing = false;
+                    this.render();
+                }
+            }
+
+            setView(view) {
+                if (navigator.vibrate) navigator.vibrate(5);
+                this.currentView = view;
+                document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+                const el = document.getElementById(`view-${view}`);
+                if (el) el.classList.add('active');
+                
+                document.querySelectorAll('.tab-item').forEach(btn => {
+                    const act = btn.dataset.view === view;
+                    btn.classList.toggle('active', act);
+                    btn.classList.toggle('text-gray-400', !act);
+                });
+                this.render();
+            }
+
+            toggleModal(show) {
+                const modal = document.getElementById('entry-modal');
+                const inner = modal.querySelector('.modal-content');
+                if (show) {
+                    modal.classList.remove('hidden');
+                    this.updateDropdown();
+                    this.setShortcutMode('default');
+                    setTimeout(() => { modal.classList.add('opacity-100'); inner.classList.remove('translate-y-full'); }, 10);
+                } else {
+                    modal.classList.remove('opacity-100'); inner.classList.add('translate-y-full');
+                    setTimeout(() => modal.classList.add('hidden'), 300);
+                }
+            }
+
+            setShortcutMode(mode) {
+                this.shortcutMode = mode;
+                const container = document.getElementById('quick-add-container');
+                const iconContainer = document.getElementById('shortcut-icons-container');
+                
+                let prices = [100, 200, 500];
+                if (mode === 'food') prices = [20, 25, 30, 200];
+                if (mode === 'bus') prices = [10, 20, 25, 30, 45];
+                if (mode === 'milk') prices = [10, 20, 35, 45];
+
+                container.innerHTML = prices.map(p => `<button type="button" onclick="app.quickAdd(${p})" class="quick-btn">${p}</button>`).join('') + 
+                    `<button type="button" onclick="document.getElementById('entry-amount').value = ''" class="quick-btn bg-red-50 text-red-500 border-red-100"><i data-lucide="trash-2" class="w-3 h-3"></i></button>`;
+                
+                if (mode !== 'default') {
+                    const descInp = document.getElementById('entry-desc');
+                    if (mode === 'food') { descInp.value = 'vadapav with homees'; this.selectCategoryByName('Foodiee me'); }
+                    if (mode === 'bus') { descInp.value = 'Up down'; this.selectCategoryByName('Up-down'); }
+                    if (mode === 'milk') { descInp.value = 'Milk'; this.selectCategoryByName('Milk and Coffee'); }
+                }
+
+                iconContainer.innerHTML = `
+                    <button type="button" onclick="app.setShortcutMode('food')" class="w-10 h-10 rounded-xl ${mode === 'food' ? 'bg-blue-600 text-white' : 'bg-white text-gray-400'} apple-shadow flex items-center justify-center transition-all"><i data-lucide="utensils" class="w-5 h-5"></i></button>
+                    <button type="button" onclick="app.setShortcutMode('bus')" class="w-10 h-10 rounded-xl ${mode === 'bus' ? 'bg-blue-600 text-white' : 'bg-white text-gray-400'} apple-shadow flex items-center justify-center transition-all"><i data-lucide="bus" class="w-5 h-5"></i></button>
+                    <button type="button" onclick="app.setShortcutMode('milk')" class="w-10 h-10 rounded-xl ${mode === 'milk' ? 'bg-blue-600 text-white' : 'bg-white text-gray-400'} apple-shadow flex items-center justify-center transition-all"><i data-lucide="coffee" class="w-5 h-5"></i></button>
+                `;
+                lucide.createIcons();
+            }
+
+            selectCategoryByName(name) {
+                let cat = this.data.categories.find(c => c.name.toLowerCase().includes(name.toLowerCase()));
+                if (!cat) {
+                    cat = { id: 'cat_' + Date.now(), name, icon: name === 'Food' ? 'utensils' : (name === 'Transport' ? 'bus' : 'coffee'), color: '#007AFF' };
+                    this.data.categories.push(cat);
+                    this.updateDropdown();
+                }
+                document.getElementById('entry-category').value = cat.id;
+            }
+
+            updateDropdown() {
+                const sel = document.getElementById('entry-category');
+                sel.innerHTML = this.data.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            }
+
+            quickAdd(val) {
+                const inp = document.getElementById('entry-amount');
+                const cur = parseFloat(inp.value) || 0;
+                inp.value = cur + val;
+                if (navigator.vibrate) navigator.vibrate(5);
+            }
+
+            handleCommit(e) {
+                e.preventDefault();
+                const fd = new FormData(e.target);
+                const amount = parseFloat(document.getElementById('entry-amount').value);
+                const catId = document.getElementById('entry-category').value;
+                const date = document.getElementById('entry-date').value;
+                const cat = this.data.categories.find(c => c.id === catId);
+                const desc = document.getElementById('entry-desc').value.trim() || (cat?.name || 'New Entry');
+                const time = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+                const tx = {
+                    id: 'tx_' + Date.now(),
+                    type: fd.get('type'),
+                    amount,
+                    categoryId: catId,
+                    date,
+                    time,
+                    description: desc,
+                    timestamp: new Date().toISOString()
+                };
+
+                this.data.transactions.unshift(tx);
+                if (navigator.vibrate) navigator.vibrate(15);
+                this.render(); // Optimistically render the new transaction
+                this.toggleModal(false);
+                this.save();
+                this.syncToCloud(); // Sync in the background
+                this.save();
+                e.target.reset();
+                document.getElementById('entry-date').value = new Date().toISOString().split('T')[0];
+            }
+
+            duplicateTransaction(txId) {
+                const tx = this.data.transactions.find(t => t.id === txId);
+                if (!tx) return;
+                this.closeDetail();
+                this.toggleModal(true);
+                document.getElementById('entry-amount').value = tx.amount;
+                document.getElementById('entry-desc').value = tx.description;
+                document.getElementById('entry-category').value = tx.categoryId;
+                const radios = document.getElementsByName('type');
+                radios.forEach(r => { if(r.value === tx.type) r.checked = true; });
+                if (navigator.vibrate) navigator.vibrate(5);
+            }
+
+            getMetrics() {
+                let balance = 0, savings = 0, spentThisMonth = 0;
+                const now = new Date();
+                this.data.transactions.forEach(t => {
+                    const tDate = new Date(t.date);
+                    if (t.type === 'credit') balance += t.amount;
+                    else if (t.type === 'expense') {
+                        balance -= t.amount;
+                        if (tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear()) {
+                            spentThisMonth += t.amount;
+                        }
+                    }
+                    else if (t.type === 'saving') { balance -= t.amount; savings += t.amount; }
+                });
+                return { balance, savings, spentThisMonth };
+            }
+
+            getTimeGreeting() {
+                const hour = new Date().getHours();
+                if (hour < 12) return "Good Morning";
+                if (hour < 17) return "Good Afternoon";
+                return "Good Evening";
+            }
+
+            formatINR(v) {
+                return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v);
+            }
+
+            exportToCSV() {
+                let csv = 'Date,Description,Category,Type,Amount\n';
+                this.data.transactions.forEach(t => {
+                    const cat = this.data.categories.find(c => c.id === t.categoryId)?.name || 'General';
+                    csv += `${t.date},"${t.description}",${cat},${t.type},${t.amount}\n`;
+                });
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.setAttribute('hidden', '');
+                a.setAttribute('href', url);
+                a.setAttribute('download', `ledger_${this.state.isOnlineMode ? 'online' : 'offline'}_${new Date().toLocaleDateString()}.csv`);
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                if (navigator.vibrate) navigator.vibrate(20);
+            }
+
+            render() {
+                if (this.isSyncing) {
+                    switch(this.currentView) {
+                        case 'home': document.getElementById('view-home').innerHTML = this.renderHomeSkeleton(); break;
+                        case 'ledger': document.getElementById('view-ledger').innerHTML = this.renderLedgerSkeleton(); break;
+                        case 'analytics': document.getElementById('view-analytics').innerHTML = ''; break; // No skeleton for analytics yet
+                        case 'profile': document.getElementById('view-profile').innerHTML = ''; break; // No skeleton for profile yet
+                    }
+                } else {
+                    const { balance, savings, spentThisMonth } = this.getMetrics();
+                    switch(this.currentView) {
+                        case 'home': this.renderHome(balance, savings, spentThisMonth); break;
+                        case 'ledger': this.renderLedger(); break;
+                        case 'analytics': this.renderAnalytics(); break;
+                        case 'profile': this.renderProfile(); break;
+                    }
+                }
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+
+            renderHomeSkeleton() {
+                return `
+                    <div class="space-y-10 pb-10">
+                        <header class="flex justify-between items-center animate-fade-in">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <p class="text-gray-400 text-[10px] font-bold uppercase tracking-[0.1em]">Loading your data...</p>
+                                </div>
+                                <h1 class="text-3xl font-black tracking-tight sm:text-4xl"><div class="skeleton h-8 w-48"></div></h1>
+                            </div>
+                            <button id="user-avatar-btn" class="w-12 h-12 rounded-2xl bg-white apple-shadow flex items-center justify-center border-2 ${this.state.isOnlineMode ? 'border-pink-500' : 'border-blue-500'} overflow-hidden p-0.5 transition-all active:scale-90">
+                                <img src="${this.state.user?.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed=User'}" class="w-full h-full object-cover rounded-[1.2rem]">
+                            </button>
+                        </header>
+
+                        <div class="bg-white p-7 rounded-[2.8rem] apple-shadow border border-white space-y-4">
+                            <div class="flex justify-between items-end">
+                                <div class="space-y-1">
+                                    <div class="skeleton h-3 w-32"></div>
+                                    <div class="skeleton h-8 w-40"></div>
+                                </div>
+                                <div class="skeleton h-3 w-12"></div>
+                            </div>
+                            <div class="skeleton h-2 w-full"></div>
+                            <div class="flex justify-between pt-2 border-t border-gray-50">
+                                <div class="skeleton h-3 w-24"></div>
+                                <div class="skeleton h-3 w-24"></div>
+                            </div>
+                        </div>
+
+                        <section class="space-y-6">
+                            <div class="flex justify-between items-center px-2">
+                                <div class="skeleton h-6 w-40"></div>
+                                <div class="skeleton w-8 h-8 rounded-full"></div>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="bg-white p-5 rounded-[2.2rem] apple-shadow border border-white space-y-4">
+                                    <div class="flex justify-between items-start">
+                                        <div class="space-y-1 flex-1 min-w-0">
+                                            <div class="skeleton h-3 w-32"></div>
+                                            <div class="skeleton h-6 w-48"></div>
+                                        </div>
+                                        <div class="flex gap-1.5 ml-2">
+                                            <div class="skeleton w-9 h-9 rounded-xl"></div>
+                                            <div class="skeleton w-9 h-9 rounded-xl"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-5 rounded-[2.2rem] apple-shadow border border-white space-y-4">
+                                    <div class="flex justify-between items-start">
+                                        <div class="space-y-1 flex-1 min-w-0">
+                                            <div class="skeleton h-3 w-32"></div>
+                                            <div class="skeleton h-6 w-48"></div>
+                                        </div>
+                                        <div class="flex gap-1.5 ml-2">
+                                            <div class="skeleton w-9 h-9 rounded-xl"></div>
+                                            <div class="skeleton w-9 h-9 rounded-xl"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="space-y-6">
+                            <div class="flex justify-between items-center px-2">
+                                <div class="skeleton h-6 w-40"></div>
+                                <div class="skeleton h-3 w-24"></div>
+                            </div>
+                            <div class="flex gap-4 overflow-x-auto hide-scrollbar pb-2 px-1">
+                                <div class="min-w-[135px] bg-white p-3.5 rounded-[1.8rem] apple-shadow border border-white space-y-2">
+                                    <div class="skeleton h-4 w-full"></div>
+                                    <div class="skeleton h-3 w-full"></div>
+                                    <div class="skeleton h-1.5 w-full"></div>
+                                    <div class="skeleton h-3 w-full"></div>
+                                </div>
+                                <div class="min-w-[135px] bg-white p-3.5 rounded-[1.8rem] apple-shadow border border-white space-y-2">
+                                    <div class="skeleton h-4 w-full"></div>
+                                    <div class="skeleton h-3 w-full"></div>
+                                    <div class="skeleton h-1.5 w-full"></div>
+                                    <div class="skeleton h-3 w-full"></div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-white p-4 rounded-[2rem] apple-shadow border border-white">
+                                <div class="skeleton h-3 w-24 mb-1"></div>
+                                <div class="skeleton h-6 w-20"></div>
+                            </div>
+                            <div class="bg-white p-4 rounded-[2rem] apple-shadow border border-white">
+                                <div class="skeleton h-3 w-24 mb-1"></div>
+                                <div class="skeleton h-6 w-20"></div>
+                            </div>
+                        </div>
+
+                        <section class="space-y-6">
+                            <div class="flex justify-between items-center px-2">
+                                <div class="skeleton h-6 w-40"></div>
+                                <div class="skeleton h-3 w-16"></div>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="skeleton h-20 rounded-[2rem]"></div>
+                                <div class="skeleton h-20 rounded-[2rem]"></div>
+                            </div>
+                        </section>
+                    </div>
+                `;
+            }
+
+            renderLedgerSkeleton() {
+                return `
+                    <div class="space-y-8 pb-10">
+                        <header class="flex justify-between items-start px-1 animate-fade-in">
+                            <div class="space-y-1">
+                                <h1 class="text-3xl font-black tracking-tight sm:text-4xl"><div class="skeleton h-8 w-48"></div></h1>
+                                <p class="text-gray-400 text-[10px] font-bold uppercase tracking-[0.1em]">Loading your data...</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <div class="skeleton w-12 h-12 rounded-2xl"></div>
+                                <div class="skeleton w-12 h-12 rounded-2xl"></div>
+                                <div class="skeleton w-12 h-12 rounded-2xl"></div>
+                                <div class="skeleton w-12 h-12 rounded-2xl"></div>
+                            </div>
+                        </header>
+                        <div class="flex gap-3 overflow-x-auto hide-scrollbar py-2 px-1">
+                            <div class="skeleton h-8 w-24 rounded-full"></div>
+                            <div class="skeleton h-8 w-24 rounded-full"></div>
+                            <div class="skeleton h-8 w-24 rounded-full"></div>
+                            <div class="skeleton h-8 w-24 rounded-full"></div>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="bg-white p-4 rounded-[2rem] apple-shadow flex items-center justify-between border border-transparent">
+                                <div class="flex items-center space-x-3 min-w-0">
+                                    <div class="skeleton w-10 h-10 rounded-xl flex-shrink-0"></div>
+                                    <div class="space-y-0.5 flex-1 min-w-0">
+                                        <div class="skeleton h-4 w-32"></div>
+                                        <div class="skeleton h-3 w-24"></div>
+                                    </div>
+                                </div>
+                                <div class="text-right flex-shrink-0">
+                                    <div class="skeleton h-4 w-20"></div>
+                                    <div class="skeleton h-3 w-16 mt-1"></div>
+                                </div>
+                            </div>
+                            <div class="bg-white p-4 rounded-[2rem] apple-shadow flex items-center justify-between border border-transparent">
+                                <div class="flex items-center space-x-3 min-w-0">
+                                    <div class="skeleton w-10 h-10 rounded-xl flex-shrink-0"></div>
+                                    <div class="space-y-0.5 flex-1 min-w-0">
+                                        <div class="skeleton h-4 w-32"></div>
+                                        <div class="skeleton h-3 w-24"></div>
+                                    </div>
+                                </div>
+                                <div class="text-right flex-shrink-0">
+                                    <div class="skeleton h-4 w-20"></div>
+                                    <div class="skeleton h-3 w-16 mt-1"></div>
+                                </div>
+                            </div>
+                            <div class="bg-white p-4 rounded-[2rem] apple-shadow flex items-center justify-between border border-transparent">
+                                <div class="flex items-center space-x-3 min-w-0">
+                                    <div class="skeleton w-10 h-10 rounded-xl flex-shrink-0"></div>
+                                    <div class="space-y-0.5 flex-1 min-w-0">
+                                        <div class="skeleton h-4 w-32"></div>
+                                        <div class="skeleton h-3 w-24"></div>
+                                    </div>
+                                </div>
+                                <div class="text-right flex-shrink-0">
+                                    <div class="skeleton h-4 w-20"></div>
+                                    <div class="skeleton h-3 w-16 mt-1"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Prediction Logic
+            addPrediction() {
+                const desc = prompt("Predicted Item Name (e.g. Monthly Bus):");
+                if (!desc) return;
+                const amount = parseFloat(prompt("Predicted Amount:"));
+                if (isNaN(amount)) return;
+                
+                this.data.predictions.push({
+                    id: 'pred_' + Date.now(),
+                    description: desc,
+                    amount: amount,
+                    categoryId: this.data.categories[0].id
+                });
+                this.save();
+                this.syncToCloud();
+                this.render();
+            }
+
+            togglePredictionForm(show) {
+                const form = document.getElementById('prediction-form');
+                if (form) form.classList.toggle('hidden', !show);
+            }
+
+            commitPrediction(e) {
+                e.preventDefault();
+                const desc = document.getElementById('pred-desc').value.trim();
+                const amount = parseFloat(document.getElementById('pred-amount').value);
+                const catId = document.getElementById('pred-cat').value;
+                if (!desc || isNaN(amount)) return;
+
+                this.data.predictions.push({
+                    id: 'pred_' + Date.now(),
+                    description: desc,
+                    amount: amount,
+                    categoryId: catId
+                });
+                this.save();
+                this.render(); // Optimistically render the new prediction
+                this.syncToCloud(); // Sync in the background
+            }
+
+            deletePrediction(id) {
+                this.data.predictions = this.data.predictions.filter(p => p.id !== id);
+                this.save();
+                this.render(); // Optimistically render the change
+                this.syncToCloud(); // Sync in the background
+            }
+
+            tickPrediction(id) {
+                const pred = this.data.predictions.find(p => p.id === id);
+                if (!pred) return;
+                
+                const tx = {
+                    id: 'tx_' + Date.now(),
+                    type: 'expense',
+                    amount: pred.amount,
+                    categoryId: pred.categoryId,
+                    date: new Date().toISOString().split('T')[0],
+                    time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
+                    description: pred.description,
+                    timestamp: new Date().toISOString()
+                };
+                this.data.transactions.unshift(tx);
+                this.data.predictions = this.data.predictions.filter(p => p.id !== id);
+                this.render(); // Optimistically render the changes
+                this.save();
+                this.syncToCloud(); // Sync in the background
+                this.save();
+            }
+
+            openPredictionDetail(id) {
+                const p = this.data.predictions.find(x => x.id === id);
+                const { balance } = this.getMetrics();
+                alert(`Prediction: ${p.description}\nAmount: ${this.formatINR(p.amount)}\nComparison with Balance: ${((p.amount / balance) * 100).toFixed(1)}% of your current funds.`);
+            }
+
+            renderHome(balance, savings, spentThisMonth) {
+                const container = document.getElementById('view-home');
+                const recent = this.data.transactions.slice(0, 5);
+                const totalPredicted = Object.values(this.data.categoryBudgets).reduce((a, b) => a + b, 0);
+                const budgetProgress = Math.min((spentThisMonth / this.data.monthlyBudget) * 100, 100);
+                const isOver = spentThisMonth > this.data.monthlyBudget;
+                const greeting = this.getTimeGreeting();
+
+                // Calculate category spending
+                const catSpending = {};
+                this.data.transactions.forEach(t => {
+                    if (t.type === 'expense') {
+                        catSpending[t.categoryId] = (catSpending[t.categoryId] || 0) + t.amount;
+                    }
+                });
+
+                container.innerHTML = `
+                    <div class="space-y-10 pb-10">
+                        <header class="flex justify-between items-center animate-fade-in">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <p class="text-gray-400 text-[10px] font-bold uppercase tracking-[0.1em]">${greeting} • <span class="${this.state.isOnlineMode ? 'text-pink-500' : 'text-blue-500'}">${this.state.isOnlineMode ? 'Online' : 'Offline'}</span></p>
+                                    ${this.isSyncing ? '<i data-lucide="refresh-cw" class="w-3 h-3 text-blue-500 sync-spinner"></i>' : ''}
+                                </div>
+                                <h1 class="text-3xl font-black tracking-tight sm:text-4xl">${this.formatINR(balance)}</h1>
+                            </div>
+                            <button id="user-avatar-btn" onclick="app.toggleMode()" class="w-12 h-12 rounded-2xl bg-white apple-shadow flex items-center justify-center border-2 ${this.state.isOnlineMode ? 'border-pink-500' : 'border-blue-500'} overflow-hidden p-0.5 transition-all active:scale-90">
+                                <img src="${this.state.user?.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed=User'}" class="w-full h-full object-cover rounded-[1.2rem]">
+                            </button>
+                        </header>
+
+                        <!-- Budget Tracker Card -->
+                        <div class="bg-white p-7 rounded-[2.8rem] apple-shadow border border-white space-y-4">
+                            <div class="flex justify-between items-end">
+                                <div class="space-y-1">
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Monthly Limit Status</p>
+                                    <p class="text-2xl font-black ${isOver ? 'text-red-500' : 'text-gray-900'} sm:text-3xl">${this.formatINR(spentThisMonth)} <span class="text-gray-300 font-bold text-sm">/ ${this.formatINR(this.data.monthlyBudget)}</span></p>
+                                </div>
+                                <p class="text-[10px] font-black text-gray-400 uppercase">${Math.round(budgetProgress)}%</p>
+                            </div>
+                            <div class="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                <div class="h-full ${isOver ? 'bg-red-500' : 'bg-blue-600'} transition-all duration-1000" style="width: ${budgetProgress}%"></div>
+                            </div>
+                            <div class="flex justify-between pt-2 border-t border-gray-50">
+                                <div>
+                                    <p class="text-[8px] font-bold text-gray-400 uppercase">Remaining Budget</p>
+                                    <p class="text-xs font-bold">${this.formatINR(Math.max(0, this.data.monthlyBudget - spentThisMonth))}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[8px] font-bold text-gray-400 uppercase">Budget Coverage</p>
+                                    <p class="text-xs font-bold text-blue-600">${balance > 0 ? ((this.data.monthlyBudget / balance) * 100).toFixed(0) : 0}%</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Predicted Spending Section -->
+                        <section class="space-y-6">
+                            <div class="flex justify-between items-center px-2">
+                                <h2 class="text-xl font-bold tracking-tight sm:text-2xl">Predicted Spending</h2>
+                                <button onclick="app.togglePredictionForm(true)" class="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center active:scale-90 transition-all"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                            </div>
+
+                            <!-- Graphical Prediction Form -->
+                            <div id="prediction-form" class="hidden bg-white p-6 rounded-[2.5rem] apple-shadow border border-white space-y-6 animate-fade-in">
+                                <div class="flex justify-between items-center">
+                                    <p class="text-[12px] font-bold text-gray-500 uppercase tracking-widest">New Prediction</p>
+                                    <button onclick="app.togglePredictionForm(false)" class="text-gray-400 hover:text-red-500 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                                </div>
+                                <form onsubmit="app.commitPrediction(event)" class="space-y-5">
+                                    <input type="text" id="pred-desc" placeholder="Item Name (e.g. Bus Fare)" class="w-full p-5 rounded-[1.5rem] bg-gray-100/50 font-bold outline-none border-2 border-gray-100 focus:border-blue-500 transition-all text-[15px] text-gray-900 placeholder:text-gray-400" required>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <input type="number" id="pred-amount" placeholder="Amount" class="w-full p-5 rounded-[1.5rem] bg-gray-100/50 font-bold outline-none border-2 border-gray-100 focus:border-blue-500 transition-all text-[15px] text-gray-900 placeholder:text-gray-400" required>
+                                        <div class="relative">
+                                            <select id="pred-cat" class="w-full p-5 rounded-[1.5rem] bg-gray-100/50 font-bold outline-none border-2 border-gray-100 focus:border-blue-500 transition-all text-[15px] text-gray-900 appearance-none">
+                                                ${this.data.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                                            </select>
+                                            <i data-lucide="chevron-down" class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"></i>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="w-full py-5 bg-blue-600 text-white rounded-[1.5rem] font-bold uppercase tracking-widest text-[12px] shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Add Prediction</button>
+                                </form>
+                            </div>
+
+                            <div class="space-y-4">
+                                ${this.data.predictions.map(p => {
+                                    const progress = Math.min((spentThisMonth / p.amount) * 100, 100);
+                                    const diff = balance - p.amount;
+                                    return `
+                                        <div class="bg-white p-5 rounded-[2.2rem] apple-shadow border border-white space-y-4">
+                                            <div class="flex justify-between items-start">
+                                                <div onclick="app.openPredictionDetail('${p.id}')" class="cursor-pointer group flex-1 min-w-0">
+                                                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest group-hover:text-blue-600 transition-colors truncate">${p.description}</p>
+                                                    <p class="text-xl font-black text-gray-900">${this.formatINR(p.amount)}</p>
+                                                </div>
+                                                <div class="flex gap-1.5 ml-2">
+                                                    <button onclick="app.tickPrediction('${p.id}')" class="w-9 h-9 rounded-xl bg-green-50 text-green-600 flex items-center justify-center active:scale-90 transition-all border border-green-100"><i data-lucide="check" class="w-4.5 h-4.5"></i></button>
+                                                    <button onclick="app.deletePrediction('${p.id}')" class="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center active:scale-90 transition-all border border-red-100"><i data-lucide="trash-2" class="w-4.5 h-4.5"></i></button>
+                                                </div>
+                                            </div>
+                                            <div class="space-y-2.5">
+                                                <div class="flex justify-between items-center text-[9px] font-bold uppercase">
+                                                    <span class="text-gray-500 truncate mr-2">Bal - Pred: <span class="text-gray-900">${this.formatINR(diff)}</span></span>
+                                                    <span class="${diff < 0 ? 'bg-red-500 text-white' : 'bg-green-500 text-white'} px-2.5 py-1 rounded-full font-black uppercase tracking-widest shadow-md whitespace-nowrap">${diff < 0 ? 'Short' : 'Safe'}</span>
+                                                </div>
+                                                <div class="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                                                    <div class="h-full bg-blue-600 transition-all duration-1000" style="width: ${progress}%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                                ${this.data.predictions.length === 0 ? `
+                                    <div class="bg-white p-8 rounded-[2.5rem] apple-shadow border border-white text-center space-y-4">
+                                        <div class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto">
+                                            <i data-lucide="sparkles" class="w-8 h-8 text-blue-500"></i>
+                                        </div>
+                                        <div class="space-y-1">
+                                            <p class="font-bold text-sm">No predictions yet</p>
+                                            <p class="text-[10px] text-gray-400 uppercase font-bold">Plan your future expenses here</p>
+                                        </div>
+                                        <button onclick="app.togglePredictionForm(true)" class="px-6 py-3 bg-black text-white rounded-2xl text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all">Add First Prediction</button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </section>
+
+                        <!-- Category Predicted Spending -->
+                        <section class="space-y-6">
+                            <div class="flex justify-between items-center px-2">
+                                <h2 class="text-xl font-bold tracking-tight sm:text-2xl">Category Limits</h2>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase">Total: ${this.formatINR(totalPredicted)}</p>
+                            </div>
+                            <div class="flex gap-4 overflow-x-auto hide-scrollbar pb-2 px-1">
+                                ${this.data.categories.map(c => {
+                                    const predicted = this.data.categoryBudgets[c.id] || 0;
+                                    if (predicted === 0) return '';
+                                    const spent = catSpending[c.id] || 0;
+                                    const available = predicted - spent;
+                                    const progress = Math.min((spent / predicted) * 100, 100);
+                                    const isOverCat = spent > predicted;
+                                    return `
+                                        <div class="min-w-[135px] bg-white p-3.5 rounded-[1.8rem] apple-shadow border border-white space-y-2">
+                                            <div class="flex justify-between items-center">
+                                                <div class="flex items-center gap-1.5 min-w-0">
+                                                    <div class="w-7 h-7 rounded-lg ${this.state.isOnlineMode ? 'bg-[var(--apple-icon-bg-pink)]' : 'bg-gray-50'} flex items-center justify-center border border-gray-100 flex-shrink-0"><i data-lucide="${c.icon}" class="w-3.5 h-3.5 text-gray-500"></i></div>
+                                                    <span class="text-[8.5px] font-bold truncate text-gray-900">${c.name}</span>
+                                                </div>
+                                                ${isOverCat ? '<span class="text-[6.5px] bg-red-500 text-white px-1.5 py-0.5 rounded-full font-black uppercase tracking-widest shadow-sm">Over</span>' : '<span class="text-[6.5px] bg-green-500 text-white px-1.5 py-0.5 rounded-full font-black uppercase tracking-widest shadow-sm">Safe</span>'}
+                                            </div>
+                                            <div class="space-y-1">
+                                                <div class="flex justify-between text-[7.5px] font-bold uppercase tracking-tight">
+                                                    <span class="text-gray-500">Pred</span>
+                                                    <span class="text-gray-900">${this.formatINR(predicted)}</span>
+                                                </div>
+                                                <div class="flex justify-between text-[7.5px] font-bold uppercase tracking-tight">
+                                                    <span class="text-gray-500">Spent</span>
+                                                    <span class="text-red-500">${this.formatINR(spent)}</span>
+                                                </div>
+                                            </div>
+                                            <div class="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                                                <div class="h-full ${isOverCat ? 'bg-red-500' : 'bg-blue-600'} transition-all duration-700" style="width: ${progress}%"></div>
+                                            </div>
+                                            <div class="flex justify-between items-center pt-0.5">
+                                                <span class="text-[7.5px] text-gray-500 font-bold uppercase tracking-tight">Avail</span>
+                                                <span class="text-[7.5px] ${available < 0 ? 'text-red-500' : 'text-blue-600'} font-bold">${this.formatINR(available)}</span>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                                ${totalPredicted === 0 ? '<div class="w-full py-4 text-center text-gray-400 text-[10px] font-bold uppercase italic">Set category budgets in profile</div>' : ''}
+                            </div>
+                        </section>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-white p-4 rounded-[2rem] apple-shadow border border-white">
+                                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Aira Vault</p>
+                                <p class="text-lg font-bold">${this.formatINR(savings)}</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-[2rem] apple-shadow border border-white">
+                                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Cloud Sync</p>
+                                <div class="flex items-center gap-1.5 overflow-hidden">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                                    <p class="text-xs font-bold text-green-500 truncate">Active</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <section class="space-y-6">
+                            <div class="flex justify-between items-center px-2">
+                                <h2 class="text-xl font-bold tracking-tight">Recent Activity</h2>
+                                <button onclick="app.setView('ledger')" class="text-blue-600 text-[10px] font-bold uppercase tracking-widest">See All</button>
+                            </div>
+                            <div class="space-y-4">
+                                ${recent.length ? recent.map(t => this.txCard(t)).join('') : '<div class="py-20 text-center text-gray-300 italic text-sm">No activity yet. Logs will appear here.</div>'}
+                            </div>
+                        </section>
+                    </div>
+                `;
+            }
+
+            txCard(t) {
+                const cat = this.data.categories.find(c => c.id === t.categoryId);
+                const col = t.type === 'credit' ? 'text-green-500' : (t.type === 'saving' ? 'text-blue-500' : 'text-red-500');
+                const sym = t.type === 'credit' ? '+' : '-';
+                return `
+                    <div onclick="app.openDetail('${t.id}')" class="bg-white p-4 rounded-[2rem] apple-shadow flex items-center justify-between border border-transparent hover:border-blue-50 active:scale-[0.98] transition-all cursor-pointer">
+                        <div class="flex items-center space-x-3 min-w-0">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center ${this.state.isOnlineMode ? 'bg-[var(--apple-icon-bg-pink)]' : 'bg-[#F2F2F7]'} flex-shrink-0"><i data-lucide="${cat?.icon || 'layers'}" class="w-5 h-5 text-gray-400"></i></div>
+                            <div class="space-y-0.5 flex-1 min-w-0">
+                                <p class="font-bold text-[14px] text-[#1D1D1F] line-clamp-1">${t.description}</p>
+                                <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest truncate">${cat?.name || 'General'}</p>
+                            </div>
+                        </div>
+                        <div class="text-right flex-shrink-0">
+                            <p class="font-extrabold text-[14px] ${col}">${sym}${this.formatINR(t.amount)}</p>
+                            <p class="text-[8px] text-gray-300 font-bold uppercase">${new Date(t.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            openDetail(txId) {
+                const tx = this.data.transactions.find(t => t.id === txId);
+                const cat = this.data.categories.find(c => c.id === tx.categoryId);
+                const content = document.getElementById('detail-content');
+                const actions = document.getElementById('detail-actions');
+                const col = tx.type === 'credit' ? 'text-green-500' : (tx.type === 'saving' ? 'text-blue-500' : 'text-red-500');
+                const sym = tx.type === 'credit' ? '+' : '-';
+
+                content.innerHTML = `
+                    <div class="flex flex-col items-center text-center space-y-8">
+                        <div class="w-24 h-24 rounded-[2.8rem] bg-white apple-shadow flex items-center justify-center text-gray-400 border border-white"><i data-lucide="${cat?.icon || 'layers'}" class="w-10 h-10"></i></div>
+                        <h2 class="text-3xl font-extrabold tracking-tight">${tx.description}</h2>
+                        <div class="space-y-1">
+                            <p class="text-5xl font-black tracking-tighter ${col}">${sym}${this.formatINR(tx.amount)}</p>
+                            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400">${tx.type}</p>
+                        </div>
+                        <div class="w-full grid grid-cols-2 gap-4 pt-10 text-left">
+                            <div class="bg-white p-6 rounded-3xl apple-shadow border border-white"><p class="text-[9px] font-bold text-gray-400 uppercase mb-1">Logged On</p><p class="font-bold text-sm">${new Date(tx.date).toLocaleDateString()}</p></div>
+                            <div class="bg-white p-6 rounded-3xl apple-shadow border border-white"><p class="text-[9px] font-bold text-gray-400 uppercase mb-1">Time</p><p class="font-bold text-sm">${tx.time || '--:--'}</p></div>
+                        </div>
+                    </div>
+                `;
+                actions.innerHTML = `
+                    <button onclick="app.deleteTransaction('${tx.id}')" class="py-5 bg-red-50 text-red-500 rounded-[2rem] font-bold text-xs uppercase tracking-widest active:scale-95 transition-all">Delete</button>
+                    <button onclick="app.duplicateTransaction('${tx.id}')" class="py-5 bg-blue-50 text-blue-600 rounded-[2rem] font-bold text-xs uppercase tracking-widest active:scale-95 transition-all">Duplicate</button>
+                    <button onclick="app.closeDetail()" class="col-span-2 py-5 bg-black text-white rounded-[2rem] font-bold text-xs uppercase tracking-widest active:scale-95 transition-all">Close</button>
+                `;
+                document.getElementById('detail-view').classList.remove('hidden');
+                lucide.createIcons();
+            }
+
+            closeDetail() { document.getElementById('detail-view').classList.add('hidden'); }
+
+            deleteTransaction(id) {
+                if (confirm("Permanently delete this entry?")) {
+                    this.data.transactions = this.data.transactions.filter(t => t.id !== id);
+                    if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
+                    this.save(); this.syncToCloud(); this.closeDetail(); this.render();
+                    this.save();
+                }
+            }
+
+            setLedgerSort(mode) {
+                this.state.ledgerSort = mode;
+                if (navigator.vibrate) navigator.vibrate(5);
+                this.render();
+            }
+
+            renderLedger() {
+                const container = document.getElementById('view-ledger');
+                let filtered = this.data.transactions.filter(t => this.state.currentFilter === 'all' || t.type === this.state.currentFilter);
+                
+                // Category Filter
+                if (this.state.categoryFilter !== 'all') {
+                    filtered = filtered.filter(t => t.categoryId === this.state.categoryFilter);
+                }
+
+                // Date Filter
+                const now = new Date();
+                if (this.state.dateFilter === 'week') {
+                    const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    filtered = filtered.filter(t => new Date(t.date) >= lastWeek);
+                } else if (this.state.dateFilter === 'month') {
+                    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+                    filtered = filtered.filter(t => new Date(t.date) >= lastMonth);
+                } else if (this.state.dateFilter === 'custom' && this.state.customStartDate && this.state.customEndDate) {
+                    const start = new Date(this.state.customStartDate);
+                    const end = new Date(this.state.customEndDate);
+                    filtered = filtered.filter(t => {
+                        const d = new Date(t.date);
+                        return d >= start && d <= end;
+                    });
+                }
+
+                // Sorting logic
+                if (this.state.ledgerSort === 'highest') {
+                    filtered = filtered.sort((a, b) => b.amount - a.amount);
+                } else {
+                    filtered = filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+                }
+
+                // Calculate Category Spent
+                let totalSpentInFilter = 0;
+                if (this.state.categoryFilter !== 'all') {
+                    totalSpentInFilter = filtered.reduce((acc, t) => t.type === 'expense' ? acc + t.amount : acc, 0);
+                }
+
+                const activeCat = this.data.categories.find(c => c.id === this.state.categoryFilter);
+
+                container.innerHTML = this.isSyncing ? this.renderLedgerSkeleton() : `
+                    <div class="space-y-8 pb-10">
+                        <header class="flex justify-between items-start px-1">
+                            <div>
+                                <h2 class="text-3xl font-extrabold tracking-tight sm:text-4xl">Activity Log</h2>
+                                <p class="text-gray-400 text-xs font-medium">Organized view of all income, expenses, and credits.</p>
+                            </div>
+                            <div class="flex gap-2 relative z-10">
+                                <button onclick="app.toggleFilterMenu('category')" class="w-12 h-12 bg-white apple-shadow rounded-2xl flex items-center justify-center ${this.state.categoryFilter !== 'all' ? 'text-blue-600' : 'text-gray-400'} active:scale-95 transition-all flex-shrink-0">
+                                    <i data-lucide="layers" class="w-5 h-5"></i>
+                                </button>
+                                <div id="category-menu" class="filter-menu ${this.state.activeMenu === 'category' ? 'active' : ''}">
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 px-2">Filter Category</p>
+                                    <button onclick="app.setCategoryFilter('all')" class="filter-option ${this.state.categoryFilter === 'all' ? 'selected' : ''}">
+                                        <i data-lucide="grid" class="w-4 h-4"></i> All Categories
+                                    </button>
+                                    ${this.data.categories.map(c => `
+                                        <button onclick="app.setCategoryFilter('${c.id}')" class="filter-option ${this.state.categoryFilter === c.id ? 'selected' : ''}">
+                                            <i data-lucide="${c.icon}" class="w-4 h-4"></i> ${c.name}
+                                        </button>
+                                    `).join('')}
+                                </div>
+
+                                <button onclick="app.toggleFilterMenu('date')" class="w-12 h-12 bg-white apple-shadow rounded-2xl flex items-center justify-center ${this.state.dateFilter !== 'all' ? 'text-blue-600' : 'text-gray-400'} active:scale-95 transition-all flex-shrink-0">
+                                    <i data-lucide="calendar" class="w-5 h-5"></i>
+                                </button>
+                                <div id="date-menu" class="filter-menu ${this.state.activeMenu === 'date' ? 'active' : ''}">
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 px-2">Time Range</p>
+                                    <button onclick="app.setDateFilter('all')" class="filter-option ${this.state.dateFilter === 'all' ? 'selected' : ''}">
+                                        <i data-lucide="history" class="w-4 h-4"></i> All Time
+                                    </button>
+                                    <button onclick="app.setDateFilter('week')" class="filter-option ${this.state.dateFilter === 'week' ? 'selected' : ''}">
+                                        <i data-lucide="calendar-days" class="w-4 h-4"></i> Last Week
+                                    </button>
+                                    <button onclick="app.setDateFilter('month')" class="filter-option ${this.state.dateFilter === 'month' ? 'selected' : ''}">
+                                        <i data-lucide="calendar-range" class="w-4 h-4"></i> Last Month
+                                    </button>
+                                    <button onclick="app.setDateFilter('custom')" class="filter-option ${this.state.dateFilter === 'custom' ? 'selected' : ''}">
+                                        <i data-lucide="settings-2" class="w-4 h-4"></i> Custom Range
+                                    </button>
+                                    
+                                    ${this.state.dateFilter === 'custom' ? `
+                                        <div class="mt-4 p-3 bg-gray-50 rounded-2xl space-y-3 animate-fade-in">
+                                            <div class="space-y-1">
+                                                <p class="text-[8px] font-bold text-gray-400 uppercase ml-1">Start Date</p>
+                                                <input type="date" id="custom-start-date" value="${this.state.customStartDate || ''}" class="w-full p-2.5 rounded-xl border border-gray-200 text-xs font-bold outline-none">
+                                            </div>
+                                            <div class="space-y-1">
+                                                <p class="text-[8px] font-bold text-gray-400 uppercase ml-1">End Date</p>
+                                                <input type="date" id="custom-end-date" value="${this.state.customEndDate || ''}" class="w-full p-2.5 rounded-xl border border-gray-200 text-xs font-bold outline-none">
+                                            </div>
+                                            <button onclick="app.applyCustomDateFilter()" class="w-full py-2.5 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest">Apply Filter</button>
+                                        </div>
+                                    ` : ''}
+                                </div>
+
+                                <button onclick="app.setLedgerSort('${this.state.ledgerSort === 'newest' ? 'highest' : 'newest'}')" class="w-12 h-12 bg-white apple-shadow rounded-2xl flex items-center justify-center text-gray-400 active:text-blue-600 transition-colors flex-shrink-0">
+                                    <i data-lucide="${this.state.ledgerSort === 'newest' ? 'arrow-up-narrow-wide' : 'clock'}" class="w-5 h-5"></i>
+                                </button>
+
+                            </div>
+                        </header>
+
+                        ${this.state.categoryFilter !== 'all' ? `
+                            <div class="bg-blue-600 p-6 rounded-[2.5rem] text-white apple-shadow flex justify-between items-center animate-fade-in">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center"><i data-lucide="${activeCat?.icon || 'layers'}" class="w-6 h-6"></i></div>
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase tracking-widest opacity-70">Total Spent in ${activeCat?.name}</p>
+                                        <p class="text-2xl font-black">${this.formatINR(totalSpentInFilter)}</p>
+                                    </div>
+                                </div>
+                                <button onclick="app.setCategoryFilter('all')" class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center active:scale-90 transition-all"><i data-lucide="x" class="w-5 h-5"></i></button>
+                            </div>
+                        ` : ''}
+
+                        <div class="flex justify-between items-center px-1">
+                            <button onclick="app.toggleLedgerMenu()" class="w-12 h-12 bg-white apple-shadow rounded-2xl flex items-center justify-center text-gray-400 active:text-blue-600 transition-colors flex-shrink-0">
+                                <i data-lucide="menu" class="w-5 h-5"></i>
+                            </button>
+                            <div id="ledger-filter-panel" class="flex gap-3 overflow-x-auto hide-scrollbar py-2 transition-all ${this.state.isLedgerMenuOpen ? 'max-w-full' : 'max-w-0'}">
+                                ${['all', 'expense', 'credit', 'saving'].map(f => `<button onclick="app.setLedgerFilter('${f}')" class="filter-pill px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${this.state.currentFilter === f ? 'active' : 'bg-white text-gray-400 apple-shadow'} transition-all">${f}</button>`).join('')}
+                            </div>
+                        </div>
+                        <div class="space-y-4">${filtered.length ? filtered.map(t => this.txCard(t)).join('') : '<div class="py-24 text-center text-gray-400 italic">No records matching your filters.</div>'}</div>
+                    </div>
+                `;
+            }
+
+            setLedgerFilter(f) { 
+                if (navigator.vibrate) navigator.vibrate(5);
+                this.state.currentFilter = f; 
+                this.render(); 
+            }
+
+            toggleLedgerMenu() {
+                this.state.isLedgerMenuOpen = !this.state.isLedgerMenuOpen;
+                this.render();
+            }
+
+            toggleFilterMenu(type) {
+                this.state.activeMenu = (this.state.activeMenu === type) ? null : type;
+                this.render();
+            }
+
+            setCategoryFilter(catId) {
+                this.state.categoryFilter = catId;
+                this.state.activeMenu = null;
+                this.render();
+            }
+
+            setDateFilter(mode) {
+                this.state.dateFilter = mode;
+                if (mode !== 'custom') {
+                    this.state.customStartDate = null;
+                    this.state.customEndDate = null;
+                    this.state.activeMenu = null;
+                }
+                this.render();
+            }
+
+            applyCustomDateFilter() {
+                const start = document.getElementById('custom-start-date').value;
+                const end = document.getElementById('custom-end-date').value;
+                if (!start || !end) return alert("Please select both dates");
+                this.state.customStartDate = start;
+                this.state.customEndDate = end;
+                this.state.activeMenu = null;
+                this.render();
+            }
+
+            renderAnalytics() {
+                const container = document.getElementById('view-analytics');
+                container.innerHTML = `
+                    <div class="space-y-8 pb-10">
+                        <header class="px-1">
+                            <h2 class="text-3xl font-extrabold tracking-tight sm:text-4xl">${this.state.isOnlineMode ? 'Online' : 'Flow'} Stats</h2>
+                            <p class="text-gray-400 text-sm font-medium">Visual distribution of wealth.</p>
+                        </header>
+                        <div class="bg-white p-8 rounded-[3rem] apple-shadow border border-white space-y-6"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Expense Distribution</p><div class="h-64 relative"><canvas id="pieChart"></canvas></div></div>
+                        <div class="bg-white p-8 rounded-[3rem] apple-shadow border border-white space-y-6"><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Recent Activity Trend</p><div class="h-64 relative"><canvas id="barChart"></canvas></div></div>
+                    </div>
+                `;
+                setTimeout(() => this.initCharts(), 100);
+            }
+
+            initCharts() {
+                const exp = this.data.transactions.filter(t => t.type !== 'credit');
+                if (!exp.length) return;
+                const catData = {}; exp.forEach(t => catData[t.categoryId] = (catData[t.categoryId] || 0) + t.amount);
+                new Chart(document.getElementById('pieChart'), { type: 'doughnut', data: { labels: Object.keys(catData).map(id => this.data.categories.find(c => c.id === id)?.name), datasets: [{ data: Object.values(catData), backgroundColor: Object.keys(catData).map(id => this.data.categories.find(c => c.id === id)?.color), borderWidth: 0, spacing: 8 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '82%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 6, usePointStyle: true, font: { size: 10, weight: '700' }, padding: 20 } } } } });
+                const daily = new Array(7).fill(0); exp.forEach(t => daily[new Date(t.date).getDay()] += t.amount);
+                new Chart(document.getElementById('barChart'), { type: 'bar', data: { labels: ['S', 'M', 'T', 'W', 'T', 'F', 'S'], datasets: [{ data: daily, backgroundColor: this.state.isOnlineMode ? '#FF2D55' : '#007AFF', borderRadius: 10, barThickness: 14 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, border: { display: false } }, y: { grid: { display: false }, ticks: { display: false }, border: { display: false } } } } });
+            }
+
+            setBudget(val) {
+                this.data.monthlyBudget = parseFloat(val) || 0;
+                this.save();
+                this.syncToCloud();
+                this.render();
+            }
+
+            setCategoryBudget(catId, val) {
+                this.data.categoryBudgets[catId] = parseFloat(val) || 0;
+                this.save();
+                this.syncToCloud();
+                this.render();
+            }
+
+            renderProfile() {
+                const container = document.getElementById('view-profile');
+                container.innerHTML = `
+                    <div class="space-y-10 pb-10">
+                        <header class="text-center space-y-6">
+                            <div class="relative w-32 h-32 mx-auto">
+                                <div class="w-32 h-32 rounded-[3.2rem] bg-white apple-shadow flex items-center justify-center border-4 ${this.state.isOnlineMode ? 'border-pink-500' : 'border-blue-500'} overflow-hidden p-1">
+                                    <img src="${this.state.user.avatar}" class="w-full h-full object-cover rounded-[2.8rem]">
+                                </div>
+                                <label class="absolute -bottom-2 -right-2 w-10 h-10 bg-black rounded-2xl flex items-center justify-center text-white border-4 border-[#F2F2F7] cursor-pointer">
+                                    <i data-lucide="camera" class="w-4 h-4"></i>
+                                    <input type="file" class="hidden" accept="image/*" onchange="app.handleProfileUpload(event)">
+                                </label>
+                            </div>
+                            <div class="space-y-1">
+                                <h2 class="text-3xl font-extrabold tracking-tight sm:text-4xl">${this.state.user.name}</h2>
+                                <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Account ID: ${this.state.user.joined.split('T')[0]}</p>
+                                <div class="mt-2 px-4 py-1.5 rounded-full ${this.state.isOnlineMode ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'} text-[9px] font-black uppercase tracking-widest inline-block">${this.state.isOnlineMode ? 'Online Mode Active' : 'Offline Mode Active'}</div>
+                            </div>
+                        </header>
+
+                        <!-- Budget Setting -->
+                        <div class="bg-white p-7 rounded-[2.5rem] apple-shadow border border-white space-y-4">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Monthly Spending Limit</p>
+                            <div class="flex items-center bg-gray-50 rounded-2xl px-5">
+                                <span class="font-bold text-gray-300 mr-2">₹</span>
+                                <input type="number" onchange="app.setBudget(this.value)" value="${this.data.monthlyBudget}" class="w-full bg-transparent py-4 font-black text-lg outline-none" placeholder="Limit Amount">
+                            </div>
+                        </div>
+
+                        <!-- Category Budgets -->
+                        <section class="space-y-6">
+                            <div class="px-1"><h3 class="text-xl font-bold">Predicted Spending</h3><p class="text-gray-400 text-[10px] font-bold uppercase">Set limits per category</p></div>
+                            <div class="space-y-3">
+                                ${this.data.categories.map(c => `
+                                    <div class="bg-white p-5 rounded-[2.2rem] apple-shadow flex items-center justify-between border border-white">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-2xl ${this.state.isOnlineMode ? 'bg-[var(--apple-icon-bg-pink)]' : 'bg-gray-50'} flex items-center justify-center"><i data-lucide="${c.icon}" class="w-5 h-5 text-gray-400"></i></div>
+                                            <span class="text-sm font-bold">${c.name}</span>
+                                        </div>
+                                        <div class="flex items-center bg-gray-50 rounded-xl px-3">
+                                            <span class="text-[10px] font-bold text-gray-300 mr-1">₹</span>
+                                            <input type="number" onchange="app.setCategoryBudget('${c.id}', this.value)" value="${this.data.categoryBudgets[c.id] || ''}" class="w-20 bg-transparent py-2 text-right font-bold text-sm outline-none" placeholder="0">
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </section>
+
+                        <section class="space-y-6">
+                            <div class="flex justify-between items-center px-1"><h3 class="text-xl font-bold">Category Map</h3><button onclick="app.showCatTool()" class="w-11 h-11 rounded-2xl bg-black text-white flex items-center justify-center active:scale-90 transition-all"><i data-lucide="plus" class="w-6 h-6"></i></button></div>
+                            <div id="cat-tool" class="hidden bg-white p-6 rounded-[2.5rem] apple-shadow space-y-6 animate-fade-in border border-white max-w-sm mx-auto">
+                                <input type="text" id="new-cat-name" placeholder="Class Name" class="w-full p-4 rounded-2xl bg-gray-50 font-bold outline-none border-2 border-transparent focus:border-blue-500 transition-all">
+                                <div class="flex flex-wrap gap-3 max-h-40 overflow-y-auto hide-scrollbar">
+                                    ${LUCIDE_BANK.map(i => `<button onclick="app.pickIcon('${i}')" class="cat-icon-btn w-12 h-12 rounded-2xl ${this.state.isOnlineMode ? 'bg-[var(--apple-icon-bg-pink)]' : 'bg-gray-50'} flex items-center justify-center transition-all" data-icon="${i}"><i data-lucide="${i}" class="w-5 h-5"></i></button>`).join('')}
+                                </div>
+                                <button onclick="app.commitCategory()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold uppercase tracking-widest text-xs">Register Category</button>
+                            </div>
+                        </section>
+                        <button onclick="app.reset()" class="w-full py-5 text-red-500 font-bold border-2 border-red-50 rounded-2xl text-xs uppercase tracking-widest active:bg-red-50 transition-all">Reset Application Cache</button>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+
+            handleProfileUpload(e) {
+                const f = e.target.files[0]; if (!f) return;
+                const r = new FileReader(); r.onload = (ev) => {
+                    this.state.user.avatar = ev.target.result;
+                    localStorage.setItem('ifi_identity', JSON.stringify(this.state.user));
+                    this.syncToCloud(); this.render();
+                }; r.readAsDataURL(f);
+            }
+
+            showCatTool() { document.getElementById('cat-tool').classList.toggle('hidden'); this.pickIcon('package'); }
+            pickIcon(i) { 
+                this.selectedIcon = i; 
+                document.querySelectorAll('.cat-icon-btn').forEach(b => { 
+                    const act = b.dataset.icon === i; 
+                    b.classList.toggle('bg-blue-600', act); 
+                    b.classList.toggle('text-white', act);
+                    b.classList.toggle('selected-icon', act); // Add/remove selected-icon class
+                }); 
+            }
+            commitCategory() {
+                const name = document.getElementById('new-cat-name').value.trim(); if (!name) return;
+                this.data.categories.push({ id: 'cat_' + Date.now(), name, icon: this.selectedIcon, color: THEME_COLORS[this.data.categories.length % THEME_COLORS.length] });
+                this.save();
+                this.syncToCloud(); this.render(); document.getElementById('cat-tool').classList.add('hidden');
+            }
+            async reset() {
+                if (confirm("Clear all data? This will delete all your financial records from the cloud.")) {
+                    try {
+                        await fetch(this.syncUrl + '?action=resetCloudData'); // Call the new Apps Script function
+                        localStorage.clear(); // Clear any remaining local storage (e.g., identity if it was stored there previously)
+                        location.reload();
+                    } catch (e) {
+                        alert("Failed to reset cloud data. Please try again.");
+                        console.error("Reset failed:", e);
+                    }
+                }
+            }
+        }
+
+        window.app = new FinanceApp();
+    </script>
+</body>
+</html>
