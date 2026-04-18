@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LeadConnect Pro</title>
+<style>
+:root {
+--slate-50: #f8fafc;
+--slate-100: #f1f5f9;
+--slate-200: #e2e8f0;
+--slate-400: #94a3b8;
+--slate-500: #64748b;
+--slate-600: #475569;
+--slate-900: #0f172a;
+--indigo-100: #e0e7ff;
+--indigo-500: #6366f1;
+--indigo-600: #4f46e5;
+--indigo-700: #4338ca;
+--emerald-500: #10b981;
+--emerald-600: #059669;
+--green-200: #bbf7d0;
+--green-500: #22c55e;
+--green-50: rgba(240, 253, 244, 0.3);
+}
+code
+Code
+* {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--slate-50);
+        color: var(--slate-900);
+        min-height: 100vh;
+        padding-bottom: 80px;
+        line-height: 1.5;
+    }
+
+    header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background-color: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px border var(--slate-200);
+        padding: 16px;
+    }
+
+    .header-content {
+        max-width: 448px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    h1 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: -0.025em;
+        color: var(--indigo-600);
+    }
+
+    .counter {
+        background-color: var(--indigo-100);
+        color: var(--indigo-700);
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 9999px;
+    }
+
+    .search-container {
+        max-width: 448px;
+        margin: 16px auto 0;
+        position: relative;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--slate-400);
+        width: 16px;
+        height: 16px;
+    }
+
+    input {
+        width: 100%;
+        background-color: var(--slate-100);
+        border: none;
+        border-radius: 12px;
+        padding: 10px 16px 10px 40px;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+        outline: none;
+    }
+
+    input:focus {
+        box-shadow: 0 0 0 2px var(--indigo-500);
+    }
+
+    main {
+        max-width: 448px;
+        margin: 0 auto;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .lead-card {
+        background-color: white;
+        border-radius: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border: 1px solid var(--slate-100);
+        padding: 16px;
+        transition: all 0.3s ease;
+        position: relative;
+        transform-origin: center;
+    }
+
+    .lead-card.marked {
+        border-color: var(--green-200);
+        background-color: var(--green-50);
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+    }
+
+    .lead-info {
+        flex: 1;
+    }
+
+    .lead-name {
+        font-weight: 600;
+        font-size: 1.125rem;
+        line-height: 1.2;
+        transition: color 0.2s, text-decoration 0.2s;
+    }
+
+    .lead-card.marked .lead-name {
+        color: var(--slate-500);
+        text-decoration: line-through;
+    }
+
+    .lead-address {
+        color: var(--slate-400);
+        font-size: 0.75rem;
+        margin-top: 4px;
+        line-height: 1.4;
+    }
+
+    .btn-check {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        background-color: var(--slate-100);
+        color: var(--slate-400);
+        flex-shrink: 0;
+        margin-left: 12px;
+    }
+
+    .btn-check.active {
+        background-color: var(--green-500);
+        color: white;
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+    }
+
+    .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 16px;
+    }
+
+    .btn-action {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        height: 48px;
+        border-radius: 12px;
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .btn-action:active {
+        transform: scale(0.95);
+    }
+
+    .btn-call {
+        background-color: var(--indigo-600);
+        color: white;
+    }
+
+    .btn-call:hover {
+        background-color: var(--indigo-700);
+    }
+
+    .btn-whatsapp {
+        background-color: var(--emerald-500);
+        color: white;
+    }
+
+    .btn-whatsapp:hover {
+        background-color: var(--emerald-600);
+    }
+
+    .btn-map {
+        width: 48px;
+        height: 48px;
+        background-color: var(--slate-100);
+        color: var(--slate-600);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s;
+        flex-shrink: 0;
+        text-decoration: none;
+    }
+
+    .btn-map:hover {
+        background-color: var(--slate-200);
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 48px 0;
+        color: var(--slate-400);
+    }
+
+    svg {
+        width: 20px;
+        height: 20px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .fade-enter {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    .fade-enter-active {
+        opacity: 1;
+        transform: translateY(0);
+    }
+</style>
+</head>
+<body>
+<header>
+<div class="header-content">
+<h1>LeadConnect</h1>
+<div id="stats" class="counter">0/30 Done</div>
+</div>
+<div class="search-container">
+<svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+<input type="text" id="search-input" placeholder="Search leads...">
+</div>
+</header>
+code
+Code
+<main id="lead-list">
+    <!-- Leads will be injected here -->
+</main>
+
+<script>
+    const LEADS_DATA = [
+        { id: '1', name: 'FABRIKA BLINDS', address: '1 ST FLOOR, RAJVI COMPLEX, Ahmedabad', phone: '098988 22296', mapsUrl: 'https://www.google.com/maps?cid=3668538360634430725' },
+        { id: '2', name: 's3 Blinds', address: 'First Floor 101, Sarthik Square, Ahmedabad', phone: '079 2685 0044', mapsUrl: 'https://www.google.com/maps?cid=5141246433178918697' },
+        { id: '3', name: 'JAF INTERIORS', address: '17/1, Jay Jalaram Society, Ahmedabad', phone: '099241 70743', mapsUrl: 'https://www.google.com/maps?cid=6884481585681164783' },
+        { id: '4', name: 'Shashhwat Decors', address: '702, Corporate Rd, Ahmedabad', phone: '098980 61166', mapsUrl: 'https://www.google.com/maps?cid=11869886990007360005' },
+        { id: '5', name: 'Roller blinds Zebra blinds', address: 'Danilimda, Ahmedabad', phone: '099988 49414', mapsUrl: 'https://www.google.com/maps?cid=14235853405011244904' },
+        { id: '6', name: 'Luxray Decor', address: 'Prakashdeep Apartment, Nava Vadaj, Ahmedabad', phone: '098245 19765', mapsUrl: 'https://www.google.com/maps?cid=8657250006945556728' },
+        { id: '7', name: 'Jai Blinds', address: 'GF 26 A1 TO 26 A8,SHREEJI COMPLEX, Ahmedabad', phone: '097129 19405', mapsUrl: 'https://www.google.com/maps?cid=4965293809580944245' },
+        { id: '8', name: 'BDH Interior Products', address: 'Basement, Shivalay Apartment, Satellite, Ahmedabad', phone: '081416 31695', mapsUrl: 'https://www.google.com/maps?cid=3030097960041197931' },
+        { id: '9', name: 'Salaam Home Furnishing', address: '3, Shaheen Palace, Behrampura, Ahmedabad', phone: '099047 78855', mapsUrl: 'https://www.google.com/maps?cid=6901236563361917911' },
+        { id: '10', name: 'LIGER BLINDS', address: 'Meldi Estate, Gota, Ahmedabad', phone: '098982 79074', mapsUrl: 'https://www.google.com/maps?cid=13951090988933152056' },
+        { id: '11', name: 'Dream curtain blinds', address: 'bhagvat complex, Chanakyapuri, Ahmedabad', phone: '070413 60177', mapsUrl: 'https://www.google.com/maps?cid=12973613634721413799' },
+        { id: '12', name: 'Ditya Decor', address: 'GROUND FLOOR, GRAND EMPORIO, Motera, Ahmedabad', phone: '084697 17070', mapsUrl: 'https://www.google.com/maps?cid=12440998292773816195' },
+        { id: '13', name: 'Joshi Venetian Blinds', address: 'Arun Complex, Ashram Rd, Ahmedabad', phone: '098790 25766', mapsUrl: 'https://www.google.com/maps?cid=3650084195315026392' },
+        { id: '14', name: 'Swan Blinds', address: 'A-101, Ashoka Chamber, Mithakhali Cir, Ahmedabad', phone: '079 2646 7535', mapsUrl: 'https://www.google.com/maps?cid=6096510943563147478' },
+        { id: '15', name: 'Sk Curtains Blinds', address: 'Shop 4, mandir, Naroda, Ahmedabad', phone: '089802 35234', mapsUrl: 'https://www.google.com/maps?cid=4763118079957293793' },
+        { id: '16', name: 'Unique Wallpaper', address: 'Shop no 7, devshrusti, Nikol, Ahmedabad', phone: '097277 67171', mapsUrl: 'https://www.google.com/maps?cid=10609023345411444470' },
+        { id: '17', name: 'Design ID The Furnishing Hub', address: 'B - 323, Shalin Square, Ahmedabad', phone: '095862 73320', mapsUrl: 'https://www.google.com/maps?cid=13099676748981120985' },
+        { id: '18', name: 'Santosh Rolling Shutters', address: 'Gita Mandir Rd, Behrampura, Ahmedabad', phone: '093749 73750', mapsUrl: 'https://www.google.com/maps?cid=1357056192356157614' },
+        { id: '19', name: 'Fabulous Curtains and Blinds', address: 'Ghatlodiya, Ahmedabad', phone: '083203 00721', mapsUrl: 'https://www.google.com/maps?cid=5797345409423662492' },
+        { id: '20', name: 'Chick N Curtains', address: 'Stellar, 210, Sindhu Bhavan Marg, Ahmedabad', phone: '093772 91071', mapsUrl: 'https://www.google.com/maps?cid=17225859900243758607' },
+        { id: '21', name: 'Senosi Blinds', address: 'Rivera Arcade, Prahlad Nagar Rd, Ahmedabad', phone: '099799 93438', mapsUrl: 'https://www.google.com/maps?cid=14406235278046038111' },
+        { id: '22', name: 'OZA INTERIOR PRODUCTS', address: '108, the grand monarch complex, Satellite, Ahmedabad', phone: '097144 19548', mapsUrl: 'https://www.google.com/maps?cid=5689270556881214624' },
+        { id: '23', name: 'JP Furnishing', address: 'Shop 4, Somnath flat, Vasna, Ahmedabad', phone: '076003 39424', mapsUrl: 'https://www.google.com/maps?cid=10082689260408303436' },
+        { id: '24', name: 'Biren Decor Agencies', address: 'Shop No.4,5&8, Manas Complex, Satellite, Ahmedabad', phone: '076003 53055', mapsUrl: 'https://www.google.com/maps?cid=7873740161690827531' },
+        { id: '25', name: 'Royal Curtain', address: 'Shop No.8, Om Centre, Jivraj Park, Ahmedabad', phone: '099988 45885', mapsUrl: 'https://www.google.com/maps?cid=1627010737061125974' },
+        { id: '26', name: 'BOMBAY CURTAIN AND BLINDS', address: 'Danilimda, Ahmedabad', phone: '099988 49414', mapsUrl: 'https://www.google.com/maps?cid=3935617734334058001' },
+        { id: '27', name: 'Siddhi Agency', address: 'B-4, Samudra Complex, Navrangpura, Ahmedabad', phone: '098252 50191', mapsUrl: 'https://www.google.com/maps?cid=13659099715762310789' },
+        { id: '28', name: 'Dk.Curtain', address: 'SHANTI SADAN, Vejalpur, Ahmedabad', phone: '078020 95097', mapsUrl: 'https://www.google.com/maps?cid=12902599089583121019' },
+        { id: '29', name: 'Sulit Decor', address: 'Showroom no.107, Aaron Spectra, Bodakdev, Ahmedabad', phone: '097236 79997', mapsUrl: 'https://www.google.com/maps?cid=7379158456091956899' },
+        { id: '30', name: 'Yash Enterprise', address: 'Shop No.5, Ved Shree, Vastral, Ahmedabad', phone: '090990 18960', mapsUrl: 'https://www.google.com/maps?cid=7171186219219636872' }
+    ];
+
+    let markedLeads = new Set();
+    let searchTerm = '';
+
+    const listElement = document.getElementById('lead-list');
+    const statsElement = document.getElementById('stats');
+    const searchInput = document.getElementById('search-input');
+
+    function cleanPhone(phone) {
+        return phone.replace(/\s+/g, '');
+    }
+
+    function toggleMarked(id) {
+        if (markedLeads.has(id)) {
+            markedLeads.delete(id);
+        } else {
+            markedLeads.add(id);
+        }
+        render();
+    }
+
+    function render() {
+        const filtered = LEADS_DATA.filter(lead => 
+            lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            lead.address.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        statsElement.textContent = `${markedLeads.size}/${LEADS_DATA.length} Done`;
+
+        if (filtered.length === 0) {
+            listElement.innerHTML = `<div class="no-results">No leads found matching "${searchTerm}"</div>`;
+            return;
+        }
+
+        listElement.innerHTML = '';
+        filtered.forEach((lead, index) => {
+            const isMarked = markedLeads.has(lead.id);
+            const phone = cleanPhone(lead.phone);
+            
+            const card = document.createElement('div');
+            card.className = `lead-card ${isMarked ? 'marked' : ''}`;
+            card.style.animation = `fadeSlideUp 0.3s ease forwards ${index * 0.05}s`;
+            card.style.opacity = '0';
+            
+            card.innerHTML = `
+                <div class="card-header">
+                    <div class="lead-info">
+                        <div class="lead-name">${lead.name}</div>
+                        <div class="lead-address">${lead.address}</div>
+                    </div>
+                    <button class="btn-check ${isMarked ? 'active' : ''}" onclick="toggleMarked('${lead.id}')">
+                        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </button>
+                </div>
+                <div class="actions">
+                    <a href="tel:${phone}" class="btn-action btn-call">
+                        <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                        Call
+                    </a>
+                    <a href="https://wa.me/91${phone}" target="_blank" class="btn-action btn-whatsapp">
+                        <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                        WhatsApp
+                    </a>
+                    <a href="${lead.mapsUrl}" target="_blank" class="btn-map">
+                        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    </a>
+                </div>
+            `;
+            listElement.appendChild(card);
+        });
+    }
+
+    searchInput.addEventListener('input', (e) => {
+        searchTerm = e.target.value;
+        render();
+    });
+
+    // Add custom keyframe animation for list emergence
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Initial render
+    render();
+</script>
+</body>
+</html>
