@@ -285,7 +285,7 @@
                 if (!localStorage.getItem(this.KEYS.INTERACTIONS)) localStorage.setItem(this.KEYS.INTERACTIONS, JSON.stringify([]));
                 if (!localStorage.getItem(this.KEYS.CLIENTS)) localStorage.setItem(this.KEYS.CLIENTS, JSON.stringify([]));
                 
-                // Fetch from Sheets on load
+                // Trigger initial fetch from cloud
                 fetchLeadsFromSheets(true);
             }
             load(key) { return JSON.parse(localStorage.getItem(key) || '[]'); }
@@ -325,38 +325,40 @@
         const db = new Database();
 
         async function fetchLeadsFromSheets(silent = false) {
-            if (!GAS_DEPLOY_URL) return;
+            if (!GAS_DEPLOY_URL || GAS_DEPLOY_URL.includes("PASTE_YOUR")) return;
             const icon = document.getElementById('sync-icon');
             if(icon && !silent) icon.classList.add('sync-spin');
             
             try {
-                // Using standard fetch with redirect: follow
                 const response = await fetch(GAS_DEPLOY_URL, { 
                     method: 'GET',
-                    redirect: 'follow',
-                    cache: 'no-cache'
+                    redirect: 'follow'
                 });
+                
                 const text = await response.text();
                 
+                // If it's HTML, GAS is likely asking for login or script is not "Anyone"
+                if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
+                    console.error("GAS returned HTML:", text.substring(0, 200));
+                    throw new Error("Invalid Cloud Response: Please ensure the script is deployed as 'Web App', Execute as 'Me', and 'Who has access: Anyone'.");
+                }
+
                 try {
-                    // Check if response is HTML (Google Login/Error)
-                    if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
-                        throw new Error("Received HTML instead of JSON. Ensure script is deployed as 'Anyone'.");
-                    }
-                    
                     const data = JSON.parse(text);
                     if (data && Array.isArray(data)) {
                         db.saveLeads(data);
-                        if (!silent) alert(`Cloud Sync: Pulled ${data.length} records.`);
-                        handleRoute();
+                        if (!silent) alert(`Synchronization Successful! Records found: ${data.length}`);
+                        handleRoute(); 
+                    } else if (data && data.error) {
+                        throw new Error(data.error);
                     }
                 } catch(pe) {
-                    console.error("Fetch Data Error:", text);
-                    if (!silent) alert("Failed to fetch cloud data. Check console for details.");
+                    console.error("JSON Parse Error:", text);
+                    throw new Error("Cloud script didn't return valid JSON. Check your Apps Script deployment.");
                 }
             } catch (e) {
-                console.error("Fetch error:", e);
-                if (!silent) alert("Failed to connect to cloud.");
+                console.error("Cloud Sync Error:", e);
+                if (!silent) alert(e.message || "Failed to reach the cloud server.");
             } finally {
                 if(icon && !silent) icon.classList.remove('sync-spin');
             }
@@ -367,18 +369,21 @@
             if (syncTimeout) clearTimeout(syncTimeout);
             syncTimeout = setTimeout(() => {
                 syncLeadsToSheets(true);
-            }, 2500); // 2.5 second delay to batch rapid changes
+            }, 3000); // 3 second delay to batch rapid changes
         }
 
         async function syncLeadsToSheets(silent = false) {
-            if (!GAS_DEPLOY_URL) return;
+            if (!GAS_DEPLOY_URL || GAS_DEPLOY_URL.includes("PASTE_YOUR")) return;
             const icon = document.getElementById('sync-icon');
             if(icon && !silent) icon.classList.add('sync-spin');
             try {
                 const leads = db.getLeads();
                 const interactions = db.getInteractions();
-                // Map data for sheets
-                const data = leads.map(l => ({ ...l, interactions: interactions.filter(i => i.leadId === l.id).length }));
+                const data = leads.map(l => ({ 
+                    ...l, 
+                    id: l.id,
+                    interactionCount: interactions.filter(i => i.leadId === l.id).length 
+                }));
                 
                 await fetch(GAS_DEPLOY_URL, { 
                     method: 'POST', 
@@ -387,7 +392,7 @@
                     body: JSON.stringify(data) 
                 });
                 
-                if (!silent) alert("Cloud Sync Successful!");
+                if (!silent) alert("Data pushed to cloud!");
             } catch (e) { 
                 console.error(e); 
                 if (!silent) alert("Sync Failed."); 
@@ -765,16 +770,36 @@
             document.getElementById('agent-chat-area').scrollTop = 9999;
         }
         function resetAgentOptions() {
-            document.getElementById('agent-options').innerHTML = [ {id:'sum', label:'Status Summary'}, {id:'new', label:'Show New'} ].map(o => `<button onclick="handleAgentQuery('${o.id}','${o.label}')" class="px-3 py-1 bg-slate-100 rounded-full text-xs font-bold">${o.label}</button>`).join('');
+            const opts = [
+                {id:'sum', label:'Status Summary'}, 
+                {id:'new', label:'Show New'}, 
+                {id:'sync', label:'Cloud Refresh'},
+                {id:'over', label:'Overdue Tasks'}
+            ];
+            document.getElementById('agent-options').innerHTML = opts.map(o => `<button onclick="handleAgentQuery('${o.id}','${o.label}')" class="px-3 py-1.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-full text-[11px] font-bold transition-transform active:scale-95">${o.label}</button>`).join('');
         }
         function handleAgentQuery(id, label) {
             addAgentMsg(label, true);
             setTimeout(() => {
-                let r = "I'm checking...";
-                if(id === 'sum') r = `You have ${db.getLeads().length} total leads.`;
-                else if(id === 'new') r = `Found ${db.getLeads().filter(x=>x.status===LeadStatus.NEW).length} new leads.`;
+                let r = "I'm checking on that for you...";
+                if(id === 'sum') {
+                    const leads = db.getLeads();
+                    r = `You currently have ${leads.length} total leads in your pipeline.`;
+                }
+                else if(id === 'new') {
+                    const count = db.getLeads().filter(x=>x.status===LeadStatus.NEW).length;
+                    r = `There are ${count} leads in 'New' status waiting for contact.`;
+                }
+                else if(id === 'sync') {
+                    r = "Initiating cloud pull... I'll update the list as soon as data arrives.";
+                    fetchLeadsFromSheets(false);
+                }
+                else if(id === 'over') {
+                    const overdue = db.getTasks().filter(t => !t.isCompleted && new Date(t.dueDate) < new Date());
+                    r = overdue.length ? `You have ${overdue.length} overdue tasks that need attention.` : "No overdue tasks! You're all caught up.";
+                }
                 addAgentMsg(r);
-            }, 500);
+            }, 600);
         }
         resetAgentOptions();
     </script>
