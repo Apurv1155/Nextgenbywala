@@ -569,9 +569,9 @@
 
                 document.getElementById('main-content').innerHTML = `
                     <div class="p-4 md:p-8 w-full max-w-[1800px] mx-auto space-y-6 pb-24 md:pb-12">
-                        <div class="flex flex-col gap-1 text-center md:text-left">
-                            <h1 class="text-xl md:text-3xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
-                            <p class="text-slate-500 text-[10px] md:text-sm uppercase tracking-widest font-medium">Welcome back, Founder.</p>
+                        <div class="flex flex-col gap-1 text-center md:text-left transition-all">
+                            <h1 class="text-xl md:text-3xl font-bold text-slate-800 tracking-tight leading-tight"></h1>
+                            <p class="text-slate-400 text-[10px] md:text-xs uppercase tracking-[0.2em] font-black opacity-80"></p>
                         </div>
 
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
@@ -976,12 +976,12 @@
                                         <div class="flex-1 min-w-0">
                                             <div class="flex justify-between items-start mb-1">
                                                 <h4 class="font-bold text-slate-800 text-sm md:text-base ${s.completed ? 'opacity-50 line-through' : ''}">${s.name}</h4>
-                                                <button onclick="editStageDate('${c.id}', ${idx})" class="text-slate-300 hover:text-indigo-500 transition-colors p-1 relative">
+                                                <div class="relative p-1 rounded-lg hover:bg-indigo-50 transition-colors cursor-pointer text-slate-300 hover:text-indigo-600">
                                                     <i data-lucide="calendar" class="w-4 h-4"></i>
                                                     <input type="date" value="${s.date || ''}" 
                                                            onchange="saveStageDate('${c.id}', ${idx}, this.value)"
-                                                           class="absolute inset-0 opacity-0 cursor-pointer">
-                                                </button>
+                                                           class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                                                </div>
                                             </div>
 
                                             <div class="flex flex-wrap items-center gap-2">
