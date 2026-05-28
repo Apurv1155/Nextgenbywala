@@ -123,8 +123,8 @@
             <div class="absolute top-0 right-0 h-full w-72 bg-white shadow-2xl pointer-events-auto transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col" id="menu-content">
                 <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
                     <div>
-                        <h3 class="font-black text-xl text-slate-800 tracking-tight">Ecosystem</h3>
-                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Control Center</p>
+                        <h3 class="font-black text-xl text-slate-800 tracking-tight">Menu</h3>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Control Panel</p>
                     </div>
                     <button onclick="toggleMenu()" class="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-full transition-all active:scale-95"><i data-lucide="x" class="w-5 h-5"></i></button>
                 </div>
@@ -132,7 +132,7 @@
                     <!-- Items injected by JS -->
                 </div>
                 <div class="p-8 border-t border-slate-50 bg-slate-50/50 text-center">
-                    <p class="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em]">Built for Scale</p>
+                    <p class="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em]">Powered by NextGen</p>
                 </div>
             </div>
         </div>
@@ -622,7 +622,7 @@
                 // Side Menu Items
                 document.getElementById('side-menu-items').innerHTML = `
                     <section>
-                        <p class="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-4 ml-2">Main Utility</p>
+                        <p class="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-4 ml-2">Core Tools</p>
                         <div class="grid gap-2">
                             ${mainRoutes.map(r => `
                                 <a href="#${r.id}" onclick="toggleMenu()" class="flex items-center gap-4 p-4 rounded-2xl transition-all ${current === r.id ? 'bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-sm' : 'text-slate-600 hover:bg-slate-50 border border-transparent'}">
@@ -633,7 +633,7 @@
                         </div>
                     </section>
                     <section>
-                        <p class="text-[10px] font-black uppercase text-rose-400 tracking-[0.2em] mb-4 ml-2">Ecosystem Apps</p>
+                        <p class="text-[10px] font-black uppercase text-rose-400 tracking-[0.2em] mb-4 ml-2">External Tools</p>
                         <div class="grid gap-2">
                             ${moreRoutes.map(r => `
                                 <a href="#${r.id}" onclick="toggleMenu()" class="flex items-center gap-4 p-4 rounded-2xl transition-all ${current === r.id ? 'bg-rose-50 text-rose-600 border border-rose-100 shadow-sm' : 'text-slate-600 hover:bg-slate-50 border border-transparent'}">
@@ -1370,8 +1370,8 @@
                 document.getElementById('main-content').innerHTML = `
                     <div class="p-4 md:p-10 w-full max-w-5xl mx-auto pb-24">
                         <header class="mb-10">
-                            <h1 class="text-3xl font-black text-slate-800 tracking-tight">Retention Dash</h1>
-                            <p class="text-slate-500 text-sm font-medium">Automatic lifecycle management for your clients.</p>
+                            <h1 class="text-3xl font-black text-slate-800 tracking-tight">NextGen Care Center</h1>
+                            <p class="text-slate-500 text-sm font-medium">Organized client relationship</p>
                         </header>
 
                         <div class="space-y-10">
@@ -1390,14 +1390,14 @@
                                     <i data-lucide="calendar-check" class="w-4 h-4"></i> Today's Follow-ups
                                 </h3>
                                 <div class="grid gap-3">
-                                    ${todayF.length ? todayF.map(renderCard).join('') : '<p class="text-center py-6 text-slate-300 text-xs border border-dashed rounded-2xl">No follow-ups scheduled for today.</p>'}
+                                    ${todayF.length ? todayF.map(renderCard).join('') : '<p class="text-center py-6 text-slate-300 text-xs border border-dashed rounded-2xl">Schedule is empty for today</p>'}
                                 </div>
                             </section>
 
                             <!-- Upcoming Section -->
                             <section>
                                 <h3 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                                    <i data-lucide="calendar" class="w-4 h-4"></i> Upcoming Lifecycle Events
+                                    <i data-lucide="calendar" class="w-4 h-4"></i> Next Client Milestones
                                 </h3>
                                 <div class="grid md:grid-cols-2 gap-3">
                                     ${upcoming.map(renderCard).join('')}
@@ -1442,8 +1442,8 @@
                     <div class="p-4 md:p-10 w-full max-w-4xl mx-auto pb-24">
                         <header class="flex justify-between items-center mb-10">
                             <div>
-                                <h1 class="text-3xl font-black text-slate-800 tracking-tight">Message Library</h1>
-                                <p class="text-slate-500 text-sm font-medium">Manage your WhatsApp and Email templates.</p>
+                                <h1 class="text-3xl font-black text-slate-800 tracking-tight">Nextgen Message Library</h1>
+                                <p class="text-slate-500 text-sm font-medium">Organize your communication templates</p>
                             </div>
                             <button onclick="openTemplateModal()" class="bg-indigo-600 text-white p-3 rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 active:scale-95 transition-all">
                                 <i data-lucide="plus"></i>
