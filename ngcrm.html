@@ -213,13 +213,13 @@
                     </div>
 
                     <!-- New Category Input (Hidden by default) -->
-                    <div id="new-cat-area" class="hidden animate-fade-in p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
+                    <div id="new-cat-area" class="hidden animate-fade-in p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3 mx-2">
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Create Tag</p>
-                        <div class="flex gap-2">
-                            <input id="new-cat-name" class="flex-1 px-4 py-2 border border-slate-200 rounded-xl outline-none text-sm font-medium" placeholder="Name">
-                            <input id="new-cat-color" type="color" class="w-10 h-10 p-0.5 bg-white border border-slate-200 rounded-xl cursor-pointer" value="#6366f1">
+                        <div class="flex gap-2 items-center">
+                            <input id="new-cat-name" class="flex-1 px-4 py-3 border border-slate-200 rounded-xl outline-none text-sm font-medium" placeholder="Tag Name">
+                            <input id="new-cat-color" type="color" class="w-12 h-12 p-1 bg-white border border-slate-200 rounded-xl cursor-pointer shrink-0" value="#6366f1">
                         </div>
-                        <button type="button" onclick="saveNewCat()" class="w-full bg-indigo-600 text-white text-xs font-black py-2.5 rounded-xl uppercase tracking-widest shadow-md">Add Tag</button>
+                        <button type="button" onclick="saveNewCat()" class="w-full bg-indigo-600 text-white text-sm font-black py-3 rounded-xl uppercase tracking-widest shadow-md active:scale-95 transition-all">Add Tag</button>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
@@ -272,7 +272,7 @@
 
     <!-- LOGIC -->
     <script>
-        const GAS_DEPLOY_URL = "https://script.google.com/macros/s/AKfycbzjKeEkR3vYkSlQfVD7iv739qsGlADUH8Bmjjhaa3DbfuD_sWhjckOPRlYaIjtMb24Z/exec";
+        const GAS_DEPLOY_URL = "https://script.google.com/macros/s/AKfycbzuk164suIQbqw3nMgLlHW_N6Us6zcGMkohoMry-NK8QcpLEmnFvjvFhFy4IchzAxAX/exec";
 
         const LeadStatus = {
             NEW: 'New', CONTACTED: 'Contacted', FOLLOW_UP: 'Follow-Up', 
@@ -352,9 +352,26 @@
                 autoSync();
             }
             createClient(lead) {
-                const clients = this.getClients(); if (clients.find(c => c.leadId === lead.id)) return;
-                clients.push({ id: crypto.randomUUID(), leadId: lead.id, name: lead.name, serviceType: 'New Client', renewalDate: Date.now() + 30 * 24 * 3600 * 1000 });
+                const clients = this.load(this.KEYS.CLIENTS); 
+                if (clients.find(c => c.leadId === lead.id)) return;
+                
+                const client = { 
+                    ...lead, // Copy all lead data (full row copy)
+                    id: lead.id, // Match the ID
+                    stages: [
+                        { name: "Question Stage", date: "", completed: false },
+                        { name: "Requirement Gathering Stage", date: "", completed: false },
+                        { name: "Development Stage", date: "", completed: false },
+                        { name: "Delivery Stage", date: "", completed: false },
+                        { name: "Payment & Activation Stage", date: "", completed: false },
+                        { name: "Aftercare & Retention Stage", date: "", completed: false }
+                    ],
+                    crmStatus: 'Active',
+                    convertedAt: Date.now()
+                };
+                clients.push(client);
                 this.save(this.KEYS.CLIENTS, clients);
+                autoSync();
             }
         }
         const db = new Database();
@@ -365,38 +382,60 @@
             if(icon && !silent) icon.classList.add('sync-spin');
             
             try {
-                const response = await fetch(GAS_DEPLOY_URL, { 
-                    method: 'GET',
-                    redirect: 'follow'
-                });
+                // 1. Sync Leads
+                const leadRes = await fetch(GAS_DEPLOY_URL + "?sheet=Leads");
+                const leadText = await leadRes.text();
                 
-                const text = await response.text();
+                if (leadText.trim().startsWith("<!DOCTYPE")) throw new Error("Invalid Cloud Response: Check Apps Script deployment settings.");
+
+                const leads = JSON.parse(leadText);
+                if (Array.isArray(leads)) db.saveLeads(leads);
+
+                // 2. Sync CRM (Clients)
+                const clientRes = await fetch(GAS_DEPLOY_URL + "?sheet=CRM");
+                const clientText = await clientRes.text();
                 
-                // If it's HTML, GAS is likely asking for login or script is not "Anyone"
-                if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
-                    console.error("GAS returned HTML:", text.substring(0, 200));
-                    throw new Error("Invalid Cloud Response: Please ensure the script is deployed as 'Web App', Execute as 'Me', and 'Who has access: Anyone'.");
+                if (!clientText.trim().startsWith("<!DOCTYPE")) {
+                    const cloudClients = JSON.parse(clientText);
+                    if (Array.isArray(cloudClients)) {
+                        const restoredClients = cloudClients.map(unflattenClient);
+                        db.save(db.KEYS.CLIENTS, restoredClients);
+                    }
                 }
 
-                try {
-                    const data = JSON.parse(text);
-                    if (data && Array.isArray(data)) {
-                        db.saveLeads(data);
-                        if (!silent) alert(`Synchronization Successful! Records found: ${data.length}`);
-                        handleRoute(); 
-                    } else if (data && data.error) {
-                        throw new Error(data.error);
-                    }
-                } catch(pe) {
-                    console.error("JSON Parse Error:", text);
-                    throw new Error("Cloud script didn't return valid JSON. Check your Apps Script deployment.");
-                }
+                if (!silent) alert(`Sync Successful! Leads: ${leads.length || 0}`);
+                handleRoute(); 
             } catch (e) {
                 console.error("Cloud Sync Error:", e);
                 if (!silent) alert(e.message || "Failed to reach the cloud server.");
             } finally {
                 if(icon && !silent) icon.classList.remove('sync-spin');
             }
+        }
+
+        function unflattenClient(c) {
+            const stages = [];
+            for (let i = 1; i <= 6; i++) {
+                if (c[`stage_${i}_name`]) {
+                    stages.push({
+                        name: c[`stage_${i}_name`],
+                        date: c[`stage_${i}_date`] || "",
+                        completed: String(c[`stage_${i}_completed`]).toLowerCase() === 'true'
+                    });
+                }
+            }
+            if (stages.length === 0) {
+                // Default stages fallback
+                return { ...c, stages: [
+                    { name: "Question Stage", date: "", completed: false },
+                    { name: "Requirement Gathering Stage", date: "", completed: false },
+                    { name: "Development Stage", date: "", completed: false },
+                    { name: "Delivery Stage", date: "", completed: false },
+                    { name: "Payment & Activation Stage", date: "", completed: false },
+                    { name: "Aftercare & Retention Stage", date: "", completed: false }
+                ]};
+            }
+            return { ...c, stages };
         }
 
         let syncTimeout = null;
@@ -412,30 +451,43 @@
             const icon = document.getElementById('sync-icon');
             if(icon && !silent) icon.classList.add('sync-spin');
             try {
+                // Sync Leads
                 const leads = db.getLeads();
                 const interactions = db.getInteractions();
-                const data = leads.map(l => {
+                const leadData = leads.map(l => {
                     const leadInts = interactions.filter(i => i.leadId === l.id).sort((a,b) => b.timestamp - a.timestamp);
                     const lastNote = leadInts.find(i => i.type === 'Note')?.content || '';
-                    const allNotes = leadInts.filter(i => i.type === 'Note').map(i => `${new Date(i.timestamp).toLocaleDateString()}: ${i.content}`).join(' | ');
-                    
-                    return { 
-                        ...l, 
-                        id: l.id,
-                        interactionCount: leadInts.length,
-                        lastNote: lastNote,
-                        allNotes: allNotes
-                    };
+                    return { ...l, interactionCount: leadInts.length, lastNote };
                 });
                 
                 await fetch(GAS_DEPLOY_URL, { 
                     method: 'POST', 
                     mode: 'no-cors', 
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data) 
+                    body: JSON.stringify({ sheetName: "Leads", data: leadData }) 
+                });
+
+                // Sync Clients
+                const clients = db.getClients();
+                const clientsFlat = clients.map(c => {
+                    const flat = { ...c };
+                    delete flat.stages;
+                    c.stages.forEach((s, i) => {
+                        flat[`stage_${i+1}_name`] = s.name;
+                        flat[`stage_${i+1}_date`] = s.date;
+                        flat[`stage_${i+1}_completed`] = s.completed;
+                    });
+                    return flat;
+                });
+
+                await fetch(GAS_DEPLOY_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sheetName: "CRM", data: clientsFlat }) 
                 });
                 
-                if (!silent) alert("Data pushed to cloud!");
+                if (!silent) alert("Data successfully pushed to cloud!");
             } catch (e) { 
                 console.error(e); 
                 if (!silent) alert("Sync Failed."); 
@@ -505,6 +557,7 @@
                 });
 
                 const urgentTasks = tasks.filter(t => !t.isCompleted);
+                const followUpLeads = leads.filter(l => l.status === LeadStatus.FOLLOW_UP);
                 const maxCount = Math.max(...Object.values(counts), 1);
 
                 const today = new Date().setHours(0,0,0,0);
@@ -516,22 +569,26 @@
 
                 document.getElementById('main-content').innerHTML = `
                     <div class="p-4 md:p-8 w-full max-w-[1800px] mx-auto space-y-6 pb-24 md:pb-12">
-                        <div class="flex flex-col gap-1">
-                            <h1 class="text-2xl md:text-3xl font-bold text-slate-900">Dashboard</h1>
-                            <p class="text-slate-500 text-sm">Welcome back, Founder.</p>
+                        <div class="flex flex-col gap-1 text-center md:text-left">
+                            <h1 class="text-xl md:text-3xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
+                            <p class="text-slate-500 text-[10px] md:text-sm uppercase tracking-widest font-medium">Welcome back, Founder.</p>
                         </div>
 
-                        <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                            <div class="bg-gradient-to-br from-blue-600 to-blue-500 p-5 rounded-2xl text-white shadow-lg">
-                                <p class="text-xs font-bold uppercase opacity-80 mb-1">New Leads</p>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                            <div class="bg-gradient-to-br from-indigo-600 to-indigo-500 p-5 rounded-2xl text-white shadow-lg">
+                                <p class="text-xs font-bold uppercase opacity-80 mb-1">New</p>
                                 <p class="text-4xl font-bold">${counts[LeadStatus.NEW] || 0}</p>
                             </div>
+                            <div onclick="jumpToStatus(LeadStatus.FOLLOW_UP)" class="bg-white p-5 rounded-2xl border border-blue-100 shadow-sm cursor-pointer hover:bg-blue-50 transition-all active:scale-95">
+                                <p class="text-xs font-bold uppercase text-blue-500 mb-1">Follow Ups</p>
+                                <p class="text-4xl font-bold text-slate-800">${followUpLeads.length}</p>
+                            </div>
                             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-                                <p class="text-xs font-bold uppercase text-slate-400 mb-1">Total Leads</p>
+                                <p class="text-xs font-bold uppercase text-slate-400 mb-1">Total</p>
                                 <p class="text-4xl font-bold text-slate-800">${leads.length}</p>
                             </div>
                             <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-                                <p class="text-xs font-bold uppercase text-emerald-500 mb-1">Won Deals</p>
+                                <p class="text-xs font-bold uppercase text-emerald-500 mb-1">Won</p>
                                 <p class="text-4xl font-bold text-slate-800">${counts[LeadStatus.WON] || 0}</p>
                             </div>
                         </div>
@@ -635,6 +692,17 @@
                                     const leadDate = l.createdAt ? new Date(l.createdAt) : null;
                                     const dateStr = leadDate && !isNaN(leadDate) ? leadDate.toLocaleDateString() : 'N/A';
                                     
+                                    // Follow-up Timer logic
+                                    let timerHtml = '';
+                                    if (l.followUpDate) {
+                                        const todayNow = new Date().setHours(0,0,0,0);
+                                        const fuDate = new Date(l.followUpDate).setHours(0,0,0,0);
+                                        const diff = Math.ceil((fuDate - todayNow) / (1000 * 60 * 60 * 24));
+                                        const colorClass = diff < 0 ? 'bg-red-50 text-red-600 border-red-100' : diff === 0 ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100';
+                                        const text = diff < 0 ? `${Math.abs(diff)}d Overdue` : diff === 0 ? 'Today' : `${diff}d Left`;
+                                        timerHtml = `<div class="flex items-center gap-1 px-2 py-1 ${colorClass} rounded-lg border text-[9px] font-bold shadow-sm"><i data-lucide="calendar-clock" class="w-3 h-3"></i><span>${text}</span></div>`;
+                                    }
+
                                     return `
                                     <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm group hover:border-blue-300 relative pl-10 cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98]" data-id="${l.id}" onclick="openLeadModal('${l.id}')">
                                         <div class="drag-handle absolute left-0 top-0 bottom-0 w-8 flex items-center justify-center cursor-grab active:cursor-grabbing text-slate-300 hover:text-blue-500 bg-gray-50/10 border-r border-gray-50 rounded-l-xl" onclick="event.stopPropagation()">
@@ -642,19 +710,22 @@
                                         </div>
                                         <div class="flex justify-between items-start mb-1">
                                             <h3 class="font-semibold text-gray-900 truncate text-sm">${l.name || 'Unknown'}</h3>
-                                            <span class="text-[9px] text-gray-400 bg-gray-50 px-1 py-0.5 rounded whitespace-nowrap">${dateStr === 'Invalid Date' ? 'N/A' : dateStr}</span>
+                                            <span class="text-[9px] text-gray-400 bg-gray-50 px-1 py-0.5 rounded whitespace-nowrap">${dateStr}</span>
                                         </div>
                                         
                                         <div class="flex items-center justify-between mb-2">
-                                            <div class="text-[10px] text-slate-400 truncate max-w-[60%]">${l.company || ''}</div>
+                                            <div class="text-[10px] text-slate-400 truncate max-w-[50%]">${l.company || ''}</div>
                                             ${l.category ? `<span class="text-[8px] font-bold px-1.5 py-0.5 rounded-full text-white uppercase tracking-wider" style="background-color: ${cat.color}">${l.category}</span>` : ''}
                                         </div>
                                         
                                         <div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-50" onclick="event.stopPropagation()">
                                             <a href="tel:${phoneStr}" onclick="logAction('${l.id}', 'Call')" class="p-1.5 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100"><i data-lucide="phone" class="w-3.5 h-3.5"></i></a>
                                             <a href="https://wa.me/${waPhone}" target="_blank" onclick="logAction('${l.id}', 'WhatsApp')" class="p-1.5 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i></a>
-                                            <button onclick="openLeadModal('${l.id}'); editLead('${l.id}')" class="p-1.5 rounded-full bg-slate-50 text-indigo-600 hover:bg-indigo-50" title="Edit Profile"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
-                                            <button onclick="quickNote('${l.id}')" class="p-1.5 rounded-full bg-amber-50 text-amber-600 hover:bg-amber-100 ml-auto" title="Quick Note"><i data-lucide="file-edit" class="w-3.5 h-3.5"></i></button>
+                                            <div class="flex items-center gap-1.5 ml-auto">
+                                                ${timerHtml}
+                                                <button onclick="openLeadModal('${l.id}'); editLead('${l.id}')" class="p-1.5 rounded-full bg-slate-50 text-indigo-600 hover:bg-indigo-50" title="Edit Profile"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
+                                                <button onclick="quickNote('${l.id}')" class="p-1.5 rounded-full bg-slate-50 text-amber-600 hover:bg-amber-100" title="Quick Note"><i data-lucide="file-edit" class="w-3.5 h-3.5"></i></button>
+                                            </div>
                                         </div>
                                     </div>
                                 `}).join('')}
@@ -711,11 +782,14 @@
         function updateLeadCatFilter(val) { leadCategoryFilter = val; renderLeads(); }
 
         function quickNote(id) {
-            const note = prompt("Enter a brief note for this lead:");
-            if(note && note.trim()) {
-                db.addInteraction({ id: crypto.randomUUID(), leadId: id, type: 'Note', content: note.trim(), timestamp: Date.now() });
-                renderLeads();
-            }
+            openLeadModal(id);
+            setTimeout(() => {
+                const noteIn = document.getElementById('note-in');
+                if(noteIn) {
+                    noteIn.focus();
+                    noteIn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 300);
         }
 
         function initSortable() {
@@ -746,7 +820,10 @@
                                 if(l) { 
                                     l.status = next; db.saveLeads(ls); 
                                     db.addInteraction({ id: crypto.randomUUID(), leadId: id, type: 'Note', content: `Moved ${prev} -> ${next}`, timestamp: Date.now() }); 
-                                    if(next === LeadStatus.WON) db.createClient(l); 
+                                    if(next === LeadStatus.WON) {
+                                        db.createClient(l); 
+                                        db.addInteraction({ id: crypto.randomUUID(), leadId: id, type: 'Note', content: `Converted to CRM Client`, timestamp: Date.now() }); 
+                                    }
                                     autoSync();
                                     renderLeads();
                                 }
@@ -802,27 +879,206 @@
                             <div class="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-full text-xs font-bold">${clients.length} Active</div>
                         </div>
                         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            ${clients.length ? clients.map(c => `
-                                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all group">
+                            ${clients.length ? clients.map(c => {
+                                // Calculate overall progress
+                                const completedCount = (c.stages || []).filter(s => s.completed).length;
+                                const progressPct = Math.round((completedCount / 6) * 100);
+                                
+                                return `
+                                <div onclick="openClientProfile('${c.id}')" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all group cursor-pointer active:scale-95">
                                     <div class="flex justify-between items-start mb-4">
                                         <div class="p-3 bg-blue-50 text-blue-600 rounded-xl"><i data-lucide="briefcase"></i></div>
+                                        <div class="text-right">
+                                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Progress</p>
+                                            <p class="text-sm font-black text-blue-600">${progressPct}%</p>
+                                        </div>
                                     </div>
                                     <h3 class="font-bold text-xl text-slate-800 mb-1">${c.name}</h3>
-                                    <p class="text-sm font-medium text-slate-500 mb-6">${c.serviceType || 'Default Service'}</p>
+                                    <p class="text-sm font-medium text-slate-500 mb-6">${c.company || 'Direct Client'}</p>
                                     
+                                    <div class="w-full bg-slate-100 h-2 rounded-full mb-6">
+                                        <div class="bg-emerald-500 h-full rounded-full transition-all" style="width: ${progressPct}%"></div>
+                                    </div>
+
                                     <div class="pt-4 border-t border-slate-50 flex items-center justify-between">
                                          <div>
-                                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Next Renewal</p>
-                                            <p class="text-sm font-bold text-slate-700">${new Date(c.renewalDate).toLocaleDateString()}</p>
+                                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</p>
+                                            <p class="text-xs font-bold text-emerald-600">${completedCount === 6 ? 'Completed' : 'Working'}</p>
                                          </div>
-                                         <div class="bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-tighter">Active</div>
+                                         <div class="bg-slate-50 text-slate-400 p-2 rounded-lg group-hover:text-blue-500 group-hover:bg-blue-50 transition-all">
+                                             <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                                         </div>
                                     </div>
                                 </div>
-                            `).join('') : '<div class="col-span-full py-20 text-center text-slate-400 border-2 border-dashed rounded-3xl">No clients found. Convert an "Interested" lead to "Won" to see them here!</div>'}
+                            `}).join('') : '<div class="col-span-full py-20 text-center text-slate-400 border-2 border-dashed rounded-3xl">No clients found. Convert an "Interested" lead to "Won" to see them here!</div>'}
                         </div>
                     </div>`;
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             } catch(e) { console.error("Clients render error", e); }
+        }
+
+        let currentClientId = null;
+        function openClientProfile(id) {
+            currentClientId = id;
+            renderClientProfile();
+            document.getElementById('lead-modal').classList.remove('hidden');
+        }
+
+        function renderClientProfile() {
+            try {
+                const c = db.getClients().find(x => x.id === currentClientId);
+                if (!c) return;
+
+                const today = new Date().setHours(0,0,0,0);
+                const stages = c.stages || [];
+
+                document.getElementById('lead-modal-content').innerHTML = `
+                    <div class="relative pb-6 space-y-8">
+                        <!-- Client Header -->
+                        <div class="text-center p-6 bg-slate-50 rounded-3xl border border-slate-100 relative overflow-hidden">
+                             <div class="absolute top-0 left-0 w-2 h-full bg-emerald-500"></div>
+                             <h2 class="text-2xl font-bold text-slate-800">${c.name}</h2>
+                             <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">${c.company || 'Private Entity'}</p>
+                             
+                             <div class="flex justify-center gap-6 mt-6">
+                                <div class="text-center">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase">Overall Stage</p>
+                                    <p class="text-sm font-black text-emerald-600">${stages.filter(s => s.completed).length}/6</p>
+                                </div>
+                                <div class="w-px h-8 bg-slate-200"></div>
+                                <div class="text-center">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase">Current Stage</p>
+                                    <p class="text-sm font-black text-slate-700">${stages.find(s => !s.completed)?.name || 'Project Finished'}</p>
+                                </div>
+                             </div>
+                        </div>
+
+                        <!-- Timeline -->
+                        <div class="relative pl-4 space-y-0">
+                            <!-- Vertical Progress Bar Background -->
+                            <div class="absolute left-[26px] top-4 bottom-4 w-1 bg-slate-100 rounded-full"></div>
+                            <!-- Vertical Active Bar -->
+                            <div id="vertical-progress" class="absolute left-[26px] top-4 w-1 bg-emerald-500 rounded-full transition-all duration-500 max-h-full"></div>
+
+                            <div class="space-y-6">
+                                ${stages.map((s, idx) => {
+                                    const stageDate = s.date ? new Date(s.date) : null;
+                                    const isLate = !s.completed && stageDate && stageDate < today;
+                                    const lateDays = isLate ? Math.floor((today - stageDate) / (1000 * 60 * 60 * 24)) : 0;
+                                    
+                                    return `
+                                    <div class="relative flex items-start gap-6 group">
+                                        <!-- Node -->
+                                        <div onclick="toggleStageCompletion('${c.id}', ${idx})" class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center border-4 border-white shadow-md transition-all cursor-pointer ${s.completed ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-200 text-slate-400 hover:bg-emerald-100'}">
+                                            ${s.completed ? '<i data-lucide="check" class="w-4 h-4"></i>' : `<span class="text-[10px] font-black">${idx + 1}</span>`}
+                                        </div>
+
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex justify-between items-start mb-1">
+                                                <h4 class="font-bold text-slate-800 text-sm md:text-base ${s.completed ? 'opacity-50 line-through' : ''}">${s.name}</h4>
+                                                <button onclick="editStageDate('${c.id}', ${idx})" class="text-slate-300 hover:text-indigo-500 transition-colors p-1 relative">
+                                                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                                                    <input type="date" value="${s.date || ''}" 
+                                                           onchange="saveStageDate('${c.id}', ${idx}, this.value)"
+                                                           class="absolute inset-0 opacity-0 cursor-pointer">
+                                                </button>
+                                            </div>
+
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                ${s.date ? `
+                                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${isLate ? 'bg-red-50 text-red-500 border border-red-100' : 'bg-slate-50 text-slate-500 border border-slate-100'}">
+                                                        Deadline: ${new Date(s.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                                    </span>
+                                                ` : '<span class="text-[10px] text-slate-300">No deadline set</span>'}
+                                                
+                                                ${isLate ? `
+                                                    <span class="text-[10px] font-black text-red-600 animate-pulse uppercase tracking-wider flex items-center gap-1">
+                                                        <i data-lucide="alert-circle" class="w-3 h-3"></i> Late by ${lateDays} days
+                                                    </span>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+
+                        ${stages.filter(s => s.completed).length === 6 ? `
+                            <div class="bg-emerald-50 p-6 rounded-3xl border border-emerald-100 text-center animate-fade-in shadow-lg shadow-emerald-50">
+                                <i data-lucide="award" class="w-12 h-12 text-emerald-500 mx-auto mb-3"></i>
+                                <h3 class="text-lg font-black text-emerald-700">Project Completed!</h3>
+                                <p class="text-sm text-emerald-600/80">Excellent work moving this through all stages.</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+                updateVerticalBar(c);
+            } catch(e) { console.error("Client profile render error", e); }
+        }
+
+        function updateVerticalBar(client) {
+            const bar = document.getElementById('vertical-progress');
+            if(!bar) return;
+            const completedCount = client.stages.filter(s => s.completed).length;
+            const pct = completedCount > 0 ? (completedCount / 6) * 100 : 0;
+            bar.style.height = `calc(${pct}% - 8px)`;
+            
+            const today = new Date().setHours(0,0,0,0);
+            const isAnyLate = client.stages.some(s => !s.completed && s.date && new Date(s.date) < today);
+            if(isAnyLate) {
+                bar.classList.remove('bg-emerald-500');
+                bar.classList.add('bg-red-500');
+            } else {
+                bar.classList.remove('bg-red-500');
+                bar.classList.add('bg-emerald-500');
+            }
+        }
+
+        function toggleStageCompletion(clientId, stageIdx) {
+            const cs = db.getClients();
+            const c = cs.find(x => x.id === clientId);
+            if(c) {
+                c.stages[stageIdx].completed = !c.stages[stageIdx].completed;
+                db.save(db.KEYS.CLIENTS, cs);
+                renderClientProfile();
+                autoSync();
+            }
+        }
+
+        function updateMobileDots() {
+            const board = document.getElementById('kanban-board');
+            const dotsCont = document.getElementById('kanban-dots');
+            if(!board || !dotsCont) return;
+            const scrollLeft = board.scrollLeft;
+            const width = board.offsetWidth;
+            const activeIdx = Math.round(scrollLeft / width);
+            
+            const dots = dotsCont.children;
+            for(let i=0; i<dots.length; i++) {
+                if(i === activeIdx) {
+                    dots[i].className = "w-1.5 h-1.5 rounded-full transition-all bg-blue-500 w-3";
+                } else {
+                    dots[i].className = "w-1.5 h-1.5 rounded-full transition-all bg-slate-300";
+                }
+            }
+        }
+
+        function saveStageDate(clientId, stageIdx, date) {
+            const cs = db.getClients();
+            const c = cs.find(x => x.id === clientId);
+            if(c) {
+                c.stages[stageIdx].date = date;
+                db.save(db.KEYS.CLIENTS, cs);
+                renderClientProfile();
+                autoSync();
+            }
+        }
+
+        function editStageDate(clientId, stageIdx) {
+            // Native picker handled by hidden input overlay in HTML
         }
 
         function handleRoute() { renderNav(); const h = location.hash || '#dashboard'; if(h === '#leads') renderLeads(); else if(h === '#tasks') renderTasks(); else if(h === '#clients') renderClients(); else renderDashboard(); }
@@ -968,6 +1224,25 @@
                             </div>
                         </div>
 
+                        ${l.status === LeadStatus.FOLLOW_UP ? `
+                        <div class="mb-8 p-5 bg-blue-50/50 rounded-3xl border border-blue-100 animate-fade-in">
+                            <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-4">Follow-Up Configuration</p>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-2 mb-1 block">Scheduled Date</label>
+                                    <input type="date" value="${l.followUpDate || ''}" onchange="updateLeadFollowUp('${l.id}', 'followUpDate', this.value)" class="w-full bg-white border border-blue-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-200">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-2 mb-1 block">Follow-up Message</label>
+                                    <textarea id="fu-msg-${l.id}" class="w-full bg-white border border-blue-100 rounded-xl px-4 py-3 text-sm font-medium text-slate-600 outline-none focus:ring-2 focus:ring-blue-200 h-20" placeholder="Type a reminder or message...">${l.followUpMsg || ''}</textarea>
+                                    <button onclick="sendFollowUpWhatsApp('${l.id}')" class="w-full py-3 bg-emerald-500 text-white rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 active:scale-95 transition-all">
+                                        <i data-lucide="send" class="w-4 h-4"></i> Send Follow-up (WA)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
+
                         <div class="mb-8">
                             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-3">Add Update</p>
                             <div class="bg-indigo-50/50 p-1.5 rounded-2xl flex gap-2">
@@ -1098,6 +1373,24 @@
             }
         }
 
+        function jumpToStatus(status) {
+            location.hash = '#leads';
+            setTimeout(() => {
+                const board = document.getElementById('kanban-board');
+                if(!board) return;
+                const colTarget = board.querySelector(`[data-status="${status}"]`);
+                if(colTarget) {
+                    const colWrapper = colTarget.closest('.snap-center');
+                    if(colWrapper) {
+                        board.scrollTo({
+                            left: colWrapper.offsetLeft - 16,
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+            }, 150);
+        }
+
         let currentLeadId = null;
         function addNote() {
             const cin = document.getElementById('note-in');
@@ -1106,6 +1399,46 @@
             db.addInteraction({ id: crypto.randomUUID(), leadId: currentLeadId, type: 'Note', content: val, timestamp: Date.now() });
             cin.value = '';
             renderLeadModalContent();
+        }
+
+        function updateLeadFollowUp(id, key, val) {
+            const ls = db.getLeads();
+            const l = ls.find(x => x.id === id);
+            if(l) {
+                l[key] = val;
+                db.saveLeads(ls);
+                if(key === 'followUpDate' && val) {
+                    db.addInteraction({ id: crypto.randomUUID(), leadId: id, type: 'Note', content: `Follow-up date set to ${val}`, timestamp: Date.now() });
+                }
+                autoSync();
+                // We don't necessarily need to re-render everything if it's just a data update, 
+                // but for followUpDate we might want to update the history shown in modal
+                if(key === 'followUpDate') renderLeadModalContent();
+            }
+        }
+
+        async function sendFollowUpWhatsApp(id) {
+            const ls = db.getLeads();
+            const l = ls.find(x => x.id === id);
+            if(!l) return;
+            
+            const msgArea = document.getElementById(`fu-msg-${l.id}`);
+            const msg = msgArea ? msgArea.value.trim() : (l.followUpMsg || '');
+            
+            // Save the message content
+            l.followUpMsg = msg;
+            db.saveLeads(ls);
+            
+            const phoneStr = String(l.phone || '');
+            const rawPhone = phoneStr.replace(/\D/g, '');
+            const waPhone = rawPhone.length === 10 ? '91' + rawPhone : rawPhone;
+            
+            const encodedMsg = encodeURIComponent(msg);
+            const waUrl = `https://wa.me/${waPhone}?text=${encodedMsg}`;
+            
+            logAction(id, 'WhatsApp');
+            window.open(waUrl, '_blank');
+            autoSync();
         }
 
         function logAction(id, type) {
